@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f0fdfa;
+  --foreground: #042f2e;
+  --font-sans: var(--font-kanit), -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", "Noto Sans",
+    Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Tailwind's preflight resets <button> to cursor: default -- explicitly
+   restore a pointer cursor on every interactive control. */
+button:not(:disabled),
+select,
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
