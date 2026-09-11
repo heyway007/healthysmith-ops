@@ -11,16 +11,14 @@ const kanit = Kanit({
 });
 
 export const metadata: Metadata = {
-  title: "ระบบบัญชีและหลังบ้าน",
-  description: "ระบบขาย จัดซื้อ และพนักงาน/เงินเดือน",
+  title: "ระบบบัญชีและพนักงาน",
+  description: "ระบบขาย จัดซื้อ พนักงาน/เงินเดือน และศูนย์บริการพนักงาน",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="th" className={`h-full antialiased ${kanit.variable}`}>
-      <body className="min-h-full flex flex-col bg-linear-to-br from-teal-50 via-cyan-50 to-teal-100 text-teal-950">
-        {children}
-      </body>
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">{children}</body>
     </html>
   );
 }

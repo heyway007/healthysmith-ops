@@ -73,7 +73,7 @@ export function LineItemsEditor({
                   <button
                     type="button"
                     onClick={() => removeRow(i)}
-                    className="rounded p-1.5 text-orange-500 hover:bg-orange-50"
+                    className="rounded border border-orange-200 p-1.5 text-orange-500 hover:border-orange-400 hover:bg-orange-50"
                     title="ลบรายการ"
                   >
                     <FontAwesomeIcon icon={faTrash} className="text-xs" />
@@ -87,7 +87,7 @@ export function LineItemsEditor({
       <button
         type="button"
         onClick={addRow}
-        className="mt-2 flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50"
+        className="mt-2 flex items-center gap-2 rounded-lg border border-teal-200 px-3 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50"
       >
         <FontAwesomeIcon icon={faPlus} className="text-xs" />
         เพิ่มรายการ

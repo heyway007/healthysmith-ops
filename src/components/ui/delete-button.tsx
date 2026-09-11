@@ -24,7 +24,7 @@ export function DeleteButton({
           startTransition(() => action());
         }
       }}
-      className="rounded-full p-1.5 text-orange-500 transition-colors hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50"
+      className="rounded-full border border-orange-200 p-1.5 text-orange-500 transition-colors hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50"
       title="ลบ"
     >
       <FontAwesomeIcon icon={faTrash} />

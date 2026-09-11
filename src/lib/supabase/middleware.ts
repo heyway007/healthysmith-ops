@@ -4,8 +4,9 @@ import type { Database } from "@/types/database.types";
 
 /**
  * Refreshes the Supabase auth session on every request and redirects
- * unauthenticated users away from protected routes. Wired up in
- * middleware.ts at the project root.
+ * unauthenticated users away from protected routes -- to /admin/login for
+ * the back office, /login for the front (employee) office. Wired up in
+ * src/proxy.ts.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -33,11 +34,13 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/login");
+  const { pathname } = request.nextUrl;
+  const isAdminSection = pathname.startsWith("/admin");
+  const isAuthRoute = isAdminSection ? pathname.startsWith("/admin/login") : pathname === "/login";
 
   if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = isAdminSection ? "/admin/login" : "/login";
     return NextResponse.redirect(url);
   }
 

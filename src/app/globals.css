@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f0fdfa;
-  --foreground: #042f2e;
+  --background: #f8fafc;
+  --foreground: #0f172a;
   --font-sans: var(--font-kanit), -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", "Noto Sans",
     Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;

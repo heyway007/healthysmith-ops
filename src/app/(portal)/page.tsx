@@ -1,0 +1,124 @@
+import Link from "next/link";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCalendarPlus, faClipboardList, faCalendarDays } from "@fortawesome/free-solid-svg-icons";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentEmployee } from "@/lib/current-employee";
+
+export default async function PortalHomePage() {
+  const employee = await getCurrentEmployee();
+  if (!employee) return null; // layout shows the "not linked" message instead
+
+  const supabase = await createClient();
+  const currentYear = new Date().getFullYear();
+
+  const [{ data: leaveTypes }, { data: approved }, { data: pending }] = await Promise.all([
+    supabase.from("leave_types").select("*").order("name"),
+    supabase
+      .from("leave_requests")
+      .select("leave_type_id, days_count, start_date")
+      .eq("employee_id", employee.id)
+      .eq("status", "approved"),
+    supabase
+      .from("leave_requests")
+      .select("id")
+      .eq("employee_id", employee.id)
+      .eq("status", "pending"),
+  ]);
+
+  const usedByType = new Map<string, number>();
+  for (const r of approved ?? []) {
+    if (new Date(r.start_date).getFullYear() !== currentYear) continue;
+    usedByType.set(r.leave_type_id, (usedByType.get(r.leave_type_id) ?? 0) + r.days_count);
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-indigo-950">
+          สวัสดี {employee.prefix_name}
+          {employee.first_name}
+        </h1>
+        <p className="mt-1 text-indigo-600">สรุปวันลาและสิทธิ์การลาของคุณ ปี {currentYear + 543}</p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Link
+          href="/leave/new"
+          className="group flex items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-900/20">
+            <FontAwesomeIcon icon={faCalendarPlus} className="text-lg" />
+          </div>
+          <div>
+            <p className="font-medium text-indigo-950">ยื่นใบลาใหม่</p>
+            <p className="text-sm text-indigo-600">แจ้งลาป่วย ลากิจ หรือลาพักร้อน</p>
+          </div>
+        </Link>
+        <Link
+          href="/leave"
+          className="group flex items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-indigo-400 to-indigo-600 text-white shadow-md shadow-indigo-900/20">
+            <FontAwesomeIcon icon={faClipboardList} className="text-lg" />
+          </div>
+          <div>
+            <p className="font-medium text-indigo-950">ใบลาของฉัน</p>
+            <p className="text-sm text-indigo-600">ดูประวัติและสถานะคำขอลา</p>
+          </div>
+        </Link>
+        <Link
+          href="/holidays"
+          className="group flex items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-rose-400 to-rose-600 text-white shadow-md shadow-rose-900/20">
+            <FontAwesomeIcon icon={faCalendarDays} className="text-lg" />
+          </div>
+          <div>
+            <p className="font-medium text-indigo-950">วันหยุดบริษัท</p>
+            <p className="text-sm text-indigo-600">ดูวันหยุดและวัน WFH ทั้งปี</p>
+          </div>
+        </Link>
+      </div>
+
+      {pending && pending.length > 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+          <p className="text-sm font-medium text-amber-800">มีคำขอลารออนุมัติ {pending.length} รายการ</p>
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-2xl border border-indigo-100 bg-white shadow-sm">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-indigo-100 bg-linear-to-r from-indigo-50 to-amber-50 text-left text-xs font-medium uppercase text-indigo-700">
+              <th className="px-4 py-3">ประเภทการลา</th>
+              <th className="px-4 py-3">สิทธิ์ต่อปี</th>
+              <th className="px-4 py-3">ใช้ไปแล้ว</th>
+              <th className="px-4 py-3">คงเหลือ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leaveTypes?.map((lt) => {
+              const used = usedByType.get(lt.id) ?? 0;
+              const remaining = lt.max_days_per_year != null ? lt.max_days_per_year - used : null;
+              return (
+                <tr key={lt.id} className="border-t border-indigo-100">
+                  <td className="px-4 py-3 text-indigo-950">{lt.name}</td>
+                  <td className="px-4 py-3 text-indigo-700">{lt.max_days_per_year ?? "ไม่จำกัด"}</td>
+                  <td className="px-4 py-3 text-indigo-700">{used}</td>
+                  <td className="px-4 py-3 font-medium text-indigo-950">{remaining ?? "-"}</td>
+                </tr>
+              );
+            })}
+            {(!leaveTypes || leaveTypes.length === 0) && (
+              <tr>
+                <td colSpan={4} className="px-4 py-6 text-center text-indigo-400">
+                  ยังไม่มีประเภทการลาในระบบ
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

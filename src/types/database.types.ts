@@ -316,6 +316,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      company_holidays: {
+        Row: {
+          id: string;
+          holiday_date: string;
+          name: string;
+          type: string;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          holiday_date: string;
+          name: string;
+          type?: string;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          holiday_date?: string;
+          name?: string;
+          type?: string;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       leave_types: {
         Row: {
           id: string;
@@ -1720,10 +1750,54 @@ export interface Database {
         };
         Relationships: [];
       };
+      user_roles: {
+        Row: {
+          id: string;
+          user_id: string;
+          employee_id: string | null;
+          roles: string[];
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          employee_id?: string | null;
+          roles?: string[];
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          employee_id?: string | null;
+          roles?: string[];
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       supplier_purchase_history: {
         Row: { [key: string]: unknown };
+        Relationships: [];
+      };
+      employee_directory: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          employee_code: string;
+          prefix_name: string | null;
+          first_name: string;
+          last_name: string;
+          department_id: string | null;
+          position_id: string | null;
+          status: string;
+        };
         Relationships: [];
       };
     };
@@ -1735,6 +1809,40 @@ export interface Database {
       set_updated_at: {
         Args: Record<PropertyKey, never>;
         Returns: unknown;
+      };
+      current_roles: {
+        Args: Record<PropertyKey, never>;
+        Returns: string[];
+      };
+      has_role: {
+        Args: { p_role: string };
+        Returns: boolean;
+      };
+      is_admin: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      current_employee_id: {
+        Args: Record<PropertyKey, never>;
+        Returns: string | null;
+      };
+      update_own_employee_profile: {
+        Args: {
+          p_prefix_name: string | null;
+          p_first_name: string;
+          p_last_name: string;
+          p_nickname: string | null;
+          p_phone: string | null;
+          p_email: string | null;
+          p_address: string | null;
+          p_id_card_number: string | null;
+          p_bank_name: string | null;
+          p_bank_account_number: string | null;
+          p_bank_account_name: string | null;
+          p_social_security_number: string | null;
+          p_tax_id: string | null;
+        };
+        Returns: undefined;
       };
     };
     Enums: {
