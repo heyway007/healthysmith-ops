@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { faUserShield } from "@fortawesome/free-solid-svg-icons";
 import { adminLogin } from "./actions";
 
@@ -50,12 +51,10 @@ export default async function AdminLoginPage({
 
             {error && <p className="text-sm text-orange-600">{error}</p>}
 
-            <button
-              type="submit"
-              className="w-full rounded-lg border border-orange-600/40 bg-linear-to-r from-orange-500 to-orange-600 px-3 py-2 text-sm font-medium text-white shadow-md shadow-orange-500/30 transition-colors hover:from-orange-600 hover:to-orange-700"
-            >
+            {/* Spinner + disabled while signing in, so a slow login is visible and can't be double-sent. */}
+            <SubmitButton className="w-full rounded-lg border border-orange-600/40 bg-linear-to-r from-orange-500 to-orange-600 px-3 py-2 text-sm font-medium text-white shadow-md shadow-orange-500/30 transition-colors hover:from-orange-600 hover:to-orange-700" pendingLabel="กำลังเข้าสู่ระบบ...">
               เข้าสู่ระบบหลังบ้าน
-            </button>
+            </SubmitButton>
           </form>
 
           <p className="mt-4 text-xs text-teal-500">

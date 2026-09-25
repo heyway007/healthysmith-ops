@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { faCalendarDays, faUser } from "@fortawesome/free-solid-svg-icons";
 import { login } from "./actions";
 
@@ -51,12 +52,10 @@ export default async function LoginPage({
 
             {error && <p className="text-sm text-amber-700">{error}</p>}
 
-            <button
-              type="submit"
-              className="w-full rounded-lg border border-mist-800 bg-mist-800 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-mist-700"
-            >
+            {/* Spinner + disabled while signing in, so a slow login is visible and can't be double-sent. */}
+            <SubmitButton className="w-full rounded-lg border border-mist-800 bg-mist-800 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-mist-700" pendingLabel="กำลังเข้าสู่ระบบ...">
               เข้าสู่ระบบพนักงาน
-            </button>
+            </SubmitButton>
           </form>
 
           <p className="mt-4 text-xs text-mist-500">
