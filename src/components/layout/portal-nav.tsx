@@ -25,7 +25,7 @@ export function PortalNav({ signedIn }: { signedIn: boolean }) {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={`whitespace-nowrap rounded-lg px-3 py-1.5 font-medium transition-colors ${
-              active ? "bg-indigo-600 text-white shadow-sm" : "text-indigo-700 hover:bg-indigo-50"
+              active ? "bg-mist-800 text-white" : "text-mist-700 hover:bg-mist-100"
             }`}
           >
             {item.label}

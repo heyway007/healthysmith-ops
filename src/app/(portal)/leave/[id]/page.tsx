@@ -38,12 +38,12 @@ export default async function LeaveRequestDetailPage({
 
   return (
     <div>
-      <Link href="/leave" className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800">
+      <Link href="/leave" className="inline-flex items-center gap-2 text-sm font-medium text-mist-600 hover:text-mist-800">
         <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
         กลับไปหน้าใบลาของฉัน
       </Link>
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold text-indigo-950">{leaveType?.name ?? "ใบลา"}</h1>
+        <h1 className="text-2xl font-semibold text-mist-900">{leaveType?.name ?? "ใบลา"}</h1>
         <StatusBadge status={request.status} config={LEAVE_STATUS} />
       </div>
 
@@ -63,7 +63,7 @@ export default async function LeaveRequestDetailPage({
         </dl>
 
         {request.status === "pending" && (
-          <div className="mt-6 border-t border-indigo-100 pt-5">
+          <div className="mt-6 border-t border-mist-200 pt-5">
             <form action={withdrawLeaveRequest.bind(null, id)}>
               <button type="submit" className={dangerButtonClassName}>
                 ถอนคำขอลานี้
@@ -79,8 +79,8 @@ export default async function LeaveRequestDetailPage({
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-indigo-500">{label}</dt>
-      <dd className="mt-1 text-sm text-indigo-900">{value}</dd>
+      <dt className="text-xs font-medium uppercase tracking-wide text-mist-500">{label}</dt>
+      <dd className="mt-1 text-sm text-mist-900">{value}</dd>
     </div>
   );
 }

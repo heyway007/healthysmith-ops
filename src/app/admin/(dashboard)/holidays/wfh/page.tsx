@@ -14,6 +14,7 @@ import { ConfirmSubmit } from "./confirm-submit";
 import { PeriodFields } from "./period-fields";
 import { TeamPicker } from "./team-picker";
 import { WORKDAYS, WeekdayCheckboxes } from "./weekday-checkboxes";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 const TABS = [
   { key: "create", label: "ตั้งวัน WFH ประจำสัปดาห์" },
@@ -125,9 +126,9 @@ export default async function RecurringWfhPage({
                 <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-800">
                   วันหยุดบริษัท หรือวันที่ทีมนี้มี WFH อยู่แล้ว จะถูกข้ามให้อัตโนมัติ
                 </p>
-                <button type="submit" className={submitButtonClassName}>
+                <SubmitButton className={submitButtonClassName} pendingLabel="กำลังสร้างวัน WFH...">
                   สร้างวัน WFH
-                </button>
+                </SubmitButton>
               </form>
             )}
 
@@ -143,9 +144,9 @@ export default async function RecurringWfhPage({
                   ย้ายเฉพาะวัน WFH ของ {teamName} ถ้าวันปลายทางเป็นวันหยุดหรือมี WFH อยู่แล้ว วันนั้นจะไม่ถูกย้าย
                   ถ้าจะย้ายแค่วันเดียว ให้คลิกวันนั้นในปฏิทินแล้วแก้วันที่
                 </p>
-                <button type="submit" className={submitButtonClassName}>
+                <SubmitButton className={submitButtonClassName} pendingLabel="กำลังย้ายวัน WFH...">
                   ย้ายวัน WFH
-                </button>
+                </SubmitButton>
               </form>
             )}
 

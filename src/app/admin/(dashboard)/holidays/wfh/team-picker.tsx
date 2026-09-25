@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { startNavigationProgress } from "@/components/ui/navigation-progress";
 import { selectClassName } from "@/lib/ui-classes";
 
 /** Step 1 of the recurring-WFH page: picking a team reloads the page scoped to it. */
@@ -18,9 +19,10 @@ export function TeamPicker({
     <select
       id="team"
       value={value}
-      onChange={(e) =>
-        router.push(`/admin/holidays/wfh?${new URLSearchParams({ tab, team: e.target.value })}`)
-      }
+      onChange={(e) => {
+        startNavigationProgress();
+        router.push(`/admin/holidays/wfh?${new URLSearchParams({ tab, team: e.target.value })}`);
+      }}
       className={`max-w-sm ${selectClassName}`}
     >
       <option value="" disabled>

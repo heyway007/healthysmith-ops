@@ -14,7 +14,7 @@ export default async function PublicLayout({ children }: { children: React.React
   ] = await Promise.all([supabase.auth.getUser(), getCurrentEmployee()]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-linear-to-br from-indigo-50 via-white to-amber-50 text-indigo-950">
+    <div className="flex min-h-screen flex-col bg-mist-100 text-mist-900">
       <PortalHeader signedIn={!!user} employee={employee} />
       <main className="flex-1 px-4 py-8 sm:px-8">{children}</main>
     </div>

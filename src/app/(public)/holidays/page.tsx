@@ -13,10 +13,10 @@ import { TeamFilter } from "@/components/holidays/team-filter";
 export default async function HolidaysPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; year?: string; month?: string; date?: string; team?: string }>;
+  searchParams: Promise<{ view?: string; year?: string; month?: string; date?: string; team?: string; type?: string }>;
 }) {
   const params = await searchParams;
-  const { view, year, month, date } = parseHolidayParams(params);
+  const { view, year, month, date, type } = parseHolidayParams(params);
   const theme = HOLIDAY_THEMES.portal;
 
   const supabase = await createClient();
@@ -39,7 +39,9 @@ export default async function HolidaysPage({
   const myTeamId = me?.team_id ?? null;
   const chosen = params.team === "all" || teams?.some((t) => t.id === params.team) ? params.team! : undefined;
   const team = chosen ?? (myTeamId && teams?.some((t) => t.id === myTeamId) ? myTeamId : "all");
-  const visible = (holidays ?? []).filter((h) => team === "all" || h.team_id === null || h.team_id === team);
+  const visible = (holidays ?? [])
+    .filter((h) => team === "all" || h.team_id === null || h.team_id === team)
+    .filter((h) => !type || h.type === type);
 
   return (
     <div className="space-y-5">
@@ -51,6 +53,7 @@ export default async function HolidaysPage({
         year={year}
         month={month}
         theme={theme}
+        type={type}
         team={chosen}
         filter={
           <TeamFilter
@@ -58,6 +61,7 @@ export default async function HolidaysPage({
             view={view}
             year={year}
             month={month}
+            type={type}
             teams={teams ?? []}
             value={team}
             allValue="all"
@@ -68,6 +72,8 @@ export default async function HolidaysPage({
       />
       {view === "calendar" ? (
         <HolidayCalendar
+          basePath="/holidays"
+          linkParams={{ team: chosen, type }}
           year={year}
           month={month}
           holidays={visible}

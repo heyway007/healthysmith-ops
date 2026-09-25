@@ -9,6 +9,7 @@ import {
 import { HOLIDAY_TYPES, holidayListUrl } from "@/lib/holiday-types";
 import type { Database } from "@/types/database.types";
 import { HolidayDateFields } from "./holiday-date-fields";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 type Holiday = Database["public"]["Tables"]["company_holidays"]["Row"];
 
@@ -89,9 +90,7 @@ export function HolidayForm({
         </div>
 
         <div className="flex items-center gap-4 pt-2">
-          <button type="submit" className={submitButtonClassName}>
-            {submitLabel}
-          </button>
+          <SubmitButton className={submitButtonClassName}>{submitLabel}</SubmitButton>
           <Link href={holidayListUrl(returnView, date)} className={secondaryButtonClassName}>
             ยกเลิก
           </Link>

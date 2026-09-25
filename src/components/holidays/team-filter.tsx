@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { startNavigationProgress } from "@/components/ui/navigation-progress";
 
 /**
  * Calendar team filter: `allValue` = every team, otherwise company-wide days +
@@ -12,6 +13,7 @@ export function TeamFilter({
   view,
   year,
   month,
+  type,
   teams,
   value,
   allValue = "",
@@ -22,6 +24,8 @@ export function TeamFilter({
   view: string;
   year: number;
   month: number;
+  /** Holiday / WFH filter to keep when switching team. */
+  type?: string;
   teams: { id: string; name: string }[];
   value: string;
   allValue?: string;
@@ -39,6 +43,8 @@ export function TeamFilter({
         onChange={(e) => {
           const q = new URLSearchParams({ view, year: String(year), month: String(month) });
           if (e.target.value) q.set("team", e.target.value);
+          if (type) q.set("type", type);
+          startNavigationProgress();
           router.push(`${basePath}?${q}`);
         }}
         className={selectClassName}

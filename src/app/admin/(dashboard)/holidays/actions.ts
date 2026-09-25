@@ -97,3 +97,29 @@ export async function deleteHoliday(id: string, returnTo?: string) {
   revalidateHolidays();
   if (returnTo) redirect(returnTo);
 }
+
+/**
+ * "คืนค่าเริ่มต้น": delete every WFH day (company-wide and all teams), keeping
+ * only public holidays -- for one year, or every year when scope=all.
+ */
+export async function resetToHolidaysOnly(formData: FormData) {
+  const supabase = await createClient();
+  const year = Number(formData.get("year"));
+  const allYears = formData.get("scope") === "all";
+  let deleted = 0;
+  try {
+    if (!allYears && !Number.isInteger(year)) throw new Error("ไม่พบปีที่ต้องการคืนค่า");
+    let query = supabase.from("company_holidays").delete().eq("type", "wfh");
+    if (!allYears) query = query.gte("holiday_date", `${year}-01-01`).lte("holiday_date", `${year}-12-31`);
+    const { data, error } = await query.select("id");
+    if (error) throw error;
+    deleted = data?.length ?? 0;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "คืนค่าเริ่มต้นไม่สำเร็จ";
+    redirect(`/admin/holidays?${new URLSearchParams({ error: message })}`);
+  }
+  revalidateHolidays();
+  const notice = `คืนค่าเริ่มต้นแล้ว — ลบวัน WFH ${deleted} วัน${allYears ? " (ทุกปี)" : ` ของปี ${year + 543}`} เหลือเฉพาะวันหยุด`;
+  const month = String(Number(formData.get("month")) || 1).padStart(2, "0");
+  redirect(`${listUrl("calendar", allYears ? undefined : `${year}-${month}-01`)}&${new URLSearchParams({ notice })}`);
+}

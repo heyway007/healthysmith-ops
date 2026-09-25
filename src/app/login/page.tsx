@@ -11,19 +11,19 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-indigo-100 via-indigo-50 to-amber-50 px-4">
-      <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-xl shadow-indigo-900/10">
-        <div className="h-1.5 bg-linear-to-r from-indigo-500 via-indigo-400 to-amber-400" />
+    <div className="flex min-h-screen items-center justify-center bg-mist-100 px-4">
+      <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-mist-200 bg-white shadow-sm">
+        <div className="h-1 bg-mist-800" />
         <div className="p-8">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500 to-indigo-700 text-white shadow-md shadow-indigo-900/20">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-mist-800 text-white">
             <FontAwesomeIcon icon={faUser} />
           </div>
-          <h1 className="mt-4 text-lg font-semibold text-indigo-950">เข้าสู่ระบบพนักงาน</h1>
-          <p className="mt-1 text-sm text-indigo-700">ยื่นใบลา ดูวันหยุด และสิทธิ์การลาของคุณ</p>
+          <h1 className="mt-4 text-lg font-semibold text-mist-900">เข้าสู่ระบบพนักงาน</h1>
+          <p className="mt-1 text-sm text-mist-700">ยื่นใบลา ดูวันหยุด และสิทธิ์การลาของคุณ</p>
 
           <form action={login} className="mt-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-indigo-800" htmlFor="email">
+              <label className="block text-sm font-medium text-mist-800" htmlFor="email">
                 อีเมล
               </label>
               <input
@@ -31,12 +31,12 @@ export default async function LoginPage({
                 name="email"
                 type="email"
                 required
-                className="mt-1 w-full rounded-lg border border-indigo-300 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-mist-300 px-3 py-2 text-sm focus:border-mist-600 focus:outline-none"
                 placeholder="you@company.com"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-indigo-800" htmlFor="password">
+              <label className="block text-sm font-medium text-mist-800" htmlFor="password">
                 รหัสผ่าน
               </label>
               <input
@@ -44,7 +44,7 @@ export default async function LoginPage({
                 name="password"
                 type="password"
                 required
-                className="mt-1 w-full rounded-lg border border-indigo-300 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-mist-300 px-3 py-2 text-sm focus:border-mist-600 focus:outline-none"
                 placeholder="••••••••"
               />
             </div>
@@ -53,18 +53,18 @@ export default async function LoginPage({
 
             <button
               type="submit"
-              className="w-full rounded-lg border border-amber-600/40 bg-linear-to-r from-amber-500 to-amber-600 px-3 py-2 text-sm font-medium text-white shadow-md shadow-amber-500/30 transition-colors hover:from-amber-600 hover:to-amber-700"
+              className="w-full rounded-lg border border-mist-800 bg-mist-800 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-mist-700"
             >
               เข้าสู่ระบบพนักงาน
             </button>
           </form>
 
-          <p className="mt-4 text-xs text-indigo-500">
+          <p className="mt-4 text-xs text-mist-500">
             ยังไม่มีบัญชี? ติดต่อฝ่ายบุคคลให้สร้างบัญชีผูกกับข้อมูลพนักงานของคุณ
           </p>
           <Link
             href="/holidays"
-            className="mt-4 flex items-center justify-center gap-2 rounded-lg border border-indigo-200 px-3 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-50"
+            className="mt-4 flex items-center justify-center gap-2 rounded-lg border border-mist-200 px-3 py-2 text-sm font-medium text-mist-700 transition-colors hover:bg-mist-100"
           >
             <FontAwesomeIcon icon={faCalendarDays} />
             ดูปฏิทินวันหยุด (ไม่ต้องเข้าสู่ระบบ)

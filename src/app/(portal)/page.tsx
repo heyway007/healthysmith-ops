@@ -34,48 +34,48 @@ export default async function PortalHomePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-indigo-950">
+        <h1 className="text-2xl font-semibold text-mist-900">
           สวัสดี {employee.prefix_name}
           {employee.first_name}
         </h1>
-        <p className="mt-1 text-indigo-600">สรุปวันลาและสิทธิ์การลาของคุณ ปี {currentYear + 543}</p>
+        <p className="mt-1 text-mist-600">สรุปวันลาและสิทธิ์การลาของคุณ ปี {currentYear + 543}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Link
           href="/leave/new"
-          className="group flex items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+          className="group flex items-center gap-4 rounded-2xl border border-mist-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
         >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-900/20">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
             <FontAwesomeIcon icon={faCalendarPlus} className="text-lg" />
           </div>
           <div>
-            <p className="font-medium text-indigo-950">ยื่นใบลาใหม่</p>
-            <p className="text-sm text-indigo-600">แจ้งลาป่วย ลากิจ หรือลาพักร้อน</p>
+            <p className="font-medium text-mist-900">ยื่นใบลาใหม่</p>
+            <p className="text-sm text-mist-600">แจ้งลาป่วย ลากิจ หรือลาพักร้อน</p>
           </div>
         </Link>
         <Link
           href="/leave"
-          className="group flex items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+          className="group flex items-center gap-4 rounded-2xl border border-mist-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
         >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-indigo-400 to-indigo-600 text-white shadow-md shadow-indigo-900/20">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mist-100 text-mist-700">
             <FontAwesomeIcon icon={faClipboardList} className="text-lg" />
           </div>
           <div>
-            <p className="font-medium text-indigo-950">ใบลาของฉัน</p>
-            <p className="text-sm text-indigo-600">ดูประวัติและสถานะคำขอลา</p>
+            <p className="font-medium text-mist-900">ใบลาของฉัน</p>
+            <p className="text-sm text-mist-600">ดูประวัติและสถานะคำขอลา</p>
           </div>
         </Link>
         <Link
           href="/holidays"
-          className="group flex items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+          className="group flex items-center gap-4 rounded-2xl border border-mist-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
         >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-rose-400 to-rose-600 text-white shadow-md shadow-rose-900/20">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
             <FontAwesomeIcon icon={faCalendarDays} className="text-lg" />
           </div>
           <div>
-            <p className="font-medium text-indigo-950">วันหยุดบริษัท</p>
-            <p className="text-sm text-indigo-600">ดูวันหยุดและวัน WFH ทั้งปี</p>
+            <p className="font-medium text-mist-900">วันหยุดบริษัท</p>
+            <p className="text-sm text-mist-600">ดูวันหยุดและวัน WFH ทั้งปี</p>
           </div>
         </Link>
       </div>
@@ -86,10 +86,10 @@ export default async function PortalHomePage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-indigo-100 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-mist-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-indigo-100 bg-linear-to-r from-indigo-50 to-amber-50 text-left text-xs font-medium uppercase text-indigo-700">
+            <tr className="border-b border-mist-200 bg-mist-150 text-left text-xs font-medium uppercase text-mist-700">
               <th className="px-4 py-3">ประเภทการลา</th>
               <th className="px-4 py-3">สิทธิ์ต่อปี</th>
               <th className="px-4 py-3">ใช้ไปแล้ว</th>
@@ -101,17 +101,17 @@ export default async function PortalHomePage() {
               const used = usedByType.get(lt.id) ?? 0;
               const remaining = lt.max_days_per_year != null ? lt.max_days_per_year - used : null;
               return (
-                <tr key={lt.id} className="border-t border-indigo-100">
-                  <td className="px-4 py-3 text-indigo-950">{lt.name}</td>
-                  <td className="px-4 py-3 text-indigo-700">{lt.max_days_per_year ?? "ไม่จำกัด"}</td>
-                  <td className="px-4 py-3 text-indigo-700">{used}</td>
-                  <td className="px-4 py-3 font-medium text-indigo-950">{remaining ?? "-"}</td>
+                <tr key={lt.id} className="border-t border-mist-200">
+                  <td className="px-4 py-3 text-mist-900">{lt.name}</td>
+                  <td className="px-4 py-3 text-mist-700">{lt.max_days_per_year ?? "ไม่จำกัด"}</td>
+                  <td className="px-4 py-3 text-mist-700">{used}</td>
+                  <td className="px-4 py-3 font-medium text-mist-900">{remaining ?? "-"}</td>
                 </tr>
               );
             })}
             {(!leaveTypes || leaveTypes.length === 0) && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-indigo-400">
+                <td colSpan={4} className="px-4 py-6 text-center text-mist-400">
                   ยังไม่มีประเภทการลาในระบบ
                 </td>
               </tr>

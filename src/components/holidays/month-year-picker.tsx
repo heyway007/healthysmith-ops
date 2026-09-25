@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { startNavigationProgress } from "@/components/ui/navigation-progress";
 
 const THAI_MONTHS = [
   "มกราคม",
@@ -23,6 +24,7 @@ export function MonthYearPicker({
   year,
   month,
   team,
+  type,
   showMonth = true,
   selectClassName,
 }: {
@@ -31,6 +33,8 @@ export function MonthYearPicker({
   month: number;
   /** Team filter to keep when jumping (back office). */
   team?: string;
+  /** Holiday / WFH filter to keep when jumping. */
+  type?: string;
   showMonth?: boolean;
   selectClassName: string;
 }) {
@@ -38,6 +42,8 @@ export function MonthYearPicker({
   const go = (y: number, m: number) => {
     const q = new URLSearchParams({ view: showMonth ? "calendar" : "list", year: String(y), month: String(m) });
     if (team) q.set("team", team);
+    if (type) q.set("type", type);
+    startNavigationProgress();
     router.push(`${basePath}?${q}`);
   };
 

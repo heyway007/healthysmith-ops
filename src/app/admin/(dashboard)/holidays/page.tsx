@@ -14,6 +14,7 @@ import {
 } from "@/components/holidays/holiday-views";
 import { TeamFilter } from "@/components/holidays/team-filter";
 import { deleteHoliday } from "./actions";
+import { ResetPanel } from "./reset-panel";
 
 export default async function HolidaysPage({
   searchParams,
@@ -26,14 +27,15 @@ export default async function HolidaysPage({
     month?: string;
     date?: string;
     team?: string;
+    type?: string;
   }>;
 }) {
   const params = await searchParams;
-  const { view, year, month, date } = parseHolidayParams(params);
+  const { view, year, month, date, type } = parseHolidayParams(params);
   const theme = HOLIDAY_THEMES.admin;
 
   const supabase = await createClient();
-  const [{ data: holidays }, { data: teams }] = await Promise.all([
+  const [{ data: holidays }, { data: teams }, { count: wfhAllYears }] = await Promise.all([
     supabase
       .from("company_holidays")
       .select("*")
@@ -41,11 +43,14 @@ export default async function HolidaysPage({
       .lte("holiday_date", `${year}-12-31`)
       .order("holiday_date", { ascending: true }),
     supabase.from("teams").select("id, name").order("name"),
+    supabase.from("company_holidays").select("id", { count: "exact", head: true }).eq("type", "wfh"),
   ]);
 
   // Team filter: none = every team; a team = company-wide days + that team's WFH.
   const team = teams?.some((t) => t.id === params.team) ? params.team : undefined;
-  const visible = (holidays ?? []).filter((h) => !team || h.team_id === null || h.team_id === team);
+  const visible = (holidays ?? [])
+    .filter((h) => !team || h.team_id === null || h.team_id === team)
+    .filter((h) => !type || h.type === type);
 
   // Carried through the edit/new pages so saving lands back on the same view.
   const back = `view=${view}`;
@@ -62,6 +67,7 @@ export default async function HolidaysPage({
         year={year}
         month={month}
         theme={theme}
+        type={type}
         team={team}
         filter={
           <TeamFilter
@@ -69,6 +75,7 @@ export default async function HolidaysPage({
             view={view}
             year={year}
             month={month}
+            type={type}
             teams={teams ?? []}
             value={team ?? ""}
             selectClassName={theme.select}
@@ -76,6 +83,12 @@ export default async function HolidaysPage({
         }
         actions={
           <div className="flex flex-wrap gap-2">
+            <ResetPanel
+              year={year}
+              month={month}
+              wfhThisYear={(holidays ?? []).filter((h) => h.type === "wfh").length}
+              wfhAllYears={wfhAllYears ?? 0}
+            />
             <Link
               href={`/admin/holidays/wfh${team ? `?team=${team}` : ""}`}
               className={`flex items-center gap-2 ${secondaryButtonClassName}`}
@@ -101,6 +114,8 @@ export default async function HolidaysPage({
 
       {view === "calendar" ? (
         <HolidayCalendar
+          basePath="/admin/holidays"
+          linkParams={{ team, type }}
           year={year}
           month={month}
           holidays={visible}

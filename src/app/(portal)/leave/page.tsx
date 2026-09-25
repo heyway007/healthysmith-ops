@@ -30,7 +30,7 @@ export default async function LeaveListPage({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold text-indigo-950">ใบลาของฉัน</h1>
+        <h1 className="text-2xl font-semibold text-mist-900">ใบลาของฉัน</h1>
         <Link href="/leave/new" className={`flex shrink-0 items-center gap-2 ${primaryButtonClassName}`}>
           <FontAwesomeIcon icon={faPlus} />
           ยื่นใบลาใหม่
@@ -41,10 +41,10 @@ export default async function LeaveListPage({
         <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{error}</p>
       )}
 
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-indigo-100 bg-white shadow-sm">
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-mist-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-indigo-100 bg-linear-to-r from-indigo-50 to-amber-50 text-left text-xs font-medium uppercase text-indigo-700">
+            <tr className="border-b border-mist-200 bg-mist-150 text-left text-xs font-medium uppercase text-mist-700">
               <th className="px-4 py-3">ประเภทการลา</th>
               <th className="px-4 py-3">วันที่ลา</th>
               <th className="px-4 py-3">จำนวนวัน</th>
@@ -53,16 +53,16 @@ export default async function LeaveListPage({
           </thead>
           <tbody>
             {requests?.map((r) => (
-              <tr key={r.id} className="border-t border-indigo-100 hover:bg-indigo-50">
+              <tr key={r.id} className="border-t border-mist-200 hover:bg-mist-100">
                 <td className="px-4 py-3">
-                  <Link href={`/leave/${r.id}`} className="font-medium text-indigo-800 hover:text-amber-600">
+                  <Link href={`/leave/${r.id}`} className="font-medium text-mist-800 hover:text-mist-500">
                     {leaveTypeNameById.get(r.leave_type_id) ?? "-"}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-indigo-700">
+                <td className="px-4 py-3 text-mist-700">
                   {r.start_date === r.end_date ? r.start_date : `${r.start_date} — ${r.end_date}`}
                 </td>
-                <td className="px-4 py-3 text-indigo-700">{r.days_count}</td>
+                <td className="px-4 py-3 text-mist-700">{r.days_count}</td>
                 <td className="px-4 py-3">
                   <StatusBadge status={r.status} config={LEAVE_STATUS} />
                 </td>
@@ -70,7 +70,7 @@ export default async function LeaveListPage({
             ))}
             {(!requests || requests.length === 0) && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-indigo-400">
+                <td colSpan={4} className="px-4 py-6 text-center text-mist-400">
                   ยังไม่มีใบลา
                 </td>
               </tr>

@@ -45,10 +45,10 @@ export function ProfileForm({
       )}
 
       <section>
-        <h2 className="text-sm font-semibold text-indigo-900">ข้อมูลส่วนตัว</h2>
+        <h2 className="text-sm font-semibold text-mist-900">ข้อมูลส่วนตัว</h2>
         <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <div>
-            <label className="block text-sm font-medium text-indigo-800" htmlFor="prefix_name">
+            <label className="block text-sm font-medium text-mist-800" htmlFor="prefix_name">
               คำนำหน้า
             </label>
             <select
@@ -79,12 +79,12 @@ export function ProfileForm({
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold text-indigo-900">ช่องทางติดต่อ</h2>
+        <h2 className="text-sm font-semibold text-mist-900">ช่องทางติดต่อ</h2>
         <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <LabeledInput label="เบอร์โทร" type="tel" placeholder="0812345678" {...field("phone")} />
           <LabeledInput label="อีเมล" type="email" placeholder="name@example.com" {...field("email")} />
           <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
-            <label className="block text-sm font-medium text-indigo-800" htmlFor="address">
+            <label className="block text-sm font-medium text-mist-800" htmlFor="address">
               ที่อยู่
             </label>
             <textarea
@@ -101,7 +101,7 @@ export function ProfileForm({
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold text-indigo-900">ข้อมูลธนาคาร</h2>
+        <h2 className="text-sm font-semibold text-mist-900">ข้อมูลธนาคาร</h2>
         <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <LabeledInput label="ธนาคาร" placeholder="เช่น กสิกรไทย" {...field("bank_name")} />
           <LabeledInput
@@ -144,7 +144,7 @@ function LabeledInput({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-indigo-800" htmlFor={name}>
+      <label className="block text-sm font-medium text-mist-800" htmlFor={name}>
         {label}
         {required && <span className="text-rose-500"> *</span>}
       </label>

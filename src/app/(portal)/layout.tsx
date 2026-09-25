@@ -6,7 +6,7 @@ export default async function PortalLayout({ children }: { children: React.React
   const employee = await getCurrentEmployee();
 
   return (
-    <div className="flex min-h-screen flex-col bg-linear-to-br from-indigo-50 via-white to-amber-50 text-indigo-950">
+    <div className="flex min-h-screen flex-col bg-mist-100 text-mist-900">
       {/* Every portal page requires sign-in (see src/lib/supabase/middleware.ts). */}
       <PortalHeader signedIn employee={employee} />
 
@@ -27,9 +27,9 @@ export default async function PortalLayout({ children }: { children: React.React
             {children}
           </>
         ) : (
-          <div className="rounded-2xl border border-indigo-100 bg-white p-8 text-center shadow-sm">
-            <p className="text-lg font-semibold text-indigo-950">บัญชีนี้ยังไม่ได้ผูกกับข้อมูลพนักงาน</p>
-            <p className="mt-2 text-sm text-indigo-600">
+          <div className="rounded-2xl border border-mist-200 bg-white p-8 text-center shadow-sm">
+            <p className="text-lg font-semibold text-mist-900">บัญชีนี้ยังไม่ได้ผูกกับข้อมูลพนักงาน</p>
+            <p className="mt-2 text-sm text-mist-600">
               กรุณาติดต่อฝ่ายบุคคลให้ผูกบัญชีของคุณกับข้อมูลพนักงานในระบบก่อนใช้งาน
             </p>
           </div>

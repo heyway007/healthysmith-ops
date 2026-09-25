@@ -19,6 +19,8 @@ export async function login(formData: FormData) {
 
 export async function logout() {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  // "local": only this browser. The default ("global") would also sign the user
+  // out of every other browser/device, which kicked people to the login page.
+  await supabase.auth.signOut({ scope: "local" });
   redirect("/login");
 }

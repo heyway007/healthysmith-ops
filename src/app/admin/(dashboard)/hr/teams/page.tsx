@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { formCardClassName, secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createTeam, deleteTeam, renameTeam } from "./actions";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 const inputClassName =
   "w-full rounded-lg border border-teal-300 px-3 py-2 text-sm transition-shadow focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100";
@@ -33,10 +34,10 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
       <div className={`mt-6 max-w-2xl ${formCardClassName}`}>
         <form action={createTeam} className="flex gap-2">
           <input name="name" required placeholder="ชื่อทีมใหม่ เช่น ทีมขายออนไลน์" className={inputClassName} />
-          <button type="submit" className={`flex shrink-0 items-center gap-2 ${submitButtonClassName}`}>
+          <SubmitButton className={`shrink-0 ${submitButtonClassName}`}>
             <FontAwesomeIcon icon={faPlus} />
             เพิ่มทีม
-          </button>
+          </SubmitButton>
         </form>
 
         <ul className="mt-5 divide-y divide-teal-100">
@@ -44,9 +45,7 @@ export default async function TeamsPage({ searchParams }: { searchParams: Promis
             <li key={t.id} className="flex flex-wrap items-center gap-3 py-3">
               <form action={renameTeam.bind(null, t.id)} className="flex min-w-0 flex-1 gap-2">
                 <input name="name" defaultValue={t.name} required aria-label="ชื่อทีม" className={inputClassName} />
-                <button type="submit" className={`shrink-0 ${secondaryButtonClassName}`}>
-                  บันทึก
-                </button>
+                <SubmitButton className={`shrink-0 ${secondaryButtonClassName}`}>บันทึก</SubmitButton>
               </form>
               <span className="text-xs text-teal-600">
                 {count(members, t.id)} คน ·{" "}

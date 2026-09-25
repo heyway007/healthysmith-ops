@@ -14,10 +14,12 @@ import { DayButton, DaySelection, SelectDateButton, SelectedPanel } from "./day-
 import { MonthYearPicker } from "./month-year-picker";
 
 // Shared list / month-calendar views for company holidays, used by both the
-// employee portal (read-only, indigo) and the HR back office (editable, teal).
+// employee portal (read-only, mist grey) and the HR back office (editable, teal).
 
 export type Holiday = Database["public"]["Tables"]["company_holidays"]["Row"];
 export type HolidayView = "calendar" | "list";
+/** List/calendar type filter: only public holidays, only WFH, or (undefined) both. */
+export type HolidayTypeFilter = "holiday" | "wfh" | undefined;
 
 export type HolidayTheme = {
   card: string;
@@ -28,31 +30,53 @@ export type HolidayTheme = {
   navBox: string;
   navButton: string;
   select: string;
+  /** Segmented button groups (view / type): the frame, the selected and the idle button. */
+  toggleGroup: string;
   toggleActive: string;
+  toggleIdle: string;
   today: string;
   selected: string;
   cellHover: string;
   panel: string;
   icon: string;
+  /** Badge for company-wide entries / for a team's entries. */
+  companyTag: string;
+  teamTag: string;
+  /** Colours per entry type (holiday / wfh): cell tint, dot, label text, badge. */
+  types: Record<string, TypeStyle>;
+};
+
+type TypeStyle = { cell: string; dot: string; label: string; badge: string };
+
+/** Entry-type colours, identical in the front and back office: holidays red, WFH blue. */
+const TYPE_COLORS: Record<string, TypeStyle> = {
+  holiday: { cell: "bg-red-50", dot: "bg-red-500", label: "text-red-700", badge: "bg-red-50 text-red-700" },
+  wfh: { cell: "bg-sky-50", dot: "bg-sky-500", label: "text-sky-700", badge: "bg-sky-50 text-sky-700" },
 };
 
 export const HOLIDAY_THEMES = {
+  // Palette A "mist grey" -- colours registered in globals.css.
   portal: {
-    card: "rounded-2xl border border-indigo-100 bg-white shadow-sm",
-    headerRow: "bg-indigo-50/70 text-indigo-900",
-    divider: "border-indigo-100",
-    text: "text-indigo-950",
-    muted: "text-indigo-500",
-    navBox: "border-indigo-100 bg-white",
-    navButton: "text-indigo-700 hover:bg-indigo-50",
+    card: "rounded-2xl border border-mist-200 bg-white shadow-sm",
+    headerRow: "bg-mist-150 text-mist-500",
+    divider: "border-mist-200",
+    text: "text-mist-900",
+    muted: "text-mist-500",
+    navBox: "border-mist-200 bg-white",
+    navButton: "text-mist-700 hover:bg-mist-150",
     select:
-      "rounded-lg border border-indigo-200 bg-white py-2 pl-3 pr-8 text-sm text-indigo-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100",
-    toggleActive: "bg-white text-indigo-700 shadow-sm",
-    today: "font-bold text-amber-600",
-    selected: "ring-2 ring-inset ring-indigo-500 bg-indigo-50/60",
-    cellHover: "hover:bg-indigo-50/60",
-    panel: "bg-indigo-50/70",
-    icon: "text-indigo-600",
+      "rounded-lg border border-mist-300 bg-white py-2 pl-3 pr-8 text-sm text-mist-900 shadow-sm focus:border-mist-500 focus:outline-none focus:ring-2 focus:ring-mist-200",
+    toggleGroup: "border border-mist-300 bg-white shadow-sm",
+    toggleActive: "bg-mist-800 text-white",
+    toggleIdle: "text-mist-600 hover:bg-mist-150 hover:text-mist-900",
+    today: "font-bold text-red-600",
+    selected: "ring-2 ring-inset ring-mist-800 bg-mist-50",
+    cellHover: "hover:bg-mist-50",
+    panel: "bg-mist-150",
+    icon: "text-mist-700",
+    companyTag: "bg-mist-150 text-mist-500",
+    teamTag: "border border-mist-200 bg-white text-mist-700",
+    types: TYPE_COLORS,
   },
   admin: {
     card: "rounded-2xl border border-teal-100 bg-white shadow-sm",
@@ -64,21 +88,33 @@ export const HOLIDAY_THEMES = {
     navButton: "text-teal-700 hover:bg-teal-50",
     select:
       "rounded-lg border border-teal-200 bg-white py-2 pl-3 pr-8 text-sm text-teal-900 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100",
-    toggleActive: "bg-white text-teal-700 shadow-sm",
+    toggleGroup: "border border-teal-200 bg-white shadow-sm",
+    toggleActive: "bg-teal-600 text-white",
+    toggleIdle: "text-teal-700 hover:bg-teal-50",
     today: "font-bold text-orange-600",
     selected: "ring-2 ring-inset ring-teal-500 bg-teal-50/60",
     cellHover: "hover:bg-teal-50/60",
     panel: "bg-teal-50/70",
     icon: "text-teal-600",
+    companyTag: "bg-gray-100 text-gray-600",
+    teamTag: "bg-violet-100 text-violet-700",
+    types: TYPE_COLORS,
   },
 } satisfies Record<string, HolidayTheme>;
 
-const TYPE_STYLES: Record<string, { cell: string; dot: string; label: string }> = {
-  holiday: { cell: "bg-rose-50", dot: "bg-rose-400", label: "text-rose-700" },
-  wfh: { cell: "bg-sky-50", dot: "bg-sky-400", label: "text-sky-700" },
-};
-const FALLBACK_STYLE = { cell: "", dot: "bg-gray-400", label: "text-gray-700" };
-const typeStyle = (type: string) => TYPE_STYLES[type] ?? FALLBACK_STYLE;
+const FALLBACK_STYLE: TypeStyle = { cell: "", dot: "bg-gray-400", label: "text-gray-700", badge: "bg-gray-100 text-gray-700" };
+const typeStyle = (theme: HolidayTheme, type: string) => theme.types[type] ?? FALLBACK_STYLE;
+/** StatusBadge config using the theme's badge colours and the shared labels. */
+const badgeConfig = (theme: HolidayTheme) =>
+  Object.fromEntries(
+    Object.entries(HOLIDAY_TYPES).map(([type, cfg]) => [type, { label: cfg.label, className: typeStyle(theme, type).badge }]),
+  );
+
+const TYPE_OPTIONS: { value: HolidayTypeFilter; label: string }[] = [
+  { value: undefined, label: "ทั้งหมด" },
+  { value: "holiday", label: "วันหยุด" },
+  { value: "wfh", label: "WFH" },
+];
 
 // Monday-first, like the printed Thai office calendar.
 const WEEKDAYS = ["จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส.", "อา."];
@@ -89,14 +125,21 @@ const WEEKDAYS = ["จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส.", "อา."];
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export function parseHolidayParams(params: { view?: string; year?: string; month?: string; date?: string }) {
+export function parseHolidayParams(params: {
+  view?: string;
+  year?: string;
+  month?: string;
+  date?: string;
+  type?: string;
+}) {
   const [todayYear, todayMonth] = bangkokToday().split("-").map(Number);
   const view: HolidayView = params.view === "list" ? "list" : "calendar";
   const year = Number(params.year) || todayYear;
   const m = Number(params.month);
   const month = m >= 1 && m <= 12 ? m : params.year ? 1 : todayMonth;
   const date = params.date && DATE_RE.test(params.date) ? params.date : undefined;
-  return { view, year, month, date };
+  const type: HolidayTypeFilter = params.type === "holiday" || params.type === "wfh" ? params.type : undefined;
+  return { view, year, month, date, type };
 }
 
 export function bangkokToday() {
@@ -147,11 +190,11 @@ function makeTeamName(teams: Team[]) {
   return (id: string | null) => (id ? (byId.get(id) ?? "ทีมที่ถูกลบ") : "ทั้งบริษัท");
 }
 
-function TeamTag({ name, companyWide }: { name: string; companyWide: boolean }) {
+function TeamTag({ name, companyWide, theme }: { name: string; companyWide: boolean; theme: HolidayTheme }) {
   return (
     <span
       className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${
-        companyWide ? "bg-gray-100 text-gray-600" : "bg-violet-100 text-violet-700"
+        companyWide ? theme.companyTag : theme.teamTag
       }`}
     >
       {name}
@@ -170,6 +213,7 @@ export function HolidayToolbar({
   month,
   theme,
   team,
+  type,
   filter,
   actions,
 }: {
@@ -182,6 +226,8 @@ export function HolidayToolbar({
   theme: HolidayTheme;
   /** Team filter carried through navigation links (back office). */
   team?: string;
+  /** Holiday / WFH filter, kept across navigation. */
+  type?: HolidayTypeFilter;
   /** Team filter control / "your team" chip, shown next to the view toggle. */
   filter?: React.ReactNode;
   /** Extra buttons shown on the right of the second row (back office). */
@@ -191,7 +237,7 @@ export function HolidayToolbar({
   const next = view === "calendar" ? shiftMonth(year, month, 1) : { year: year + 1, month };
   const toggleClass = (active: boolean) =>
     `flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-      active ? theme.toggleActive : `${theme.muted} hover:bg-white`
+      active ? theme.toggleActive : theme.toggleIdle
     }`;
 
   return (
@@ -204,7 +250,7 @@ export function HolidayToolbar({
 
         <div className={`flex items-center gap-1 rounded-xl border px-2 py-1.5 shadow-sm ${theme.navBox}`}>
           <Link
-            href={buildHref(basePath, { view, ...prev, team })}
+            href={buildHref(basePath, { view, ...prev, team, type })}
             className={`flex h-9 w-9 items-center justify-center rounded-lg ${theme.navButton}`}
             aria-label="ก่อนหน้า"
           >
@@ -214,7 +260,7 @@ export function HolidayToolbar({
             {view === "calendar" ? `${thaiMonthName(year, month)} ${year + 543}` : `ปี ${year + 543}`}
           </span>
           <Link
-            href={buildHref(basePath, { view, ...next, team })}
+            href={buildHref(basePath, { view, ...next, team, type })}
             className={`flex h-9 w-9 items-center justify-center rounded-lg ${theme.navButton}`}
             aria-label="ถัดไป"
           >
@@ -227,22 +273,24 @@ export function HolidayToolbar({
           year={year}
           month={month}
           team={team}
+          type={type}
           showMonth={view === "calendar"}
           selectClassName={theme.select}
         />
 
-        <HolidayLegend />
+        <HolidayLegend theme={theme} />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-1 rounded-lg bg-gray-100 p-1" role="group" aria-label="รูปแบบการแสดงผล">
+          <div className={`flex gap-1 rounded-lg p-1 ${theme.toggleGroup}`} role="group" aria-label="รูปแบบการแสดงผล">
             <Link
               href={buildHref(basePath, {
                 view: "calendar",
                 year,
                 month,
                 team,
+                type,
               })}
               className={toggleClass(view === "calendar")}
             >
@@ -250,12 +298,25 @@ export function HolidayToolbar({
               ปฏิทิน
             </Link>
             <Link
-              href={buildHref(basePath, { view: "list", year, month, team })}
+              href={buildHref(basePath, { view: "list", year, month, team, type })}
               className={toggleClass(view === "list")}
             >
               <FontAwesomeIcon icon={faList} className="h-3.5 w-3.5" />
               รายการทั้งปี
             </Link>
+          </div>
+          <div className={`flex gap-1 rounded-lg p-1 ${theme.toggleGroup}`} role="group" aria-label="ประเภท">
+            {TYPE_OPTIONS.map((o) => (
+              <Link
+                key={o.label}
+                href={buildHref(basePath, { view, year, month, team, type: o.value })}
+                aria-current={type === o.value ? "true" : undefined}
+                className={toggleClass(type === o.value)}
+              >
+                {o.value && <span className={`h-2.5 w-2.5 rounded-full ${typeStyle(theme, o.value).dot}`} />}
+                {o.label}
+              </Link>
+            ))}
           </div>
           {filter}
         </div>
@@ -265,7 +326,7 @@ export function HolidayToolbar({
   );
 }
 
-export function HolidayLegend() {
+export function HolidayLegend({ theme }: { theme: HolidayTheme }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {Object.entries(HOLIDAY_TYPES).map(([type, cfg]) => (
@@ -273,7 +334,7 @@ export function HolidayLegend() {
           key={type}
           className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm"
         >
-          <span className={`h-3 w-3 rounded-full ${typeStyle(type).dot}`} />
+          <span className={`h-3 w-3 rounded-full ${typeStyle(theme, type).dot}`} />
           {cfg.label}
         </span>
       ))}
@@ -282,6 +343,8 @@ export function HolidayLegend() {
 }
 
 export function HolidayCalendar({
+  basePath,
+  linkParams,
   year,
   month,
   holidays,
@@ -292,6 +355,9 @@ export function HolidayCalendar({
   addAction,
   tip,
 }: {
+  basePath: string;
+  /** Filters (team / type) kept when jumping to a neighbouring month. */
+  linkParams?: Record<string, string | undefined>;
   year: number;
   month: number;
   holidays: Holiday[];
@@ -326,17 +392,19 @@ export function HolidayCalendar({
   const leading = (utcDate(isoDate(year, month, 1)).getUTCDay() + 6) % 7;
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const prevMonthDays = new Date(Date.UTC(year, month - 1, 0)).getUTCDate();
-  const cells: { day: number; current: boolean }[] = [
+  // offset: -1 = trailing days of the previous month, +1 = leading days of the next.
+  const cells: { day: number; current: boolean; offset?: -1 | 1 }[] = [
     ...Array.from({ length: leading }, (_, i) => ({
       day: prevMonthDays - leading + 1 + i,
       current: false,
+      offset: -1 as const,
     })),
     ...Array.from({ length: daysInMonth }, (_, i) => ({
       day: i + 1,
       current: true,
     })),
   ];
-  for (let d = 1; cells.length % 7 !== 0; d++) cells.push({ day: d, current: false });
+  for (let d = 1; cells.length % 7 !== 0; d++) cells.push({ day: d, current: false, offset: 1 });
 
   const entryLabel = (h: Holiday) => (h.team_id ? `${h.name} · ${teamName(h.team_id)}` : h.name);
 
@@ -369,8 +437,8 @@ export function HolidayCalendar({
             {entries.map((h) => (
               <li key={h.id} className={`border-t pt-3 ${theme.divider}`}>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <StatusBadge status={h.type} config={HOLIDAY_TYPES} />
-                  <TeamTag name={teamName(h.team_id)} companyWide={h.team_id === null} />
+                  <StatusBadge status={h.type} config={badgeConfig(theme)} />
+                  <TeamTag name={teamName(h.team_id)} companyWide={h.team_id === null} theme={theme} />
                 </div>
                 <p className={`mt-2 font-medium ${theme.text}`}>{h.name}</p>
                 {h.note && <p className="mt-0.5 text-sm text-gray-600">{h.note}</p>}
@@ -405,13 +473,28 @@ export function HolidayCalendar({
               ))}
             </div>
             <div className="grid grid-cols-7">
-              {cells.map(({ day, current }, i) => {
+              {cells.map(({ day, current, offset }, i) => {
                 const edge = `${i < cells.length - 7 ? "border-b" : ""} ${i % 7 !== 6 ? "border-r" : ""} ${theme.divider}`;
                 if (!current) {
+                  // Neighbouring month's day: jump to that month with the day selected.
+                  const target = shiftMonth(year, month, offset ?? 1);
+                  const date = isoDate(target.year, target.month, day);
+                  const entries = byDate.get(date) ?? [];
                   return (
-                    <div key={`x-${i}`} className={`min-h-14 p-1.5 text-sm text-gray-300 sm:min-h-24 sm:p-2.5 ${edge}`}>
+                    <Link
+                      key={`x-${i}`}
+                      href={buildHref(basePath, { view: "calendar", ...target, date, ...linkParams })}
+                      title={`ไปเดือน${thaiMonthName(target.year, target.month)}`}
+                      className={`flex min-h-14 flex-col gap-1 bg-gray-50/60 p-1.5 text-sm text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 sm:min-h-24 sm:p-2.5 ${edge}`}
+                    >
                       {day}
-                    </div>
+                      {entries.slice(0, 2).map((h) => (
+                        <span key={h.id} className="flex items-center gap-1.5 text-xs opacity-60">
+                          <span className={`h-2 w-2 shrink-0 rounded-full ${typeStyle(theme, h.type).dot}`} />
+                          <span className="hidden sm:line-clamp-1">{entryLabel(h)}</span>
+                        </span>
+                      ))}
+                    </Link>
                   );
                 }
                 const date = isoDate(year, month, day);
@@ -425,11 +508,11 @@ export function HolidayCalendar({
                     title={entries.map(entryLabel).join("\n") || undefined}
                     className={`relative flex min-h-14 cursor-pointer flex-col items-start gap-1 p-1.5 text-left text-sm transition-colors sm:min-h-24 sm:p-2.5 ${edge}`}
                     selectedClassName={theme.selected}
-                    idleClassName={`${cellType ? typeStyle(cellType).cell : "bg-white"} ${theme.cellHover}`}
+                    idleClassName={`${cellType ? typeStyle(theme, cellType).cell : "bg-white"} ${theme.cellHover}`}
                   >
                     <span className={date === today ? theme.today : `font-medium ${theme.text}`}>{day}</span>
                     {shown.map((h) => {
-                      const style = typeStyle(h.type);
+                      const style = typeStyle(theme, h.type);
                       return (
                         <span key={h.id} className={`flex items-center gap-1.5 text-xs leading-snug ${style.label}`}>
                           <span className={`h-2 w-2 shrink-0 rounded-full ${style.dot}`} />
@@ -484,10 +567,10 @@ export function HolidayCalendar({
                       {h.note && <span className="block text-xs text-gray-500">{h.note}</span>}
                     </td>
                     <td className="px-3 py-3">
-                      <TeamTag name={teamName(h.team_id)} companyWide={h.team_id === null} />
+                      <TeamTag name={teamName(h.team_id)} companyWide={h.team_id === null} theme={theme} />
                     </td>
                     <td className="px-3 py-3">
-                      <StatusBadge status={h.type} config={HOLIDAY_TYPES} />
+                      <StatusBadge status={h.type} config={badgeConfig(theme)} />
                     </td>
                   </tr>
                 ))}
@@ -556,10 +639,10 @@ export function HolidayList({
                 </td>
                 <td className={`px-4 py-3 ${theme.text}`}>{h.name}</td>
                 <td className="px-4 py-3">
-                  <TeamTag name={teamName(h.team_id)} companyWide={h.team_id === null} />
+                  <TeamTag name={teamName(h.team_id)} companyWide={h.team_id === null} theme={theme} />
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={h.type} config={HOLIDAY_TYPES} />
+                  <StatusBadge status={h.type} config={badgeConfig(theme)} />
                 </td>
                 <td className={`px-4 py-3 ${theme.muted}`}>{h.note ?? "-"}</td>
                 {actions && <td className="px-4 py-3 text-right">{actions(h)}</td>}

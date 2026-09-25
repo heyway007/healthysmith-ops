@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
 import "@/lib/fontawesome";
 import "./globals.css";
+import { Suspense } from "react";
+import { NavigationProgress } from "@/components/ui/navigation-progress";
 
 const kanit = Kanit({
   subsets: ["thai", "latin"],
@@ -18,7 +20,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="th" className={`h-full antialiased ${kanit.variable}`}>
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">{children}</body>
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
+        {/* useSearchParams() inside needs a Suspense boundary */}
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }

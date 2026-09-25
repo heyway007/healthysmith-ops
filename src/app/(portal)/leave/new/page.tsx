@@ -17,11 +17,11 @@ export default async function NewLeaveRequestPage({
 
   return (
     <div>
-      <Link href="/leave" className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800">
+      <Link href="/leave" className="inline-flex items-center gap-2 text-sm font-medium text-mist-600 hover:text-mist-800">
         <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
         กลับไปหน้าใบลาของฉัน
       </Link>
-      <h1 className="mt-3 text-2xl font-semibold text-indigo-950">ยื่นใบลาใหม่</h1>
+      <h1 className="mt-3 text-2xl font-semibold text-mist-900">ยื่นใบลาใหม่</h1>
 
       <div className={`mt-6 max-w-lg ${cardClassName}`}>
         {error && (
@@ -30,7 +30,7 @@ export default async function NewLeaveRequestPage({
 
         <form action={createLeaveRequest} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-indigo-800">ประเภทการลา</label>
+            <label className="block text-sm font-medium text-mist-800">ประเภทการลา</label>
             <select name="leave_type_id" required defaultValue="" className={inputClassName}>
               <option value="" disabled>
                 - เลือกประเภทการลา -
@@ -46,7 +46,7 @@ export default async function NewLeaveRequestPage({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-indigo-800" htmlFor="start_date">
+              <label className="block text-sm font-medium text-mist-800" htmlFor="start_date">
                 วันที่เริ่มลา
               </label>
               <input
@@ -59,7 +59,7 @@ export default async function NewLeaveRequestPage({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-indigo-800" htmlFor="end_date">
+              <label className="block text-sm font-medium text-mist-800" htmlFor="end_date">
                 วันที่สิ้นสุด
               </label>
               <input
@@ -74,7 +74,7 @@ export default async function NewLeaveRequestPage({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-indigo-800" htmlFor="reason">
+            <label className="block text-sm font-medium text-mist-800" htmlFor="reason">
               เหตุผล (ถ้ามี)
             </label>
             <textarea
