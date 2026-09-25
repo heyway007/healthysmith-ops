@@ -10,9 +10,10 @@ import {
   HolidayList,
   HolidayMonthChips,
   HolidayPeriodSummary,
-  periodBounds,
-  periodLabel,
   HolidayToolbar,
+  listMonthSet,
+  listMonthsLabel,
+  matchesType,
   parseHolidayParams,
 } from "@/components/holidays/holiday-views";
 import { TeamFilter } from "@/components/holidays/team-filter";
@@ -38,7 +39,7 @@ export default async function HolidaysPage({
   }>;
 }) {
   const params = await searchParams;
-  const { view, year, month, date, type, months, range, listMonth, fetchFrom, fetchTo } =
+  const { view, year, month, date, type, months, range, listMonth, monthList, fetchFrom, fetchTo } =
     parseHolidayParams(params);
   const theme = HOLIDAY_THEMES.admin;
 
@@ -58,46 +59,36 @@ export default async function HolidaysPage({
   const team = teams?.some((t) => t.id === params.team) ? params.team : undefined;
   const visible = (holidays ?? [])
     .filter((h) => !team || h.team_id === null || h.team_id === team)
-    .filter((h) => !type || h.type === type);
-  // List view: the entries in the same period the calendar shows.
-  const period = { year, month, months, range };
-  const { start: periodStart, end: periodEnd } = periodBounds(period);
-  const periodEntries = visible.filter((h) => h.holiday_date >= periodStart && h.holiday_date <= periodEnd);
-  // Month buttons are separate from the period: a chosen month shows that whole month.
+    .filter((h) => matchesType(h.type, type));
   const yearEntries = visible.filter((h) => h.holiday_date.startsWith(`${year}-`));
-  const listEntries =
-    listMonth === "all"
-      ? yearEntries
-      : listMonth
-        ? visible.filter((h) => h.holiday_date.startsWith(`${listMonth}-`))
-        : periodEntries;
-  const listLabel =
-    listMonth === "all"
-      ? `ทั้งปี ${year + 543}`
-      : listMonth
-        ? periodLabel({ year: Number(listMonth.slice(0, 4)), month: Number(listMonth.slice(5, 7)), months: 1 })
-        : periodLabel(period);
+  const pickedMonths = listMonthSet(listMonth);
+  // List view: picked months, or the whole year when none are picked.
+  const listEntries = pickedMonths.length
+    ? visible.filter((h) => pickedMonths.includes(h.holiday_date.slice(0, 7)))
+    : yearEntries;
+  const listLabel = pickedMonths.length ? listMonthsLabel(pickedMonths) : `ทั้งปี ${year + 543}`;
 
   // Carried through the edit/new pages so saving lands back on the same view.
   const back = `view=${view}`;
   const smallButton = "flex items-center gap-2 px-3! py-1.5!";
-  const oneMonth = listMonth && listMonth !== "all" ? listMonth : undefined;
+  // Exactly one month picked in the list → print that month; several → the year.
+  const oneMonth = pickedMonths.length === 1 ? pickedMonths[0] : undefined;
   // Print page opens with what's on screen: calendar view → that month, list view → the year.
   const printQuery = new URLSearchParams({
     year: String(year),
     month: oneMonth ? String(Number(oneMonth.slice(5, 7))) : String(month),
-    scope: listMonth === "all" ? "year" : oneMonth || (months === 1 && !range) ? "month" : "year",
+    scope: view === "list" || monthList ? (oneMonth ? "month" : "year") : months === 1 && !range ? "month" : "year",
     layout: view === "calendar" ? "calendar" : "list",
   });
   if (team) printQuery.set("team", team);
-  if (type) printQuery.set("type", type);
+  if (type !== "all") printQuery.set("type", type);
   const returnTo = (d: string) =>
     `/admin/holidays?${new URLSearchParams({
       view: "calendar",
       year: String(year),
       month: String(month),
       date: d,
-      ...(range ? range : months > 1 ? { months: String(months) } : {}),
+      ...(range ? range : monthList ? { lm: monthList.join(",") } : months > 1 ? { months: String(months) } : {}),
       ...(team ? { team } : {}),
       ...(type ? { type } : {}),
     })}`;
@@ -116,6 +107,7 @@ export default async function HolidaysPage({
         months={months}
         range={range}
         listMonth={listMonth}
+        monthList={monthList}
         team={team}
         filter={
           <TeamFilter
@@ -178,6 +170,7 @@ export default async function HolidaysPage({
           month={month}
           months={months}
           range={range}
+          monthList={monthList}
           holidays={visible}
           teams={teams ?? []}
           theme={theme}
@@ -212,8 +205,6 @@ export default async function HolidaysPage({
               keepParams={{
                 view: "list",
                 year,
-                month,
-                ...(range ? range : { months: months !== 1 ? months : undefined }),
                 team: team,
                 type,
               }}

@@ -25,8 +25,14 @@ export type MonthSpan = 1 | 2 | 3 | 4 | 12;
 const MONTH_SPANS: MonthSpan[] = [1, 2, 3, 4, 12];
 const spanName = (n: MonthSpan) => (n === 12 ? "ทั้งปี" : `${n} เดือน`);
 
-/** List/calendar type filter: only public holidays, only WFH, or (undefined) both. */
-export type HolidayTypeFilter = "holiday" | "wfh" | undefined;
+/** List/calendar type filter: only public holidays (default), only WFH, or all. */
+export type HolidayTypeFilter = "holiday" | "wfh" | "all";
+
+/** Default type filter (no ?type= in the URL): public holidays only. */
+export const DEFAULT_TYPE: HolidayTypeFilter = "holiday";
+
+/** Does an entry pass the type filter? */
+export const matchesType = (entryType: string, filter: HolidayTypeFilter) => filter === "all" || entryType === filter;
 
 export type HolidayTheme = {
   card: string;
@@ -41,6 +47,7 @@ export type HolidayTheme = {
   toggleGroup: string;
   toggleActive: string;
   toggleIdle: string;
+  /** "Today" ring colour (black outline circle around the date) and its hover fill. */
   today: string;
   selected: string;
   cellHover: string;
@@ -57,7 +64,7 @@ export type TypeStyle = { cell: string; dot: string; label: string; badge: strin
 
 /** Entry-type colours, identical in the front and back office: holidays red, WFH blue. */
 export const TYPE_COLORS: Record<string, TypeStyle> = {
-  holiday: { cell: "bg-red-50", dot: "bg-red-500", label: "text-red-700", badge: "bg-red-50 text-red-700" },
+  holiday: { cell: "bg-red-100", dot: "bg-red-500", label: "text-red-700", badge: "bg-red-50 text-red-700" },
   wfh: { cell: "bg-sky-50", dot: "bg-sky-500", label: "text-sky-700", badge: "bg-sky-50 text-sky-700" },
 };
 
@@ -76,7 +83,7 @@ export const HOLIDAY_THEMES = {
     toggleGroup: "border border-mist-300 bg-white shadow-sm",
     toggleActive: "bg-mist-800 text-white",
     toggleIdle: "text-mist-600 hover:bg-mist-150 hover:text-mist-900",
-    today: "font-bold text-red-600",
+    today: "border-mist-900 group-hover:bg-mist-900 group-hover:text-white",
     selected: "ring-2 ring-inset ring-mist-800 bg-mist-50",
     cellHover: "hover:bg-mist-50",
     panel: "bg-mist-150",
@@ -98,7 +105,7 @@ export const HOLIDAY_THEMES = {
     toggleGroup: "border border-teal-200 bg-white shadow-sm",
     toggleActive: "bg-teal-600 text-white",
     toggleIdle: "text-teal-700 hover:bg-teal-50",
-    today: "font-bold text-orange-600",
+    today: "border-gray-900 group-hover:bg-gray-900 group-hover:text-white",
     selected: "ring-2 ring-inset ring-teal-500 bg-teal-50/60",
     cellHover: "hover:bg-teal-50/60",
     panel: "bg-teal-50/70",
@@ -109,22 +116,36 @@ export const HOLIDAY_THEMES = {
   },
 } satisfies Record<string, HolidayTheme>;
 
-const FALLBACK_STYLE: TypeStyle = { cell: "", dot: "bg-gray-400", label: "text-gray-700", badge: "bg-gray-100 text-gray-700" };
+const FALLBACK_STYLE: TypeStyle = {
+  cell: "",
+  dot: "bg-gray-400",
+  label: "text-gray-700",
+  badge: "bg-gray-100 text-gray-700",
+};
 const typeStyle = (theme: HolidayTheme, type: string) => theme.types[type] ?? FALLBACK_STYLE;
 /** StatusBadge config using the theme's badge colours and the shared labels. */
 const badgeConfig = (theme: HolidayTheme) =>
   Object.fromEntries(
-    Object.entries(HOLIDAY_TYPES).map(([type, cfg]) => [type, { label: cfg.label, className: typeStyle(theme, type).badge }]),
+    Object.entries(HOLIDAY_TYPES).map(([type, cfg]) => [
+      type,
+      { label: cfg.label, className: typeStyle(theme, type).badge },
+    ]),
   );
 
 const TYPE_OPTIONS: { value: HolidayTypeFilter; label: string }[] = [
-  { value: undefined, label: "ทั้งหมด" },
   { value: "holiday", label: "วันหยุด" },
   { value: "wfh", label: "WFH" },
+  { value: "all", label: "ทั้งหมด" },
 ];
 
 // Monday-first, like the printed Thai office calendar.
 const WEEKDAYS = ["จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส.", "อา."];
+
+/** "Today": an outline circle (transparent inside) around the date number; add a border colour. */
+const TODAY_RING = "inline-flex items-center justify-center rounded-full border-2 transition-colors";
+
+/** Hover tooltip for a day cell: "วันนี้" first when it's today, then the day's entries. */
+const dayTitle = (isToday: boolean, labels: string[]) => [...(isToday ? ["วันนี้"] : []), ...labels].join("\n") || undefined;
 
 // ---------------------------------------------------------------------------
 // Date helpers -- holiday_date is a plain YYYY-MM-DD string, so everything is
@@ -149,7 +170,7 @@ export function parseHolidayParams(params: {
   const [todayYear, todayMonth] = bangkokToday().split("-").map(Number);
   const view: HolidayView = params.view === "list" ? "list" : "calendar";
   const date = params.date && DATE_RE.test(params.date) ? params.date : undefined;
-  const type: HolidayTypeFilter = params.type === "holiday" || params.type === "wfh" ? params.type : undefined;
+  const type: HolidayTypeFilter = params.type === "wfh" || params.type === "all" ? params.type : DEFAULT_TYPE;
 
   // The period shown (same for calendar and list): a custom date range
   // (?from=&to=), otherwise ?months= (1/2/3/4/12) starting at year/month.
@@ -184,14 +205,36 @@ export function parseHolidayParams(params: {
     last.year > year!
       ? isoDate(last.year, last.month, new Date(Date.UTC(last.year, last.month, 0)).getUTCDate())
       : `${year!}-12-31`;
-  // List view month buttons, independent of the period: ?lm=all = the whole year,
-  // ?lm=YYYY-MM = one month of the year; none = the period chosen above.
-  const listMonth =
-    view === "list" &&
-    params.lm &&
-    (params.lm === "all" || (/^\d{4}-\d{2}$/.test(params.lm) && params.lm.startsWith(`${year!}-`)))
-      ? params.lm
-      : undefined;
+  // List view: no period (?months / ?from–to are calendar-only). Month buttons:
+  // ?lm=YYYY-MM[,YYYY-MM…] = those months of the year; ?lm=all or none = the whole year.
+  // ?lm = months picked in the list; the calendar shows exactly those months too,
+  // so switching views keeps the same selection.
+  let listMonth: string | undefined;
+  if (params.lm) {
+    if (params.lm === "all") listMonth = "all";
+    else {
+      const picked = [...new Set(params.lm.split(","))]
+        .filter((ym) => /^\d{4}-\d{2}$/.test(ym) && ym.startsWith(`${year!}-`))
+        .sort();
+      listMonth = picked.length ? picked.join(",") : undefined;
+    }
+  }
+  let monthList: string[] | undefined;
+  if (view === "list") {
+    range = undefined;
+    months = 1;
+  } else if (listMonth === "all") {
+    // Calendar showing "ทั้งหมด" from the list = the whole year.
+    range = undefined;
+    months = 12;
+    month = 1;
+    listMonth = undefined;
+  } else if (listMonth) {
+    monthList = listMonth.split(",");
+    range = undefined;
+    month = Number(monthList[0].slice(5, 7));
+    months = monthList.length;
+  }
   return {
     view,
     year: year!,
@@ -201,6 +244,7 @@ export function parseHolidayParams(params: {
     months: months!,
     range,
     listMonth,
+    monthList,
     fetchFrom: `${year!}-01-01`,
     fetchTo,
   };
@@ -239,11 +283,46 @@ function spanLabel(year: number, month: number, months: number) {
 
 type Period = { year: number; month: number; months: number; range?: { from: string; to: string } };
 
+/** Months picked with the list's month buttons ([] for "all" / none). */
+export function listMonthSet(listMonth?: string) {
+  return listMonth && listMonth !== "all" ? listMonth.split(",") : [];
+}
+
+/** "ตุลาคม 2569" for one month, "ม.ค., มี.ค. 2569" for several. */
+export function listMonthsLabel(months: string[]) {
+  if (months.length === 1) {
+    const [y, m] = [Number(months[0].slice(0, 4)), Number(months[0].slice(5, 7))];
+    return `${thaiMonthName(y, m)} ${y + 543}`;
+  }
+  const names = months.map((ym) => formatThaiDate(`${ym}-01`, { month: "short" })).join(", ");
+  return `${names} ${Number(months[0].slice(0, 4)) + 543}`;
+}
+
+/** Are these "YYYY-MM" months consecutive? */
+function isConsecutive(months: string[]) {
+  return months.every((ym, i) => {
+    if (i === 0) return true;
+    const n = shiftMonth(Number(months[i - 1].slice(0, 4)), Number(months[i - 1].slice(5, 7)), 1);
+    return ym === `${n.year}-${pad(n.month)}`;
+  });
+}
+
+/** Label for months picked in the list: "ก.ย. – ธ.ค. 2569" when consecutive, else "ม.ค., มี.ค. 2569". */
+export function monthListLabel(months: string[]) {
+  if (months.length > 1 && isConsecutive(months)) {
+    return spanLabel(Number(months[0].slice(0, 4)), Number(months[0].slice(5, 7)), months.length);
+  }
+  return listMonthsLabel(months);
+}
+
 /** First and last date of the period shown by the calendar / list. */
 export function periodBounds({ year, month, months, range }: Period) {
   if (range) return { start: range.from, end: range.to };
   const last = shiftMonth(year, month, months - 1);
-  return { start: isoDate(year, month, 1), end: isoDate(last.year, last.month, new Date(Date.UTC(last.year, last.month, 0)).getUTCDate()) };
+  return {
+    start: isoDate(year, month, 1),
+    end: isoDate(last.year, last.month, new Date(Date.UTC(last.year, last.month, 0)).getUTCDate()),
+  };
 }
 
 /** Human label of the period: a date range, "ปี 2569", or month(s). */
@@ -257,7 +336,9 @@ export function periodLabel({ year, month, months, range }: Period) {
 function rangeLabel(from: string, to: string) {
   const d = (iso: string) => formatThaiDate(iso, { day: "numeric", month: "short" });
   const y = (iso: string) => Number(iso.slice(0, 4)) + 543;
-  return from.slice(0, 4) === to.slice(0, 4) ? `${d(from)} – ${d(to)} ${y(to)}` : `${d(from)} ${y(from)} – ${d(to)} ${y(to)}`;
+  return from.slice(0, 4) === to.slice(0, 4)
+    ? `${d(from)} – ${d(to)} ${y(to)}`
+    : `${d(from)} ${y(from)} – ${d(to)} ${y(to)}`;
 }
 
 function shiftMonth(year: number, month: number, delta: number) {
@@ -267,7 +348,9 @@ function shiftMonth(year: number, month: number, delta: number) {
 
 const buildHref = (basePath: string, q: Record<string, string | number | undefined>) =>
   `${basePath}?${new URLSearchParams(
-    Object.entries(q).flatMap(([k, v]) => (v === undefined || v === "" ? [] : [[k, String(v)]])),
+    Object.entries(q).flatMap(([k, v]) =>
+      v === undefined || v === "" || (k === "type" && v === DEFAULT_TYPE) ? [] : [[k, String(v)]],
+    ),
   )}`;
 
 export type Team = { id: string; name: string };
@@ -287,6 +370,93 @@ function labelWithTeam(h: Holiday, teamName: (id: string | null) => string) {
   if (!h.team_id) return h.name;
   const team = teamName(h.team_id);
   return h.name.includes(team) ? h.name : `${h.name} · ${team}`;
+}
+
+/** Entries grouped by month ("YYYY-MM"), in date order -- for month sections in tables. */
+function groupByMonth(entries: Holiday[]) {
+  const groups: { ym: string; label: string; entries: Holiday[] }[] = [];
+  for (const h of [...entries].sort((a, b) => a.holiday_date.localeCompare(b.holiday_date))) {
+    const ym = h.holiday_date.slice(0, 7);
+    let g = groups[groups.length - 1];
+    if (!g || g.ym !== ym) {
+      const [y, m] = [Number(ym.slice(0, 4)), Number(ym.slice(5, 7))];
+      g = { ym, label: `${thaiMonthName(y, m)} ${y + 543}`, entries: [] };
+      groups.push(g);
+    }
+    g.entries.push(h);
+  }
+  return groups;
+}
+
+/**
+ * Entries as one small table per month -- same layout as the printed list:
+ * month heading, then วันที่ | วัน | รายการ (+ note) | ทีม | ประเภท.
+ */
+function MonthTables({
+  entries,
+  teamName,
+  theme,
+  renderDate,
+  actions,
+}: {
+  entries: Holiday[];
+  teamName: (id: string | null) => string;
+  theme: HolidayTheme;
+  /** Wraps the date cell (e.g. a button that selects the day in the calendar). */
+  renderDate?: (h: Holiday, label: string) => React.ReactNode;
+  /** Back office: buttons at the end of each row. */
+  actions?: (h: Holiday) => React.ReactNode;
+}) {
+  if (entries.length === 0) {
+    return <p className="py-6 text-center text-sm text-gray-500">ไม่มีวันหยุดหรือวัน WFH ในช่วงนี้</p>;
+  }
+  return (
+    <div className="space-y-6">
+      {groupByMonth(entries).map((g) => (
+        <section key={g.ym}>
+          <h3 className={`mb-1.5 text-base font-semibold ${theme.text}`}>{g.label}</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className={`border-y text-left text-xs ${theme.divider} ${theme.headerRow}`}>
+                  <th className="w-24 px-3 py-2 font-medium">วันที่</th>
+                  <th className="w-20 px-3 py-2 font-medium">วัน</th>
+                  <th className="px-3 py-2 font-medium">รายการ</th>
+                  <th className="w-40 px-3 py-2 font-medium">ทีม</th>
+                  <th className="w-28 px-3 py-2 font-medium">ประเภท</th>
+                  {actions && <th className="w-24 px-3 py-2" />}
+                </tr>
+              </thead>
+              <tbody>
+                {g.entries.map((h) => {
+                  const date = formatThaiDate(h.holiday_date, { day: "numeric", month: "short" });
+                  return (
+                    <tr key={h.id} className={`border-b align-top ${theme.divider} ${theme.cellHover}`}>
+                      <td className={`whitespace-nowrap px-3 py-2.5 tabular-nums ${theme.text}`}>
+                        {renderDate ? renderDate(h, date) : date}
+                      </td>
+                      <td className={`whitespace-nowrap px-3 py-2.5 ${theme.text}`}>
+                        {formatThaiDate(h.holiday_date, { weekday: "short" })}
+                      </td>
+                      <td className={`px-3 py-2.5 ${theme.text}`}>
+                        {h.name}
+                        {h.note && <span className="block text-xs text-gray-500">{h.note}</span>}
+                      </td>
+                      <td className={`px-3 py-2.5 ${theme.text}`}>{teamName(h.team_id)}</td>
+                      <td className="px-3 py-2.5">
+                        <StatusBadge status={h.type} config={badgeConfig(theme)} />
+                      </td>
+                      {actions && <td className="px-3 py-2.5 text-right">{actions(h)}</td>}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ))}
+    </div>
+  );
 }
 
 function makeTeamName(teams: Team[]) {
@@ -321,6 +491,7 @@ export function HolidayToolbar({
   months = 1,
   range,
   listMonth,
+  monthList,
   filter,
   actions,
 }: {
@@ -339,8 +510,10 @@ export function HolidayToolbar({
   months?: number;
   /** Custom date range picked in the popover, kept across navigation and views. */
   range?: { from: string; to: string };
-  /** List view month button ("all" or YYYY-MM); kept by the type filter. */
+  /** Months picked in the list ("all" or YYYY-MM,…); kept by the type filter. */
   listMonth?: string;
+  /** Calendar showing exactly the months picked in the list. */
+  monthList?: string[];
   /** Team filter control / "your team" chip, shown next to the view toggle. */
   filter?: React.ReactNode;
   /** Extra buttons shown on the right of the second row (back office). */
@@ -351,15 +524,46 @@ export function HolidayToolbar({
   const prev = step ? shiftMonth(year, month, -step) : { year: year - 1, month };
   const next = step ? shiftMonth(year, month, step) : { year: year + 1, month };
   // Kept in every link: the custom range, or the month span when it isn't 1.
-  const keep: Record<string, string | number | undefined> = range
-    ? { from: range.from, to: range.to }
-    : { months: months !== 1 ? months : undefined };
-  const label = periodLabel({ year, month, months, range });
+  // Kept in links: the calendar's period (custom range, picked months or span); the list has none.
+  const keep: Record<string, string | number | undefined> =
+    view === "list"
+      ? {}
+      : range
+        ? { from: range.from, to: range.to }
+        : monthList
+          ? { lm: monthList.join(",") }
+          : { months: months !== 1 ? months : undefined };
+  // Calendar → list: pick the months the calendar shows (within its year); whole year = ทั้งหมด.
+  const { start: pStart, end: pEnd } = periodBounds({ year, month, months, range });
+  const periodMonths: string[] = [];
+  for (let ym = pStart.slice(0, 7); ym <= pEnd.slice(0, 7) && ym.startsWith(`${year}-`); ) {
+    periodMonths.push(ym);
+    const n = shiftMonth(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 1);
+    ym = `${n.year}-${pad(n.month)}`;
+  }
+  const listLm =
+    view === "list"
+      ? listMonth
+      : monthList
+        ? monthList.join(",")
+        : periodMonths.length && periodMonths.length < 12
+          ? periodMonths.join(",")
+          : "all";
+  // List → calendar: show the same months (ทั้งหมด = the whole year).
+  const calendarLinkParams: Record<string, string | number | undefined> =
+    view === "list"
+      ? listMonth && listMonth !== "all"
+        ? { lm: listMonth }
+        : { months: 12, month: 1 }
+      : { month, ...keep };
+  // A custom range or picked months replace ‹ › with a clear (×) button.
+  const custom = !!range || !!monthList;
+  const label = monthList ? monthListLabel(monthList) : periodLabel({ year, month, months, range });
   // Leaving the whole-year view: start from this month when viewing this year, else January.
   const [todayYear, todayMonth] = bangkokToday().split("-").map(Number);
   const spanStart = months === 12 ? (year === todayYear ? todayMonth : 1) : month;
-  // In a custom range the cycle button starts over at 1 month.
-  const currentSpan = range ? undefined : (months as MonthSpan);
+  // In a custom range / picked months the cycle button starts over at 1 month.
+  const currentSpan = custom ? undefined : (months as MonthSpan);
   const nextSpan = currentSpan ? MONTH_SPANS[(MONTH_SPANS.indexOf(currentSpan) + 1) % MONTH_SPANS.length] : 1;
   const toggleClass = (active: boolean) =>
     `flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -373,9 +577,81 @@ export function HolidayToolbar({
           <h1 className={`text-3xl font-bold sm:text-4xl ${theme.text}`}>{title}</h1>
           <p className={`mt-1 ${theme.muted}`}>{subtitle}</p>
         </div>
+      </div>
 
-        <div className={`relative flex items-center gap-1 rounded-xl border px-2 py-1.5 shadow-sm ${theme.navBox}`}>
-          {!range && (
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className={`flex gap-1 rounded-lg p-1 ${theme.toggleGroup}`} role="group" aria-label="รูปแบบการแสดงผล">
+            <Link
+              href={buildHref(basePath, {
+                view: "calendar",
+                year,
+                ...calendarLinkParams,
+                team,
+                type,
+              })}
+              className={toggleClass(view === "calendar")}
+            >
+              <FontAwesomeIcon icon={faCalendarDays} className="h-3.5 w-3.5" />
+              ปฏิทิน
+            </Link>
+            <Link
+              href={buildHref(basePath, { view: "list", year, lm: listLm, team, type })}
+              className={toggleClass(view === "list")}
+            >
+              <FontAwesomeIcon icon={faList} className="h-3.5 w-3.5" />
+              รายการ
+            </Link>
+          </div>
+          {/* Cycle (toggle) button: each click moves to the next span, and the icon shows
+              the current one -- 1 → 2 → 3 → 4 months → whole year → 1. Calendar view only. */}
+          {view === "calendar" && (
+            <Link
+              href={buildHref(basePath, {
+                view,
+                year,
+                month: nextSpan === 12 ? 1 : spanStart,
+                months: nextSpan === 1 ? undefined : nextSpan,
+                team,
+                type,
+              })}
+              title={`คลิกเพื่อเปลี่ยนเป็น ${spanName(nextSpan)}`}
+              aria-label={`กำลังแสดง ${currentSpan ? spanName(currentSpan) : "ช่วงที่เลือก"} — คลิกเพื่อเปลี่ยนเป็น ${spanName(nextSpan)}`}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${theme.toggleGroup} ${theme.text} ${theme.cellHover}`}
+            >
+              {currentSpan ? (
+                <SpanIcon months={currentSpan} />
+              ) : (
+                <FontAwesomeIcon icon={faCalendarDays} className="h-4 w-4" />
+              )}
+              {currentSpan ? spanName(currentSpan) : "ช่วงที่เลือก"}
+            </Link>
+          )}
+          <div className={`flex gap-1 rounded-lg p-1 ${theme.toggleGroup}`} role="group" aria-label="ประเภท">
+            {TYPE_OPTIONS.map((o) => (
+              <Link
+                key={o.label}
+                href={buildHref(basePath, view === "list" ? { view, year, lm: listMonth, team, type: o.value } : { view, year, month, ...keep, team, type: o.value })}
+                aria-current={type === o.value ? "true" : undefined}
+                className={toggleClass(type === o.value)}
+              >
+                {o.value !== "all" && <span className={`h-2.5 w-2.5 rounded-full ${typeStyle(theme, o.value).dot}`} />}
+                {o.label}
+              </Link>
+            ))}
+          </div>
+          {filter}
+        </div>
+        {actions}
+      </div>
+
+      {/* Period navigation (‹ label ›, date-range picker) -- calendar view only; it sits
+          where the list view shows its month buttons. */}
+      {view === "calendar" && (
+        <div
+          className={`relative flex w-fit items-center gap-1 rounded-xl border px-2 py-1.5 shadow-sm ${theme.navBox}`}
+        >
+          {!custom && (
             <Link
               href={buildHref(basePath, { view, ...prev, ...keep, team, type })}
               className={`flex h-9 w-9 items-center justify-center rounded-lg ${theme.navButton}`}
@@ -403,12 +679,12 @@ export function HolidayToolbar({
               secondary: `${theme.toggleGroup} rounded-lg px-3 py-1.5 text-sm font-medium ${theme.text}`,
             }}
           />
-          {range ? (
+          {custom ? (
             <Link
               href={buildHref(basePath, { view, year, month, team, type })}
               className={`flex h-9 w-9 items-center justify-center rounded-lg ${theme.navButton}`}
-              aria-label="ล้างช่วงวันที่"
-              title="ล้างช่วงวันที่"
+              aria-label={monthList ? "ล้างเดือนที่เลือก" : "ล้างช่วงวันที่"}
+              title={monthList ? "ล้างเดือนที่เลือก" : "ล้างช่วงวันที่"}
             >
               <FontAwesomeIcon icon={faXmark} className="h-3.5 w-3.5" />
             </Link>
@@ -422,69 +698,7 @@ export function HolidayToolbar({
             </Link>
           )}
         </div>
-
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className={`flex gap-1 rounded-lg p-1 ${theme.toggleGroup}`} role="group" aria-label="รูปแบบการแสดงผล">
-            <Link
-              href={buildHref(basePath, {
-                view: "calendar",
-                year,
-                month,
-                ...keep,
-                team,
-                type,
-              })}
-              className={toggleClass(view === "calendar")}
-            >
-              <FontAwesomeIcon icon={faCalendarDays} className="h-3.5 w-3.5" />
-              ปฏิทิน
-            </Link>
-            <Link
-              href={buildHref(basePath, { view: "list", year, month, ...keep, team, type })}
-              className={toggleClass(view === "list")}
-            >
-              <FontAwesomeIcon icon={faList} className="h-3.5 w-3.5" />
-              รายการ
-            </Link>
-          </div>
-          {/* Cycle (toggle) button: each click moves to the next span, and the icon shows
-              the current one -- 1 → 2 → 3 → 4 months → whole year → 1. */}
-          <Link
-            href={buildHref(basePath, {
-              view,
-              year,
-              month: nextSpan === 12 ? 1 : spanStart,
-              months: nextSpan === 1 ? undefined : nextSpan,
-              team,
-              type,
-            })}
-            title={`คลิกเพื่อเปลี่ยนเป็น ${spanName(nextSpan)}`}
-            aria-label={`กำลังแสดง ${currentSpan ? spanName(currentSpan) : "ช่วงที่เลือก"} — คลิกเพื่อเปลี่ยนเป็น ${spanName(nextSpan)}`}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${theme.toggleGroup} ${theme.text} ${theme.cellHover}`}
-          >
-            {currentSpan ? <SpanIcon months={currentSpan} /> : <FontAwesomeIcon icon={faCalendarDays} className="h-4 w-4" />}
-            {currentSpan ? spanName(currentSpan) : "ช่วงที่เลือก"}
-          </Link>
-          <div className={`flex gap-1 rounded-lg p-1 ${theme.toggleGroup}`} role="group" aria-label="ประเภท">
-            {TYPE_OPTIONS.map((o) => (
-              <Link
-                key={o.label}
-                href={buildHref(basePath, { view, year, month, ...keep, lm: listMonth, team, type: o.value })}
-                aria-current={type === o.value ? "true" : undefined}
-                className={toggleClass(type === o.value)}
-              >
-                {o.value && <span className={`h-2.5 w-2.5 rounded-full ${typeStyle(theme, o.value).dot}`} />}
-                {o.label}
-              </Link>
-            ))}
-          </div>
-          {filter}
-        </div>
-        {actions}
-      </div>
+      )}
     </div>
   );
 }
@@ -495,7 +709,12 @@ function SpanIcon({ months }: { months: MonthSpan }) {
     months === 12
       ? Array.from({ length: 12 }, (_, i) => [1 + (i % 4) * 4.5, 2 + Math.floor(i / 4) * 4.5, 3.5, 3.5])
       : months === 4
-        ? [[1, 1, 7.5, 7.5], [10.5, 1, 7.5, 7.5], [1, 10.5, 7.5, 7.5], [10.5, 10.5, 7.5, 7.5]]
+        ? [
+            [1, 1, 7.5, 7.5],
+            [10.5, 1, 7.5, 7.5],
+            [1, 10.5, 7.5, 7.5],
+            [10.5, 10.5, 7.5, 7.5],
+          ]
         : Array.from({ length: months }, (_, i) => {
             const w = (18 - (months - 1) * 2) / months;
             return [1 + i * (w + 2), 3, w, 13];
@@ -512,7 +731,11 @@ function SpanIcon({ months }: { months: MonthSpan }) {
 // Month grids inside the left column when several months are shown (the
 // details panel keeps the right column, as in the single-month view).
 const miniGrid = (months: number) =>
-  months === 2 || months === 4 ? "sm:grid-cols-2" : months === 3 ? "sm:grid-cols-2 2xl:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-3";
+  months === 2 || months === 4
+    ? "sm:grid-cols-2"
+    : months === 3
+      ? "sm:grid-cols-2 2xl:grid-cols-3"
+      : "sm:grid-cols-2 xl:grid-cols-3";
 
 /**
  * Calendar view for any span: one full month, or 2 / 3 / 4 months / the whole
@@ -528,6 +751,7 @@ export function HolidayCalendar({
   month,
   months = 1,
   range,
+  monthList,
   holidays,
   teams,
   theme,
@@ -545,6 +769,8 @@ export function HolidayCalendar({
   months?: number;
   /** Custom date range: days outside it are faded and the table lists only entries inside it. */
   range?: { from: string; to: string };
+  /** Exactly these months ("YYYY-MM"), e.g. picked in the list view (may skip months). */
+  monthList?: string[];
   holidays: Holiday[];
   teams: Team[];
   theme: HolidayTheme;
@@ -563,11 +789,15 @@ export function HolidayCalendar({
   for (const [d, list] of byDate) byDate.set(d, sortEntries(list, teamName));
 
   const today = bangkokToday();
-  const shownMonths = Array.from({ length: months }, (_, i) => shiftMonth(year, month, i));
+  const shownMonths = monthList
+    ? monthList.map((ym) => ({ year: Number(ym.slice(0, 4)), month: Number(ym.slice(5, 7)) }))
+    : Array.from({ length: months }, (_, i) => shiftMonth(year, month, i));
   const last = shownMonths[shownMonths.length - 1];
   const rangeStart = range?.from ?? isoDate(year, month, 1);
-  const rangeEnd = range?.to ?? isoDate(last.year, last.month, new Date(Date.UTC(last.year, last.month, 0)).getUTCDate());
-  const inRange = (d: string) => d >= rangeStart && d <= rangeEnd;
+  const rangeEnd =
+    range?.to ?? isoDate(last.year, last.month, new Date(Date.UTC(last.year, last.month, 0)).getUTCDate());
+  const inRange = (d: string) =>
+    monthList ? monthList.includes(d.slice(0, 7)) : d >= rangeStart && d <= rangeEnd;
   const rangeEntries = sortEntries(
     holidays.filter((h) => inRange(h.holiday_date)),
     teamName,
@@ -622,7 +852,7 @@ export function HolidayCalendar({
     buildHref(basePath, { view: "calendar", year: y, month: m, date, ...linkParams });
 
   return (
-    <DaySelection key={`${rangeStart}-${rangeEnd}`} initial={selected}>
+    <DaySelection key={`${rangeStart}-${rangeEnd}-${monthList?.join(",") ?? ""}`} initial={selected}>
       <div className="space-y-4">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
           {months === 1 ? (
@@ -680,43 +910,13 @@ export function HolidayCalendar({
           <h2 className={`text-lg font-semibold ${theme.text}`}>
             {months === 1 && !range ? "วันหยุดในเดือนนี้" : `วันหยุดในช่วงนี้ (${rangeEntries.length} รายการ)`}
           </h2>
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className={`text-left ${theme.headerRow}`}>
-                  <th className="rounded-l-lg px-3 py-2 font-medium">วันที่</th>
-                  <th className="px-3 py-2 font-medium">รายการ</th>
-                  <th className="px-3 py-2 font-medium">ทีม</th>
-                  <th className="rounded-r-lg px-3 py-2 font-medium">ประเภท</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rangeEntries.map((h) => (
-                  <tr key={h.id} className={`border-b last:border-b-0 ${theme.divider}`}>
-                    <td className={`whitespace-nowrap px-3 py-3 ${theme.text}`}>
-                      <SelectDateButton date={h.holiday_date}>{longThaiDate(h.holiday_date)}</SelectDateButton>
-                    </td>
-                    <td className={`px-3 py-3 ${theme.text}`}>
-                      {h.name}
-                      {h.note && <span className="block text-xs text-gray-500">{h.note}</span>}
-                    </td>
-                    <td className="px-3 py-3">
-                      <TeamTag name={teamName(h.team_id)} companyWide={h.team_id === null} theme={theme} />
-                    </td>
-                    <td className="px-3 py-3">
-                      <StatusBadge status={h.type} config={badgeConfig(theme)} />
-                    </td>
-                  </tr>
-                ))}
-                {rangeEntries.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-3 py-6 text-center text-gray-500">
-                      ไม่มีวันหยุดหรือวัน WFH ในช่วงนี้
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="mt-4">
+            <MonthTables
+              entries={rangeEntries}
+              teamName={teamName}
+              theme={theme}
+              renderDate={(h, label) => <SelectDateButton date={h.holiday_date}>{label}</SelectDateButton>}
+            />
           </div>
         </div>
       </div>
@@ -751,14 +951,20 @@ function FullMonth({
   const prevMonthDays = new Date(Date.UTC(year, month - 1, 0)).getUTCDate();
   // offset: -1 = trailing days of the previous month, +1 = leading days of the next.
   const cells: { day: number; current: boolean; offset?: -1 | 1 }[] = [
-    ...Array.from({ length: leading }, (_, i) => ({ day: prevMonthDays - leading + 1 + i, current: false, offset: -1 as const })),
+    ...Array.from({ length: leading }, (_, i) => ({
+      day: prevMonthDays - leading + 1 + i,
+      current: false,
+      offset: -1 as const,
+    })),
     ...Array.from({ length: daysInMonth }, (_, i) => ({ day: i + 1, current: true })),
   ];
   for (let d = 1; cells.length % 7 !== 0; d++) cells.push({ day: d, current: false, offset: 1 });
 
   return (
     <div className={`overflow-hidden ${theme.card}`}>
-      <div className={`grid grid-cols-7 border-b text-center text-sm font-semibold ${theme.divider} ${theme.headerRow}`}>
+      <div
+        className={`grid grid-cols-7 border-b text-center text-sm font-semibold ${theme.divider} ${theme.headerRow}`}
+      >
         {WEEKDAYS.map((d, i) => (
           <div key={d} className={`py-2.5 ${i < 6 ? `border-r ${theme.divider}` : ""}`}>
             {d}
@@ -792,7 +998,10 @@ function FullMonth({
           const date = isoDate(year, month, day);
           if (!inRange(date)) {
             return (
-              <div key={date} className={`min-h-14 bg-gray-50/60 p-1.5 text-sm text-gray-300 sm:min-h-24 sm:p-2.5 ${edge}`}>
+              <div
+                key={date}
+                className={`min-h-14 bg-gray-50/60 p-1.5 text-sm text-gray-300 sm:min-h-24 sm:p-2.5 ${edge}`}
+              >
                 {day}
               </div>
             );
@@ -804,12 +1013,16 @@ function FullMonth({
             <DayButton
               key={date}
               date={date}
-              title={entries.map(entryLabel).join("\n") || undefined}
-              className={`relative flex min-h-14 cursor-pointer flex-col items-start gap-1 p-1.5 text-left text-sm transition-colors sm:min-h-24 sm:p-2.5 ${edge}`}
+              title={dayTitle(date === today, entries.map(entryLabel))}
+              className={`group relative flex min-h-14 cursor-pointer flex-col items-start gap-1 p-1.5 text-left text-sm transition-colors sm:min-h-24 sm:p-2.5 ${edge}`}
               selectedClassName={theme.selected}
               idleClassName={`${cellType ? typeStyle(theme, cellType).cell : "bg-white"} ${theme.cellHover}`}
             >
-              <span className={date === today ? theme.today : `font-medium ${theme.text}`}>{day}</span>
+              <span
+                className={`font-medium ${theme.text} ${date === today ? `${TODAY_RING} ${theme.today} -m-1 h-8 w-8` : ""}`}
+              >
+                {day}
+              </span>
               {shown.map((h) => {
                 const style = typeStyle(theme, h.type);
                 return (
@@ -831,7 +1044,16 @@ function FullMonth({
 }
 
 /** Compact month grid for multi-month spans: coloured day cells, counts under the title. */
-function MiniMonth({ year, month, inRange, byDate, today, theme, entryLabel, titleHref }: GridProps & { titleHref: string }) {
+function MiniMonth({
+  year,
+  month,
+  inRange,
+  byDate,
+  today,
+  theme,
+  entryLabel,
+  titleHref,
+}: GridProps & { titleHref: string }) {
   const leading = (utcDate(isoDate(year, month, 1)).getUTCDay() + 6) % 7;
   const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const cells: (number | null)[] = [...Array(leading).fill(null), ...Array.from({ length: days }, (_, i) => i + 1)];
@@ -882,10 +1104,8 @@ function MiniMonth({ year, month, inRange, byDate, today, theme, entryLabel, tit
             <DayButton
               key={date}
               date={date}
-              title={entries.map(entryLabel).join("\n") || undefined}
-              className={`flex h-9 cursor-pointer items-center justify-center rounded-md text-sm transition-colors ${
-                date === today ? "font-bold underline decoration-2 underline-offset-4" : ""
-              }`}
+              title={dayTitle(date === today, entries.map(entryLabel))}
+              className="group flex h-9 cursor-pointer items-center justify-center rounded-md text-sm transition-colors"
               selectedClassName={theme.selected}
               idleClassName={`${
                 main
@@ -895,7 +1115,7 @@ function MiniMonth({ year, month, inRange, byDate, today, theme, entryLabel, tit
                     : theme.text
               } ${theme.cellHover}`}
             >
-              {d}
+              <span className={date === today ? `${TODAY_RING} ${theme.today} h-7 w-7` : ""}>{d}</span>
             </DayButton>
           );
         })}
@@ -906,8 +1126,9 @@ function MiniMonth({ year, month, inRange, byDate, today, theme, entryLabel, tit
 
 /**
  * List view month buttons: ทั้งหมด | ม.ค. … ธ.ค. of the year -- a separate
- * filter, not tied to the period chosen above. "ทั้งหมด" = the whole year.
- * With no button chosen the list follows the period (same as the calendar).
+ * filter, not tied to the period chosen above. Several months can be picked
+ * (each click toggles one); "ทั้งหมด" = the whole year.
+ * Nothing picked = the whole year too.
  */
 export function HolidayMonthChips({
   basePath,
@@ -931,15 +1152,21 @@ export function HolidayMonthChips({
       active ? theme.toggleActive : `${theme.toggleIdle} ${empty ? "opacity-45" : ""}`
     }`;
   const href = (lm?: string) => buildHref(basePath, { ...keepParams, lm });
+  const selected = listMonthSet(listMonth);
+  // Clicking a month adds it to / removes it from the selection; none left = ทั้งหมด.
+  const toggle = (ym: string) => {
+    const next = selected.includes(ym) ? selected.filter((x) => x !== ym) : [...selected, ym].sort();
+    return href(next.length ? next.join(",") : "all");
+  };
 
   return (
     <div className="max-w-full overflow-x-auto">
-      <div className={`flex w-max gap-1 rounded-lg p-1 ${theme.toggleGroup}`} role="group" aria-label="กรองตามเดือน">
+      <div className={`flex w-max gap-1 rounded-lg p-1 ${theme.toggleGroup}`} role="group" aria-label="กรองตามเดือน (เลือกได้หลายเดือน)">
         <Link
           href={href("all")}
-          aria-current={listMonth === "all" ? "true" : undefined}
+          aria-current={!listMonth || listMonth === "all" ? "true" : undefined}
           title={`ทั้งปี ${year + 543} — ${entries.length} รายการ`}
-          className={chip(listMonth === "all", false)}
+          className={chip(!listMonth || listMonth === "all", false)}
         >
           ทั้งหมด
         </Link>
@@ -949,10 +1176,10 @@ export function HolidayMonthChips({
           return (
             <Link
               key={ym}
-              href={href(ym)}
-              aria-current={listMonth === ym ? "true" : undefined}
-              title={`${thaiMonthName(year, m)} ${year + 543} — ${n} รายการ`}
-              className={chip(listMonth === ym, n === 0)}
+              href={toggle(ym)}
+              aria-pressed={selected.includes(ym)}
+              title={`${thaiMonthName(year, m)} ${year + 543} — ${n} รายการ${selected.includes(ym) ? " (คลิกเพื่อเอาออก)" : ""}`}
+              className={chip(selected.includes(ym), n === 0)}
             >
               {formatThaiDate(`${ym}-01`, { month: "short" })}
             </Link>
@@ -975,7 +1202,10 @@ export function HolidayPeriodSummary({
 }) {
   const count = (t: string) => entries.filter((h) => h.type === t).length;
   return (
-    <p className={`ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-sm ${theme.muted}`} aria-live="polite">
+    <p
+      className={`ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-sm ${theme.muted}`}
+      aria-live="polite"
+    >
       <span className={`font-semibold ${theme.text}`}>
         {label} · {entries.length} รายการ
       </span>
@@ -1005,61 +1235,23 @@ export function HolidayList({
   dateHref?: (holiday: Holiday) => string;
   actions?: (holiday: Holiday) => React.ReactNode;
 }) {
-  const teamName = makeTeamName(teams);
-  const colCount = actions ? 6 : 5;
   return (
-    <div className={`overflow-x-auto ${theme.card}`}>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className={`border-b text-left text-xs font-medium uppercase ${theme.divider} ${theme.headerRow}`}>
-            <th className="px-4 py-3">วันที่</th>
-            <th className="px-4 py-3">ชื่อวันหยุด</th>
-            <th className="px-4 py-3">ทีม</th>
-            <th className="px-4 py-3">ประเภท</th>
-            <th className="px-4 py-3">หมายเหตุ</th>
-            {actions && <th className="px-4 py-3"></th>}
-          </tr>
-        </thead>
-        <tbody>
-          {holidays.map((h) => {
-            const dateLabel = formatThaiDate(h.holiday_date, {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            });
-            return (
-              <tr key={h.id} className={`border-t ${theme.divider} ${theme.cellHover}`}>
-                <td className={`whitespace-nowrap px-4 py-3 font-medium ${theme.text}`}>
-                  {dateHref ? (
-                    <Link href={dateHref(h)} className="hover:underline">
-                      {dateLabel}
-                    </Link>
-                  ) : (
-                    dateLabel
-                  )}
-                </td>
-                <td className={`px-4 py-3 ${theme.text}`}>{h.name}</td>
-                <td className="px-4 py-3">
-                  <TeamTag name={teamName(h.team_id)} companyWide={h.team_id === null} theme={theme} />
-                </td>
-                <td className="px-4 py-3">
-                  <StatusBadge status={h.type} config={badgeConfig(theme)} />
-                </td>
-                <td className={`px-4 py-3 ${theme.muted}`}>{h.note ?? "-"}</td>
-                {actions && <td className="px-4 py-3 text-right">{actions(h)}</td>}
-              </tr>
-            );
-          })}
-          {holidays.length === 0 && (
-            <tr>
-              <td colSpan={colCount} className={`px-4 py-6 text-center ${theme.muted}`}>
-                ไม่มีวันหยุดหรือวัน WFH ในช่วงนี้
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+    <div className={`p-5 ${theme.card}`}>
+      <MonthTables
+        entries={holidays}
+        teamName={makeTeamName(teams)}
+        theme={theme}
+        actions={actions}
+        renderDate={
+          dateHref
+            ? (h, label) => (
+                <Link href={dateHref(h)} className="hover:underline">
+                  {label}
+                </Link>
+              )
+            : undefined
+        }
+      />
     </div>
   );
 }

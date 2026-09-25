@@ -25,7 +25,7 @@ export default async function EditHolidayPage({
 
   if (!holiday) notFound();
 
-  const backHref = holidayListUrl(returnView, holiday.holiday_date);
+  const backHref = holidayListUrl(returnView, holiday.holiday_date, holiday.type);
 
   return (
     <div>

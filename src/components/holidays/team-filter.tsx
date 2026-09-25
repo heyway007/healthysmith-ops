@@ -50,14 +50,18 @@ export function TeamFilter({
       <select
         value={value}
         onChange={(e) => {
-          const q = new URLSearchParams({ view, year: String(year), month: String(month) });
+          const q = new URLSearchParams(
+            view === "list" || listMonth ? { view, year: String(year) } : { view, year: String(year), month: String(month) },
+          );
           if (e.target.value) q.set("team", e.target.value);
-          if (type) q.set("type", type);
-          if (range) {
-            q.set("from", range.from);
-            q.set("to", range.to);
-          } else if (months && months !== 1) q.set("months", String(months));
-          if (view === "list" && listMonth) q.set("lm", listMonth);
+          if (type && type !== "holiday") q.set("type", type);
+          if (view === "calendar" && !(listMonth && listMonth !== "all")) {
+            if (range) {
+              q.set("from", range.from);
+              q.set("to", range.to);
+            } else if (months && months !== 1) q.set("months", String(months));
+          }
+          if (listMonth) q.set("lm", listMonth);
           startNavigationProgress();
           router.push(`${basePath}?${q}`);
         }}

@@ -82,7 +82,7 @@ function done(notice: string, date: string, teamId: string | null): never {
   revalidatePath("/holidays");
   const q = new URLSearchParams({ notice });
   if (teamId) q.set("team", teamId);
-  redirect(`${holidayListUrl("calendar", date)}&${q}`);
+  redirect(`${holidayListUrl("calendar", date, "wfh")}&${q}`);
 }
 
 async function rowsInRange(start: string, end: string) {

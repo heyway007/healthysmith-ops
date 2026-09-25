@@ -91,7 +91,7 @@ export function HolidayForm({
 
         <div className="flex items-center gap-4 pt-2">
           <SubmitButton className={submitButtonClassName}>{submitLabel}</SubmitButton>
-          <Link href={holidayListUrl(returnView, date)} className={secondaryButtonClassName}>
+          <Link href={holidayListUrl(returnView, date, defaultValues?.type)} className={secondaryButtonClassName}>
             ยกเลิก
           </Link>
         </div>

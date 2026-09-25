@@ -300,15 +300,25 @@ function MonthGrid({
               type="button"
               onClick={() => onPick(date)}
               onMouseEnter={() => onHover(date)}
-              className={`h-9 text-sm transition-colors ${
+              title={date === today ? "วันนี้" : undefined}
+              className={`group h-9 text-sm transition-colors ${
                 isEndpoint
                   ? `rounded-lg font-semibold ${theme.endpoint}`
                   : between
                     ? `${theme.between} ${theme.text}`
                     : `rounded-lg ${theme.text} ${theme.button}`
-              } ${date === today && !isEndpoint ? "font-bold underline underline-offset-4" : ""}`}
+              }`}
             >
-              {d}
+              {/* Today: black outline circle around the date (transparent inside). */}
+              <span
+                className={
+                  date === today && !isEndpoint
+                    ? "inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-current transition-colors group-hover:bg-gray-900 group-hover:text-white"
+                    : ""
+                }
+              >
+                {d}
+              </span>
             </button>
           );
         })}

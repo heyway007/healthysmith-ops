@@ -67,7 +67,7 @@ export async function createHoliday(formData: FormData) {
     redirect(`/admin/holidays/new?${q}`);
   }
   revalidateHolidays();
-  redirect(listUrl(view, fields.holiday_date));
+  redirect(listUrl(view, fields.holiday_date, fields.type));
 }
 
 export async function updateHoliday(id: string, formData: FormData) {
@@ -86,7 +86,7 @@ export async function updateHoliday(id: string, formData: FormData) {
     redirect(`/admin/holidays/${id}?${new URLSearchParams({ error: message, view })}`);
   }
   revalidateHolidays();
-  redirect(listUrl(view, fields.holiday_date));
+  redirect(listUrl(view, fields.holiday_date, fields.type));
 }
 
 /** `returnTo` is set when deleting from the edit page, which no longer exists afterwards. */
