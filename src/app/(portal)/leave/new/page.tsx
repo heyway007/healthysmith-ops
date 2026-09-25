@@ -44,7 +44,7 @@ export default async function NewLeaveRequestPage({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-mist-800" htmlFor="start_date">
                 วันที่เริ่มลา

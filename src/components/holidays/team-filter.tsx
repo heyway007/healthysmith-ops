@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUserGroup } from "@fortawesome/free-solid-svg-icons";
 import { startNavigationProgress } from "@/components/ui/navigation-progress";
 
 /**
@@ -45,9 +47,15 @@ export function TeamFilter({
   const router = useRouter();
 
   return (
-    <label className="flex items-center gap-2 text-sm text-gray-600">
-      ทีม
+    // No text label beside it (it broke up the row of controls): a team icon inside the
+    // field says what it is, and aria-label names it for screen readers.
+    <div className="relative w-full sm:w-auto">
+      <FontAwesomeIcon
+        icon={faUserGroup}
+        className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
+      />
       <select
+        aria-label="ทีม"
         value={value}
         onChange={(e) => {
           const q = new URLSearchParams(
@@ -65,7 +73,7 @@ export function TeamFilter({
           startNavigationProgress();
           router.push(`${basePath}?${q}`);
         }}
-        className={selectClassName}
+        className={`w-full py-2.5! pl-9! sm:w-48 ${selectClassName}`}
       >
         <option value={allValue}>ทุกทีม</option>
         {teams.map((t) => (
@@ -75,6 +83,6 @@ export function TeamFilter({
           </option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }

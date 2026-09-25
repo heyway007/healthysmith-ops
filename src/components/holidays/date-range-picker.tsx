@@ -142,14 +142,14 @@ export function DateRangePicker({
   const tooLong = !!(start && end && monthsBetween(start, end) > MAX_MONTHS);
 
   return (
-    <div ref={box} className="relative">
+    <div ref={box} className="relative flex-1 sm:flex-none">
       <button
         type="button"
         onClick={toggle}
         aria-expanded={open}
         aria-haspopup="dialog"
         title="เลือกช่วงวันที่"
-        className={`flex min-w-40 items-center justify-center gap-2 rounded-lg px-2 py-1 text-lg font-semibold ${theme.text} ${theme.button}`}
+        className={`flex w-full min-w-40 items-center justify-center gap-2 rounded-lg px-2 py-1 text-lg font-semibold ${theme.text} ${theme.button}`}
       >
         {label}
         <FontAwesomeIcon icon={faCalendarDays} className="h-3.5 w-3.5 opacity-50" />

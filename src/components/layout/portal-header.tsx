@@ -15,7 +15,7 @@ const buttonClassName =
 export function PortalHeader({ signedIn, employee }: { signedIn: boolean; employee: CurrentEmployee | null }) {
   return (
     <header className="sticky top-0 z-30 border-b border-mist-200 bg-white/85 px-4 py-3 shadow-sm backdrop-blur sm:px-8">
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-3 sm:gap-5">
         <Link href={signedIn ? "/" : "/holidays"} className="shrink-0 font-semibold text-mist-900">
           ระบบพนักงาน
         </Link>
@@ -29,15 +29,15 @@ export function PortalHeader({ signedIn, employee }: { signedIn: boolean; employ
           )}
           {signedIn ? (
             <form action={logout}>
-              <button type="submit" className={buttonClassName}>
+              <button type="submit" className={buttonClassName} aria-label="ออกจากระบบ" title="ออกจากระบบ">
                 <FontAwesomeIcon icon={faRightFromBracket} />
-                ออกจากระบบ
+                <span className="hidden sm:inline">ออกจากระบบ</span>
               </button>
             </form>
           ) : (
-            <Link href="/login" className={buttonClassName}>
+            <Link href="/login" className={buttonClassName} aria-label="เข้าสู่ระบบ" title="เข้าสู่ระบบ">
               <FontAwesomeIcon icon={faRightToBracket} />
-              เข้าสู่ระบบ
+              <span className="hidden sm:inline">เข้าสู่ระบบ</span>
             </Link>
           )}
         </div>
