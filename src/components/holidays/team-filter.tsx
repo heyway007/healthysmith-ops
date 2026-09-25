@@ -14,6 +14,9 @@ export function TeamFilter({
   year,
   month,
   type,
+  months,
+  range,
+  listMonth,
   teams,
   value,
   allValue = "",
@@ -26,6 +29,12 @@ export function TeamFilter({
   month: number;
   /** Holiday / WFH filter to keep when switching team. */
   type?: string;
+  /** Months in the period, kept when switching team. */
+  months?: number;
+  /** Custom date range, kept when switching team. */
+  range?: { from: string; to: string };
+  /** List view month button ("all" or YYYY-MM), kept when switching team. */
+  listMonth?: string;
   teams: { id: string; name: string }[];
   value: string;
   allValue?: string;
@@ -44,6 +53,11 @@ export function TeamFilter({
           const q = new URLSearchParams({ view, year: String(year), month: String(month) });
           if (e.target.value) q.set("team", e.target.value);
           if (type) q.set("type", type);
+          if (range) {
+            q.set("from", range.from);
+            q.set("to", range.to);
+          } else if (months && months !== 1) q.set("months", String(months));
+          if (view === "list" && listMonth) q.set("lm", listMonth);
           startNavigationProgress();
           router.push(`${basePath}?${q}`);
         }}

@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHouseLaptop, faPen, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faHouseLaptop, faPen, faPlus, faPrint } from "@fortawesome/free-solid-svg-icons";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
-import { holidayListUrl } from "@/lib/holiday-types";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/ui/delete-button";
 import {
   HOLIDAY_THEMES,
   HolidayCalendar,
   HolidayList,
+  HolidayMonthChips,
+  HolidayPeriodSummary,
+  periodBounds,
+  periodLabel,
   HolidayToolbar,
   parseHolidayParams,
 } from "@/components/holidays/holiday-views";
@@ -28,10 +31,15 @@ export default async function HolidaysPage({
     date?: string;
     team?: string;
     type?: string;
+    months?: string;
+    from?: string;
+    to?: string;
+    lm?: string;
   }>;
 }) {
   const params = await searchParams;
-  const { view, year, month, date, type } = parseHolidayParams(params);
+  const { view, year, month, date, type, months, range, listMonth, fetchFrom, fetchTo } =
+    parseHolidayParams(params);
   const theme = HOLIDAY_THEMES.admin;
 
   const supabase = await createClient();
@@ -39,8 +47,8 @@ export default async function HolidaysPage({
     supabase
       .from("company_holidays")
       .select("*")
-      .gte("holiday_date", `${year}-01-01`)
-      .lte("holiday_date", `${year}-12-31`)
+      .gte("holiday_date", fetchFrom)
+      .lte("holiday_date", fetchTo)
       .order("holiday_date", { ascending: true }),
     supabase.from("teams").select("id, name").order("name"),
     supabase.from("company_holidays").select("id", { count: "exact", head: true }).eq("type", "wfh"),
@@ -51,11 +59,48 @@ export default async function HolidaysPage({
   const visible = (holidays ?? [])
     .filter((h) => !team || h.team_id === null || h.team_id === team)
     .filter((h) => !type || h.type === type);
+  // List view: the entries in the same period the calendar shows.
+  const period = { year, month, months, range };
+  const { start: periodStart, end: periodEnd } = periodBounds(period);
+  const periodEntries = visible.filter((h) => h.holiday_date >= periodStart && h.holiday_date <= periodEnd);
+  // Month buttons are separate from the period: a chosen month shows that whole month.
+  const yearEntries = visible.filter((h) => h.holiday_date.startsWith(`${year}-`));
+  const listEntries =
+    listMonth === "all"
+      ? yearEntries
+      : listMonth
+        ? visible.filter((h) => h.holiday_date.startsWith(`${listMonth}-`))
+        : periodEntries;
+  const listLabel =
+    listMonth === "all"
+      ? `ทั้งปี ${year + 543}`
+      : listMonth
+        ? periodLabel({ year: Number(listMonth.slice(0, 4)), month: Number(listMonth.slice(5, 7)), months: 1 })
+        : periodLabel(period);
 
   // Carried through the edit/new pages so saving lands back on the same view.
   const back = `view=${view}`;
   const smallButton = "flex items-center gap-2 px-3! py-1.5!";
-  const returnTo = (d: string) => `${holidayListUrl("calendar", d)}${team ? `&team=${team}` : ""}`;
+  const oneMonth = listMonth && listMonth !== "all" ? listMonth : undefined;
+  // Print page opens with what's on screen: calendar view → that month, list view → the year.
+  const printQuery = new URLSearchParams({
+    year: String(year),
+    month: oneMonth ? String(Number(oneMonth.slice(5, 7))) : String(month),
+    scope: listMonth === "all" ? "year" : oneMonth || (months === 1 && !range) ? "month" : "year",
+    layout: view === "calendar" ? "calendar" : "list",
+  });
+  if (team) printQuery.set("team", team);
+  if (type) printQuery.set("type", type);
+  const returnTo = (d: string) =>
+    `/admin/holidays?${new URLSearchParams({
+      view: "calendar",
+      year: String(year),
+      month: String(month),
+      date: d,
+      ...(range ? range : months > 1 ? { months: String(months) } : {}),
+      ...(team ? { team } : {}),
+      ...(type ? { type } : {}),
+    })}`;
 
   return (
     <div className="space-y-5">
@@ -68,6 +113,9 @@ export default async function HolidaysPage({
         month={month}
         theme={theme}
         type={type}
+        months={months}
+        range={range}
+        listMonth={listMonth}
         team={team}
         filter={
           <TeamFilter
@@ -76,6 +124,9 @@ export default async function HolidaysPage({
             year={year}
             month={month}
             type={type}
+            months={months}
+            range={range}
+            listMonth={listMonth}
             teams={teams ?? []}
             value={team ?? ""}
             selectClassName={theme.select}
@@ -86,9 +137,16 @@ export default async function HolidaysPage({
             <ResetPanel
               year={year}
               month={month}
-              wfhThisYear={(holidays ?? []).filter((h) => h.type === "wfh").length}
+              wfhThisYear={(holidays ?? []).filter((h) => h.type === "wfh" && h.holiday_date.startsWith(`${year}-`)).length}
               wfhAllYears={wfhAllYears ?? 0}
             />
+            <Link
+              href={`/admin/print/holidays?${printQuery}`}
+              className={`flex items-center gap-2 ${secondaryButtonClassName}`}
+            >
+              <FontAwesomeIcon icon={faPrint} />
+              พิมพ์
+            </Link>
             <Link
               href={`/admin/holidays/wfh${team ? `?team=${team}` : ""}`}
               className={`flex items-center gap-2 ${secondaryButtonClassName}`}
@@ -118,6 +176,8 @@ export default async function HolidaysPage({
           linkParams={{ team, type }}
           year={year}
           month={month}
+          months={months}
+          range={range}
           holidays={visible}
           teams={teams ?? []}
           theme={theme}
@@ -138,26 +198,39 @@ export default async function HolidaysPage({
               />
             </>
           )}
-          addAction={(selected) => (
-            <Link
-              href={`/admin/holidays/new?date=${selected}&${back}${team ? `&team=${team}` : ""}`}
-              className={`${submitButtonClassName} ${smallButton}`}
-            >
-              <FontAwesomeIcon icon={faPlus} className="h-3 w-3" />
-              เพิ่มวันหยุด / WFH
-            </Link>
-          )}
+          addHref={(d) => `/admin/holidays/new?date=${d}&${back}${team ? `&team=${team}` : ""}`}
+          addButtonClassName={`${submitButtonClassName} ${smallButton}`}
         />
       ) : (
-        <HolidayList
-          holidays={visible}
-          teams={teams ?? []}
-          theme={theme}
-          dateHref={(h) => `/admin/holidays/${h.id}?${back}`}
-          actions={(h) => (
-            <DeleteButton action={deleteHoliday.bind(null, h.id)} confirmMessage={`ลบ "${h.name}"?`} />
-          )}
-        />
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <HolidayMonthChips
+              basePath="/admin/holidays"
+              year={year}
+              listMonth={listMonth}
+              entries={yearEntries}
+              keepParams={{
+                view: "list",
+                year,
+                month,
+                ...(range ? range : { months: months !== 1 ? months : undefined }),
+                team: team,
+                type,
+              }}
+              theme={theme}
+            />
+            <HolidayPeriodSummary label={listLabel} entries={listEntries} theme={theme} />
+          </div>
+          <HolidayList
+            holidays={listEntries}
+            teams={teams ?? []}
+            theme={theme}
+            dateHref={(h) => `/admin/holidays/${h.id}?${back}`}
+            actions={(h) => (
+              <DeleteButton action={deleteHoliday.bind(null, h.id)} confirmMessage={`ลบ "${h.name}"?`} />
+            )}
+          />
+        </div>
       )}
     </div>
   );

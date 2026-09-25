@@ -1,6 +1,9 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
+import Link from "next/link";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCalendarCheck, faPlus } from "@fortawesome/free-solid-svg-icons";
 
 // Picking a day happens entirely in the browser: the month's data (and each
 // day's server-rendered detail panel) is already on the page, so there's no
@@ -58,10 +61,59 @@ export function DayButton({
   );
 }
 
-/** Shows the pre-rendered panel for whichever day is selected. */
-export function SelectedPanel({ panels }: { panels: Record<string, React.ReactNode> }) {
+export type EmptyDayPanelStyle = {
+  text: string;
+  muted: string;
+  icon: string;
+  divider: string;
+  /** Back office: "add" link for the day; "__DATE__" is replaced with the date. */
+  addHref?: string;
+  addClassName?: string;
+};
+
+/**
+ * Shows the server-rendered panel for the selected day when it has entries;
+ * days without entries (most of a year) get a simple panel built here, so the
+ * server doesn't have to render one per day.
+ */
+export function SelectedPanel({
+  panels,
+  empty,
+}: {
+  panels: Record<string, React.ReactNode>;
+  empty: EmptyDayPanelStyle;
+}) {
   const { selected } = useSelection();
-  return <>{panels[selected]}</>;
+  if (panels[selected]) return <>{panels[selected]}</>;
+
+  const date = new Date(`${selected}T00:00:00Z`);
+  const fmt = (o: Intl.DateTimeFormatOptions) => date.toLocaleDateString("th-TH", { ...o, timeZone: "UTC" });
+  const weekend = [0, 6].includes(date.getUTCDay());
+  return (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className={`text-xl font-semibold ${empty.text}`}>{fmt({ day: "numeric", month: "long", year: "numeric" })}</p>
+          <p className={`text-sm ${empty.muted}`}>วัน{fmt({ weekday: "long" }).replace(/^วัน/, "")}</p>
+        </div>
+        <FontAwesomeIcon icon={faCalendarCheck} className={`text-3xl ${empty.icon}`} />
+      </div>
+      <div className={`mt-4 border-t pt-4 ${empty.divider}`}>
+        <span className="inline-flex rounded-full bg-white px-2.5 py-1 text-xs font-medium text-gray-600">
+          {weekend ? "วันหยุดสุดสัปดาห์" : "วันทำงานปกติ"}
+        </span>
+        <p className="mt-2 text-sm text-gray-600">ไม่มีวันหยุดหรือ WFH ในวันนี้</p>
+      </div>
+      {empty.addHref && (
+        <div className={`mt-4 border-t pt-4 ${empty.divider}`}>
+          <Link href={empty.addHref.replace("__DATE__", selected)} className={empty.addClassName}>
+            <FontAwesomeIcon icon={faPlus} className="h-3 w-3" />
+            เพิ่มวันหยุด / WFH
+          </Link>
+        </div>
+      )}
+    </>
+  );
 }
 
 export function SelectDateButton({ date, children }: { date: string; children: React.ReactNode }) {

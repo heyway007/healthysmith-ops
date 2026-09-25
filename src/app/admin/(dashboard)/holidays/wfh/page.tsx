@@ -78,7 +78,7 @@ export default async function RecurringWfhPage({
         {(teams ?? []).length === 0 && (
           <p className="mt-2 text-xs text-teal-600">
             ยังไม่มีทีม —{" "}
-            <Link href="/admin/hr/teams" className="font-medium underline">
+            <Link href="/admin/teams" className="font-medium underline">
               สร้างทีม
             </Link>{" "}
             ก่อน หรือเลือก &quot;ทั้งบริษัท&quot;

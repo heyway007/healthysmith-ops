@@ -9,6 +9,7 @@ import {
   faCartShopping,
   faTruck,
   faUsers,
+  faPeopleGroup,
   faCalendarDays,
   faUserShield,
   faXmark,
@@ -20,6 +21,7 @@ const navItems: { href: string; label: string; icon: typeof faGaugeHigh; allowed
   { href: "/admin/sales", label: "ระบบขาย", icon: faCartShopping, allowed: ["sales"] },
   { href: "/admin/purchase", label: "ระบบจัดซื้อ", icon: faTruck, allowed: ["purchase"] },
   { href: "/admin/hr", label: "พนักงาน & เงินเดือน", icon: faUsers, allowed: ["hr"] },
+  { href: "/admin/teams", label: "ทีม", icon: faPeopleGroup, allowed: ["hr"] },
   { href: "/admin/holidays", label: "วันหยุด & WFH", icon: faCalendarDays, allowed: ["hr"] },
   { href: "/admin/users", label: "ผู้ใช้งานและสิทธิ์", icon: faUserShield, allowed: [] },
 ];
