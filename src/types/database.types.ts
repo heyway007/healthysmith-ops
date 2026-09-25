@@ -133,6 +133,24 @@ export interface Database {
         };
         Relationships: [];
       };
+      teams: {
+        Row: {
+          id: string;
+          name: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       departments: {
         Row: {
           id: string;
@@ -197,6 +215,7 @@ export interface Database {
           social_security_number: string | null;
           tax_id: string | null;
           user_id: string | null;
+          team_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -224,6 +243,7 @@ export interface Database {
           social_security_number?: string | null;
           tax_id?: string | null;
           user_id?: string | null;
+          team_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -251,6 +271,7 @@ export interface Database {
           social_security_number?: string | null;
           tax_id?: string | null;
           user_id?: string | null;
+          team_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -323,6 +344,7 @@ export interface Database {
           name: string;
           type: string;
           note: string | null;
+          team_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -332,6 +354,7 @@ export interface Database {
           name: string;
           type?: string;
           note?: string | null;
+          team_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -341,6 +364,7 @@ export interface Database {
           name?: string;
           type?: string;
           note?: string | null;
+          team_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1839,8 +1863,6 @@ export interface Database {
           p_bank_name: string | null;
           p_bank_account_number: string | null;
           p_bank_account_name: string | null;
-          p_social_security_number: string | null;
-          p_tax_id: string | null;
         };
         Returns: undefined;
       };

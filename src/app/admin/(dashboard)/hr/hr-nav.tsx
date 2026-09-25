@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUsers, faCalendarDays } from "@fortawesome/free-solid-svg-icons";
+import { faUsers, faPeopleGroup } from "@fortawesome/free-solid-svg-icons";
 
 const tabs = [
   { href: "/admin/hr", label: "พนักงาน", icon: faUsers },
-  { href: "/admin/hr/holidays", label: "วันหยุดบริษัท", icon: faCalendarDays },
+  { href: "/admin/hr/teams", label: "ทีม", icon: faPeopleGroup },
 ];
 
 export function HrNav() {
@@ -18,7 +18,7 @@ export function HrNav() {
       {tabs.map((tab) => {
         const active =
           tab.href === "/admin/hr"
-            ? pathname === "/admin/hr" || (pathname?.startsWith("/admin/hr/") && !pathname?.startsWith("/admin/hr/holidays"))
+            ? pathname === "/admin/hr" || (pathname?.startsWith("/admin/hr/") && !pathname?.startsWith("/admin/hr/teams"))
             : pathname === tab.href || pathname?.startsWith(tab.href + "/");
         return (
           <Link

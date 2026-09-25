@@ -10,7 +10,7 @@ export default async function HrLayout({ children }: { children: React.ReactNode
   return (
     <div>
       <h1 className="text-2xl font-semibold text-teal-950">👥 ระบบพนักงาน & เงินเดือน</h1>
-      <p className="mt-1 text-teal-700">ข้อมูลพนักงาน วันลา วันหยุดบริษัท และเงินเดือน</p>
+      <p className="mt-1 text-teal-700">ข้อมูลพนักงาน ทีม วันลา และเงินเดือน</p>
       {allowed && (
         <div className="mt-5">
           <HrNav />

@@ -21,9 +21,10 @@ export async function EmployeeForm({
   error?: string;
 }) {
   const supabase = await createClient();
-  const [{ data: departments }, { data: positions }] = await Promise.all([
+  const [{ data: departments }, { data: positions }, { data: teams }] = await Promise.all([
     supabase.from("departments").select("*").order("name"),
     supabase.from("positions").select("*").order("name"),
+    supabase.from("teams").select("id, name").order("name"),
   ]);
 
   const departmentNameById = new Map((departments ?? []).map((d) => [d.id, d.name]));
@@ -83,6 +84,17 @@ export async function EmployeeForm({
             listOptions={(positions ?? []).map((p) => p.name)}
           />
           <div>
+            <label className="block text-sm font-medium text-teal-800">ทีม (ใช้กำหนดวัน WFH)</label>
+            <select name="team_id" defaultValue={defaultValues?.team_id ?? ""} className={selectClassName}>
+              <option value="">- ไม่มีทีม -</option>
+              {(teams ?? []).map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
             <label className="block text-sm font-medium text-teal-800">ประเภทการจ้าง</label>
             <select
               name="employment_type"
@@ -114,6 +126,15 @@ export async function EmployeeForm({
         <FormSection title="ช่องทางติดต่อ">
           <Field label="เบอร์โทร" name="phone" defaultValue={defaultValues?.phone} />
           <Field label="อีเมล" name="email" type="email" defaultValue={defaultValues?.email} />
+        </FormSection>
+
+        <FormSection title="ข้อมูลภาษี">
+          <Field
+            label="เลขประกันสังคม"
+            name="social_security_number"
+            defaultValue={defaultValues?.social_security_number}
+          />
+          <Field label="เลขผู้เสียภาษี" name="tax_id" defaultValue={defaultValues?.tax_id} />
         </FormSection>
 
         <div className="flex items-center gap-4 border-t border-teal-100 pt-5">

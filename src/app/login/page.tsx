@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { faCalendarDays, faUser } from "@fortawesome/free-solid-svg-icons";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -61,6 +62,13 @@ export default async function LoginPage({
           <p className="mt-4 text-xs text-indigo-500">
             ยังไม่มีบัญชี? ติดต่อฝ่ายบุคคลให้สร้างบัญชีผูกกับข้อมูลพนักงานของคุณ
           </p>
+          <Link
+            href="/holidays"
+            className="mt-4 flex items-center justify-center gap-2 rounded-lg border border-indigo-200 px-3 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-50"
+          >
+            <FontAwesomeIcon icon={faCalendarDays} />
+            ดูปฏิทินวันหยุด (ไม่ต้องเข้าสู่ระบบ)
+          </Link>
         </div>
       </div>
     </div>

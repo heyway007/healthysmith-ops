@@ -37,8 +37,18 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdminSection = pathname.startsWith("/admin");
   const isAuthRoute = isAdminSection ? pathname.startsWith("/admin/login") : pathname === "/login";
+  // Public pages anyone can open without signing in.
+  const isPublicRoute = pathname === "/holidays" || pathname.startsWith("/holidays/");
 
-  if (!user && !isAuthRoute) {
+  // Visitors opening the site root land on the public holiday calendar rather
+  // than the sign-in page; employees who sign in still get the portal home.
+  if (!user && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/holidays";
+    return NextResponse.redirect(url);
+  }
+
+  if (!user && !isAuthRoute && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = isAdminSection ? "/admin/login" : "/login";
     return NextResponse.redirect(url);

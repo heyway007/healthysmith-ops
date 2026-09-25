@@ -1,38 +1,64 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { emptyToNull } from "@/lib/forms";
+import { PROFILE_FIELDS, profileSchema, type ProfileFormState, type ProfileValues } from "./schema";
 
-export async function updateProfile(formData: FormData) {
-  try {
-    const first_name = String(formData.get("first_name") ?? "").trim();
-    const last_name = String(formData.get("last_name") ?? "").trim();
-    if (!first_name || !last_name) throw new Error("กรุณากรอกชื่อและนามสกุล");
+const emptyToNull = (s: string) => (s === "" ? null : s);
 
-    const supabase = await createClient();
-    const { error } = await supabase.rpc("update_own_employee_profile", {
-      p_prefix_name: emptyToNull(formData.get("prefix_name")),
-      p_first_name: first_name,
-      p_last_name: last_name,
-      p_nickname: emptyToNull(formData.get("nickname")),
-      p_phone: emptyToNull(formData.get("phone")),
-      p_email: emptyToNull(formData.get("email")),
-      p_address: emptyToNull(formData.get("address")),
-      p_id_card_number: emptyToNull(formData.get("id_card_number")),
-      p_bank_name: emptyToNull(formData.get("bank_name")),
-      p_bank_account_number: emptyToNull(formData.get("bank_account_number")),
-      p_bank_account_name: emptyToNull(formData.get("bank_account_name")),
-      p_social_security_number: emptyToNull(formData.get("social_security_number")),
-      p_tax_id: emptyToNull(formData.get("tax_id")),
-    });
-    if (error) throw error;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "เกิดข้อผิดพลาด";
-    redirect(`/profile?error=${encodeURIComponent(message)}`);
+// Translate DB/PostgREST errors into something an employee can act on.
+function describeDbError(error: { code?: string; message: string }): string {
+  switch (error.code) {
+    case "PGRST202":
+      return "ระบบฐานข้อมูลยังไม่อัปเดต กรุณาแจ้งผู้ดูแลระบบ (update_own_employee_profile)";
+    case "22001":
+      return "มีข้อมูลบางช่องยาวเกินกำหนด กรุณาตรวจสอบอีกครั้ง";
+    case "23505":
+      return "ข้อมูลนี้ถูกใช้โดยพนักงานคนอื่นแล้ว";
+    default:
+      return `บันทึกไม่สำเร็จ: ${error.message}`;
   }
+}
+
+export async function updateProfile(_prev: ProfileFormState, formData: FormData): Promise<ProfileFormState> {
+  const values = Object.fromEntries(
+    PROFILE_FIELDS.map((f) => [f, String(formData.get(f) ?? "")]),
+  ) as ProfileValues;
+
+  const parsed = profileSchema.safeParse(values);
+  if (!parsed.success) {
+    const { fieldErrors } = z.flattenError(parsed.error);
+    return {
+      status: "error",
+      message: "กรุณาแก้ไขช่องที่มีเครื่องหมายสีแดง",
+      fieldErrors: Object.fromEntries(Object.entries(fieldErrors).map(([k, v]) => [k, v?.[0]])),
+      values,
+    };
+  }
+
+  const d = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_own_employee_profile", {
+    p_prefix_name: emptyToNull(d.prefix_name),
+    p_first_name: d.first_name,
+    p_last_name: d.last_name,
+    p_nickname: emptyToNull(d.nickname),
+    p_phone: emptyToNull(d.phone),
+    p_email: emptyToNull(d.email),
+    p_address: emptyToNull(d.address),
+    p_id_card_number: emptyToNull(d.id_card_number),
+    p_bank_name: emptyToNull(d.bank_name),
+    p_bank_account_number: emptyToNull(d.bank_account_number),
+    p_bank_account_name: emptyToNull(d.bank_account_name),
+  });
+  if (error) {
+    console.error("updateProfile failed", error);
+    return { status: "error", message: describeDbError(error), values };
+  }
+
   revalidatePath("/profile");
   revalidatePath("/");
-  redirect("/profile?saved=1");
+  // Echo the normalised values (dashes stripped etc.) back into the form.
+  return { status: "success", message: "บันทึกข้อมูลเรียบร้อยแล้ว", values: { ...values, ...d } };
 }

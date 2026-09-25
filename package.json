@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:push": "node --env-file=.env.local scripts/supabase-db.mjs push",
+    "db:repair": "node --env-file=.env.local scripts/supabase-db.mjs repair"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.3.1",

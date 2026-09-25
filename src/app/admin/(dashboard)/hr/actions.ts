@@ -22,11 +22,14 @@ async function employeeFields(supabase: SupabaseClient, formData: FormData) {
     last_name: String(formData.get("last_name") ?? "").trim(),
     department_id,
     position_id,
+    team_id: emptyToNull(formData.get("team_id")),
     employment_type: String(formData.get("employment_type") ?? "full_time"),
     start_date: String(formData.get("start_date") ?? ""),
     base_salary: numberOrDefault(formData.get("base_salary"), 0),
     phone: emptyToNull(formData.get("phone")),
     email: emptyToNull(formData.get("email")),
+    social_security_number: emptyToNull(formData.get("social_security_number")),
+    tax_id: emptyToNull(formData.get("tax_id")),
   };
 }
 
