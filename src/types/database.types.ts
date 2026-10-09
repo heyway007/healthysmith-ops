@@ -722,6 +722,7 @@ export interface Database {
           name: string;
           is_active: boolean;
           created_at: string;
+          is_marketplace: boolean;
         };
         Insert: {
           id?: string;
@@ -729,6 +730,7 @@ export interface Database {
           name: string;
           is_active?: boolean;
           created_at?: string;
+          is_marketplace?: boolean;
         };
         Update: {
           id?: string;
@@ -736,6 +738,7 @@ export interface Database {
           name?: string;
           is_active?: boolean;
           created_at?: string;
+          is_marketplace?: boolean;
         };
         Relationships: [];
       };
@@ -909,7 +912,7 @@ export interface Database {
           id: string;
           order_number: string;
           quotation_id: string | null;
-          customer_id: string;
+          customer_id: string | null;
           sales_channel_id: string | null;
           salesperson_id: string | null;
           order_date: string;
@@ -924,12 +927,25 @@ export interface Database {
           created_by: string | null;
           created_at: string;
           updated_at: string;
+          external_order_id: string | null;
+          external_status: string | null;
+          order_import_id: string | null;
+          buyer_username: string | null;
+          buyer_name: string | null;
+          buyer_phone: string | null;
+          shipping_address: string | null;
+          platform_discount: number;
+          prices_include_vat: boolean;
+          billing_name: string | null;
+          billing_tax_id: string | null;
+          billing_branch: string | null;
+          billing_address: string | null;
         };
         Insert: {
           id?: string;
           order_number?: string;
           quotation_id?: string | null;
-          customer_id: string;
+          customer_id?: string | null;
           sales_channel_id?: string | null;
           salesperson_id?: string | null;
           order_date?: string;
@@ -944,12 +960,25 @@ export interface Database {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          external_order_id?: string | null;
+          external_status?: string | null;
+          order_import_id?: string | null;
+          buyer_username?: string | null;
+          buyer_name?: string | null;
+          buyer_phone?: string | null;
+          shipping_address?: string | null;
+          platform_discount?: number;
+          prices_include_vat?: boolean;
+          billing_name?: string | null;
+          billing_tax_id?: string | null;
+          billing_branch?: string | null;
+          billing_address?: string | null;
         };
         Update: {
           id?: string;
           order_number?: string;
           quotation_id?: string | null;
-          customer_id?: string;
+          customer_id?: string | null;
           sales_channel_id?: string | null;
           salesperson_id?: string | null;
           order_date?: string;
@@ -964,6 +993,19 @@ export interface Database {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          external_order_id?: string | null;
+          external_status?: string | null;
+          order_import_id?: string | null;
+          buyer_username?: string | null;
+          buyer_name?: string | null;
+          buyer_phone?: string | null;
+          shipping_address?: string | null;
+          platform_discount?: number;
+          prices_include_vat?: boolean;
+          billing_name?: string | null;
+          billing_tax_id?: string | null;
+          billing_branch?: string | null;
+          billing_address?: string | null;
         };
         Relationships: [];
       };
@@ -978,6 +1020,7 @@ export interface Database {
           discount_amount: number;
           amount: number | null;
           sort_order: number;
+          external_sku: string | null;
         };
         Insert: {
           id?: string;
@@ -989,6 +1032,7 @@ export interface Database {
           discount_amount?: number;
           amount?: number | null;
           sort_order?: number;
+          external_sku?: string | null;
         };
         Update: {
           id?: string;
@@ -1000,6 +1044,7 @@ export interface Database {
           discount_amount?: number;
           amount?: number | null;
           sort_order?: number;
+          external_sku?: string | null;
         };
         Relationships: [];
       };
@@ -1100,7 +1145,7 @@ export interface Database {
         Row: {
           id: string;
           tax_invoice_number: string;
-          invoice_id: string;
+          invoice_id: string | null;
           issue_date: string;
           buyer_tax_id: string | null;
           buyer_name: string;
@@ -1109,11 +1154,20 @@ export interface Database {
           vat_amount: number;
           is_cancelled: boolean;
           created_at: string;
+          customer_id: string | null;
+          buyer_branch: string | null;
+          buyer_phone: string | null;
+          subtotal: number;
+          discount_amount: number;
+          note: string | null;
+          cancelled_at: string | null;
+          cancel_reason: string | null;
+          created_by: string | null;
         };
         Insert: {
           id?: string;
           tax_invoice_number?: string;
-          invoice_id: string;
+          invoice_id?: string | null;
           issue_date?: string;
           buyer_tax_id?: string | null;
           buyer_name: string;
@@ -1122,11 +1176,20 @@ export interface Database {
           vat_amount?: number;
           is_cancelled?: boolean;
           created_at?: string;
+          customer_id?: string | null;
+          buyer_branch?: string | null;
+          buyer_phone?: string | null;
+          subtotal?: number;
+          discount_amount?: number;
+          note?: string | null;
+          cancelled_at?: string | null;
+          cancel_reason?: string | null;
+          created_by?: string | null;
         };
         Update: {
           id?: string;
           tax_invoice_number?: string;
-          invoice_id?: string;
+          invoice_id?: string | null;
           issue_date?: string;
           buyer_tax_id?: string | null;
           buyer_name?: string;
@@ -1135,6 +1198,102 @@ export interface Database {
           vat_amount?: number;
           is_cancelled?: boolean;
           created_at?: string;
+          customer_id?: string | null;
+          buyer_branch?: string | null;
+          buyer_phone?: string | null;
+          subtotal?: number;
+          discount_amount?: number;
+          note?: string | null;
+          cancelled_at?: string | null;
+          cancel_reason?: string | null;
+          created_by?: string | null;
+        };
+        Relationships: [];
+      };
+      order_imports: {
+        Row: {
+          id: string;
+          sales_channel_id: string;
+          file_name: string | null;
+          order_count: number;
+          inserted_count: number;
+          updated_count: number;
+          locked_count: number;
+          imported_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          sales_channel_id: string;
+          file_name?: string | null;
+          order_count?: number;
+          inserted_count?: number;
+          updated_count?: number;
+          locked_count?: number;
+          imported_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          sales_channel_id?: string;
+          file_name?: string | null;
+          order_count?: number;
+          inserted_count?: number;
+          updated_count?: number;
+          locked_count?: number;
+          imported_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      tax_invoice_orders: {
+        Row: {
+          tax_invoice_id: string;
+          sales_order_id: string;
+        };
+        Insert: {
+          tax_invoice_id: string;
+          sales_order_id: string;
+        };
+        Update: {
+          tax_invoice_id?: string;
+          sales_order_id?: string;
+        };
+        Relationships: [];
+      };
+      tax_invoice_items: {
+        Row: {
+          id: string;
+          tax_invoice_id: string;
+          product_id: string | null;
+          description: string;
+          quantity: number;
+          unit_price: number;
+          discount_amount: number;
+          amount: number | null;
+          sort_order: number;
+        };
+        Insert: {
+          id?: string;
+          tax_invoice_id: string;
+          product_id?: string | null;
+          description: string;
+          quantity?: number;
+          unit_price?: number;
+          discount_amount?: number;
+          amount?: number | null;
+          sort_order?: number;
+        };
+        Update: {
+          id?: string;
+          tax_invoice_id?: string;
+          product_id?: string | null;
+          description?: string;
+          quantity?: number;
+          unit_price?: number;
+          discount_amount?: number;
+          amount?: number | null;
+          sort_order?: number;
         };
         Relationships: [];
       };
@@ -1806,6 +1965,25 @@ export interface Database {
       };
     };
     Views: {
+      sales_order_list: {
+        Row: Database["public"]["Tables"]["sales_orders"]["Row"] & {
+          channel_code: string | null;
+          channel_name: string | null;
+          is_marketplace: boolean | null;
+          tax_invoice_id: string | null;
+          tax_invoice_number: string | null;
+          item_summary: string | null;
+        };
+        Relationships: [];
+      };
+      tax_invoice_list: {
+        Row: Database["public"]["Tables"]["tax_invoices"]["Row"] & {
+          order_count: number | null;
+          order_refs: string | null;
+          channel_names: string | null;
+        };
+        Relationships: [];
+      };
       supplier_purchase_history: {
         Row: { [key: string]: unknown };
         Relationships: [];
@@ -1845,6 +2023,24 @@ export interface Database {
       is_admin: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
+      };
+      import_sales_orders: {
+        Args: { p_channel_id: string; p_file_name: string | null; p_orders: Json };
+        Returns: Json;
+      };
+      issue_tax_invoice: {
+        Args: {
+          p_order_ids: string[];
+          p_issue_date: string;
+          p_buyer_name: string;
+          p_buyer_tax_id: string | null;
+          p_buyer_branch: string | null;
+          p_buyer_address: string | null;
+          p_buyer_phone: string | null;
+          p_customer_id?: string | null;
+          p_note?: string | null;
+        };
+        Returns: string;
       };
       current_employee_id: {
         Args: Record<PropertyKey, never>;

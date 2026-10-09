@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Marketplace order exports (.xlsx) are uploaded through a Server Action.
+  experimental: {
+    serverActions: { bodySizeLimit: "10mb" },
+  },
   // Holidays / teams moved out of the HR module into their own back-office menus.
   async redirects() {
     return [

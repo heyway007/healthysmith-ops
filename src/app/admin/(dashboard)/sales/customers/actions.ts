@@ -23,23 +23,23 @@ export async function createCustomer(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.from("customers").insert(customerFields(formData));
 
-  if (error) redirect(`/admin/sales/new?error=${encodeURIComponent(error.message)}`);
-  revalidatePath("/admin/sales");
-  redirect("/admin/sales");
+  if (error) redirect(`/admin/sales/customers/new?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/admin/sales/customers");
+  redirect("/admin/sales/customers");
 }
 
 export async function updateCustomer(id: string, formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.from("customers").update(customerFields(formData)).eq("id", id);
 
-  if (error) redirect(`/admin/sales/${id}?error=${encodeURIComponent(error.message)}`);
-  revalidatePath("/admin/sales");
-  redirect("/admin/sales");
+  if (error) redirect(`/admin/sales/customers/${id}?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/admin/sales/customers");
+  redirect("/admin/sales/customers");
 }
 
 export async function deleteCustomer(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("customers").delete().eq("id", id);
-  if (error) redirect(`/admin/sales?error=${encodeURIComponent(error.message)}`);
-  revalidatePath("/admin/sales");
+  if (error) redirect(`/admin/sales/customers?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/admin/sales/customers");
 }

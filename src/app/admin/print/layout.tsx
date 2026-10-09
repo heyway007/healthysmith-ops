@@ -1,19 +1,7 @@
-import { getCurrentRoles } from "@/lib/current-role";
-import { canAccess } from "@/lib/role";
-import { AccessDenied } from "@/components/ui/access-denied";
-
 // Print pages live outside the dashboard layout (no sidebar/header) but are
-// still under /admin, so they use the back-office session and need the HR role.
-export default async function PrintLayout({ children }: { children: React.ReactNode }) {
-  const roles = await getCurrentRoles();
-  if (!canAccess(roles, ["hr"])) {
-    return (
-      <main className="p-8">
-        <AccessDenied moduleName="พิมพ์ปฏิทินวันหยุด" />
-      </main>
-    );
-  }
-
+// still under /admin, so they use the back-office session. Each print area
+// checks its own role in a nested layout (holidays: hr, tax-invoices: sales).
+export default function PrintLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-100 print:bg-white">
       <style>{`

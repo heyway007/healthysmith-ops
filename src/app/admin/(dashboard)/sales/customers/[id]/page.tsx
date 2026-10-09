@@ -21,10 +21,10 @@ export default async function EditCustomerPage({
 
   return (
     <div>
-      <BackLink href="/admin/sales" label="กลับไปหน้ารายชื่อลูกค้า" />
-      <h1 className="mt-3 text-2xl font-semibold text-teal-950">
+      <BackLink href="/admin/sales/customers" label="กลับไปหน้ารายชื่อลูกค้า" />
+      <h2 className="mt-3 text-lg font-semibold text-teal-950">
         แก้ไขลูกค้า — {customer.name}
-      </h1>
+      </h2>
       <div className="mt-6">
         <CustomerForm
           action={updateCustomer.bind(null, id)}

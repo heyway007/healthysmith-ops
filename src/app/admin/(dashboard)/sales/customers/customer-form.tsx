@@ -76,7 +76,7 @@ export function CustomerForm({
           <button type="submit" className={submitButtonClassName}>
             {submitLabel}
           </button>
-          <Link href="/admin/sales" className={secondaryButtonClassName}>
+          <Link href="/admin/sales/customers" className={secondaryButtonClassName}>
             ยกเลิก
           </Link>
         </div>

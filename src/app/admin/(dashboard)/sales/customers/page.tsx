@@ -22,13 +22,13 @@ export default async function SalesPage({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-teal-950">🛒 ระบบขาย — ลูกค้า</h1>
-          <p className="mt-1 text-teal-700">
-            รายชื่อลูกค้า — ใบเสนอราคา / ออเดอร์ / ใบแจ้งหนี้ ฯลฯ จะสร้างต่อไป
+          <h2 className="text-lg font-semibold text-teal-950">ลูกค้า</h2>
+          <p className="mt-1 text-sm text-teal-700">
+            ลูกค้าประจำ / ตัวแทน / นิติบุคคล ที่ต้องเก็บข้อมูลไว้ออกเอกสาร
           </p>
         </div>
         <Link
-          href="/admin/sales/new"
+          href="/admin/sales/customers/new"
           className={`flex shrink-0 items-center gap-2 ${submitButtonClassName}`}
         >
           <FontAwesomeIcon icon={faPlus} />
@@ -56,12 +56,12 @@ export default async function SalesPage({
             {customers?.map((c) => (
               <tr key={c.id} className="border-t border-teal-100 hover:bg-teal-50">
                 <td className="px-4 py-3">
-                  <Link href={`/admin/sales/${c.id}`} className="text-teal-800 hover:text-orange-600">
+                  <Link href={`/admin/sales/customers/${c.id}`} className="text-teal-800 hover:text-orange-600">
                     {c.customer_code}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-teal-950">
-                  <Link href={`/admin/sales/${c.id}`} className="hover:text-orange-600">
+                  <Link href={`/admin/sales/customers/${c.id}`} className="hover:text-orange-600">
                     {c.name}
                   </Link>
                 </td>
