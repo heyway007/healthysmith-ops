@@ -11,10 +11,10 @@ export default async function NewBillPage({
 
   return (
     <div>
-      <BackLink href="/admin/purchase/bills" label="กลับไปหน้าบิลซื้อ" />
-      <h2 className="mt-3 text-lg font-semibold text-teal-950">บันทึกบิลซื้อ</h2>
+      <BackLink href="/admin/purchase/bills" label="กลับไปหน้ารายการซื้อ" />
+      <h2 className="mt-3 text-lg font-semibold text-teal-950">จดรายการซื้อ</h2>
       <div className="mt-6">
-        <BillForm action={createBill} submitLabel="บันทึกบิลซื้อ" error={error} />
+        <BillForm action={createBill} submitLabel="บันทึก" error={error} />
       </div>
     </div>
   );

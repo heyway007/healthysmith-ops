@@ -77,8 +77,8 @@ export default async function DashboardHome() {
     {
       href: "/admin/purchase",
       icon: faTruck,
-      title: "🛍️ ระบบจัดซื้อ (Purchase)",
-      desc: "Supplier / PR / PO / รับสินค้า / บิลซื้อ / เจ้าหนี้",
+      title: "🛍️ ซื้อของ / ค่าใช้จ่าย",
+      desc: "จดรายการซื้อ / ร้านค้า / ยอดค้างจ่าย",
       allowed: ["purchase"],
     },
     {

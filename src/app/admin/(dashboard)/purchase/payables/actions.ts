@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { emptyToNull, numberOrDefault } from "@/lib/forms";
 import { currentEmployeeId } from "@/lib/employee-picker";
+import { statusForPaid } from "../bills/status";
 
 export async function recordPayment(billId: string, formData: FormData) {
   const supabase = await createClient();
@@ -14,10 +15,8 @@ export async function recordPayment(billId: string, formData: FormData) {
       .select("*")
       .eq("id", billId)
       .single();
-    if (!bill) throw new Error("ไม่พบบิลซื้อ");
-    if (!["approved", "partially_paid"].includes(bill.status)) {
-      throw new Error("บันทึกจ่ายได้เฉพาะบิลที่อนุมัติแล้วเท่านั้น");
-    }
+    if (!bill) throw new Error("ไม่พบรายการซื้อ");
+    if (bill.status === "cancelled") throw new Error("รายการนี้ถูกยกเลิกแล้ว");
 
     const amount = numberOrDefault(formData.get("amount"), 0);
     const outstanding = bill.outstanding_amount ?? bill.total_amount - bill.paid_amount;
@@ -40,7 +39,7 @@ export async function recordPayment(billId: string, formData: FormData) {
     if (paymentError) throw paymentError;
 
     const newPaidAmount = bill.paid_amount + amount;
-    const newStatus = newPaidAmount + 1e-9 >= bill.total_amount ? "paid" : "partially_paid";
+    const newStatus = statusForPaid(newPaidAmount, bill.total_amount);
 
     const { error: billError } = await supabase
       .from("purchase_bills")

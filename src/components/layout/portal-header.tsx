@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRightFromBracket, faRightToBracket } from "@fortawesome/free-solid-svg-icons";
-import { logout } from "@/app/login/actions";
+import { faRightToBracket } from "@fortawesome/free-solid-svg-icons";
 import type { CurrentEmployee } from "@/lib/current-employee";
 import { PortalNav } from "./portal-nav";
+import { UserMenu } from "./user-menu";
 
 const buttonClassName =
   "flex items-center gap-2 whitespace-nowrap rounded-lg border border-mist-200 bg-white px-3 py-1.5 text-sm text-mist-700 transition-colors hover:border-mist-400 hover:text-mist-900";
 
 /**
  * Header shared by the employee portal and the public holiday calendar.
- * Signed in: full menu + name + sign out. Visitors: public menu + sign in.
+ * Signed in: full menu + account dropdown (profile, sign out). Visitors: public menu + sign in.
  */
 export function PortalHeader({ signedIn, employee }: { signedIn: boolean; employee: CurrentEmployee | null }) {
   return (
@@ -21,19 +21,8 @@ export function PortalHeader({ signedIn, employee }: { signedIn: boolean; employ
         </Link>
         <PortalNav signedIn={signedIn} />
         <div className="ml-auto flex shrink-0 items-center gap-3">
-          {employee && (
-            <span className="hidden text-sm text-mist-700 md:inline">
-              {employee.prefix_name}
-              {employee.first_name} {employee.last_name}
-            </span>
-          )}
           {signedIn ? (
-            <form action={logout}>
-              <button type="submit" className={buttonClassName} aria-label="ออกจากระบบ" title="ออกจากระบบ">
-                <FontAwesomeIcon icon={faRightFromBracket} />
-                <span className="hidden sm:inline">ออกจากระบบ</span>
-              </button>
-            </form>
+            <UserMenu employee={employee} />
           ) : (
             <Link href="/login" className={buttonClassName} aria-label="เข้าสู่ระบบ" title="เข้าสู่ระบบ">
               <FontAwesomeIcon icon={faRightToBracket} />

@@ -24,9 +24,9 @@ export function SupplierForm({
       )}
 
       <form action={action} className="space-y-6">
-        <FormSection title="ข้อมูลซัพพลายเออร์">
+        <FormSection title="ข้อมูลร้านค้า / ผู้ขาย">
           <Field
-            label="รหัสซัพพลายเออร์"
+            label="รหัสร้านค้า / ผู้ขาย"
             name="supplier_code"
             required
             defaultValue={defaultValues?.supplier_code}

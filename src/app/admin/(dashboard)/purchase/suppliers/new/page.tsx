@@ -11,10 +11,10 @@ export default async function NewSupplierPage({
 
   return (
     <div>
-      <BackLink href="/admin/purchase/suppliers" label="กลับไปหน้ารายชื่อซัพพลายเออร์" />
-      <h1 className="mt-3 text-2xl font-semibold text-teal-950">เพิ่มซัพพลายเออร์ใหม่</h1>
+      <BackLink href="/admin/purchase/suppliers" label="กลับไปหน้ารายชื่อร้านค้า" />
+      <h1 className="mt-3 text-2xl font-semibold text-teal-950">เพิ่มร้านค้า / ผู้ขายใหม่</h1>
       <div className="mt-6">
-        <SupplierForm action={createSupplier} submitLabel="เพิ่มซัพพลายเออร์" error={error} />
+        <SupplierForm action={createSupplier} submitLabel="เพิ่มร้านค้า / ผู้ขาย" error={error} />
       </div>
     </div>
   );

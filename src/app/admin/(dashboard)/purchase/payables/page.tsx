@@ -7,14 +7,9 @@ import {
   selectClassName,
   submitButtonClassName,
 } from "@/lib/ui-classes";
+import { bangkokToday } from "@/components/holidays/holiday-views";
 import { recordPayment } from "./actions";
-
-const PAYMENT_METHODS: Record<string, string> = {
-  cash: "เงินสด",
-  bank_transfer: "โอนเงิน",
-  cheque: "เช็ค",
-  other: "อื่นๆ",
-};
+import { PAYMENT_METHODS } from "../bills/status";
 
 function agingLabel(dueDate: string | null): { label: string; className: string } {
   if (!dueDate) return { label: "-", className: "text-teal-500" };
@@ -36,7 +31,7 @@ export default async function PayablesPage({
     supabase
       .from("purchase_bills")
       .select("*")
-      .in("status", ["approved", "partially_paid"])
+      .not("status", "in", "(paid,cancelled)")
       .order("due_date", { ascending: true, nullsFirst: false }),
     supabase.from("suppliers").select("id, name"),
   ]);
@@ -54,8 +49,8 @@ export default async function PayablesPage({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-teal-950">ติดตามยอดค้างจ่าย</h2>
-          <p className="mt-1 text-sm text-teal-700">บิลซื้อที่ยังค้างชำระทั้งหมด</p>
+          <h2 className="text-lg font-semibold text-teal-950">ค้างจ่าย</h2>
+          <p className="mt-1 text-sm text-teal-700">ของที่ซื้อมาแล้วแต่ยังจ่ายไม่ครบ</p>
         </div>
         <div className="rounded-xl border border-teal-100 bg-white px-5 py-3 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-teal-500">ยอดค้างจ่ายรวม</p>
@@ -70,17 +65,17 @@ export default async function PayablesPage({
       {payingBill && (
         <div className={`mt-6 max-w-lg ${formCardClassName}`}>
           <h3 className="text-sm font-semibold text-teal-900">
-            บันทึกจ่ายชำระ — {payingBill.bill_number}
+            บันทึกจ่ายเงิน — {payingBill.bill_number}
           </h3>
           <p className="mt-1 text-sm text-teal-600">
-            ยอดค้างชำระ: {(payingBill.outstanding_amount ?? 0).toLocaleString()} บาท
+            ยอดค้างจ่าย: {(payingBill.outstanding_amount ?? 0).toLocaleString()} บาท
           </p>
           <form action={recordPayment.bind(null, payingBill.id)} className="mt-4 space-y-4">
             <Field
               label="วันที่จ่าย"
               name="payment_date"
               type="date"
-              defaultValue={new Date().toISOString().slice(0, 10)}
+              defaultValue={bangkokToday()}
             />
             <div>
               <label className="block text-sm font-medium text-teal-800">วิธีจ่าย</label>
@@ -103,7 +98,7 @@ export default async function PayablesPage({
             <Field label="หมายเหตุ" name="note" />
             <div className="flex items-center gap-4">
               <button type="submit" className={submitButtonClassName}>
-                บันทึกจ่ายชำระ
+                บันทึกจ่ายเงิน
               </button>
               <Link href="/admin/purchase/payables" className={secondaryButtonClassName}>
                 ยกเลิก
@@ -117,12 +112,12 @@ export default async function PayablesPage({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
-              <th className="px-4 py-3">เลขที่บิล</th>
-              <th className="px-4 py-3">ซัพพลายเออร์</th>
+              <th className="px-4 py-3">เลขที่</th>
+              <th className="px-4 py-3">ร้าน / ผู้ขาย</th>
               <th className="px-4 py-3">ครบกำหนด</th>
               <th className="px-4 py-3">อายุหนี้</th>
               <th className="px-4 py-3">ยอดรวม</th>
-              <th className="px-4 py-3">ค้างชำระ</th>
+              <th className="px-4 py-3">ค้างจ่าย</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>

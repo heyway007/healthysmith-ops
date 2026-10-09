@@ -21,9 +21,9 @@ export default async function EditSupplierPage({
 
   return (
     <div>
-      <BackLink href="/admin/purchase/suppliers" label="กลับไปหน้ารายชื่อซัพพลายเออร์" />
+      <BackLink href="/admin/purchase/suppliers" label="กลับไปหน้ารายชื่อร้านค้า" />
       <h1 className="mt-3 text-2xl font-semibold text-teal-950">
-        แก้ไขซัพพลายเออร์ — {supplier.name}
+        แก้ไขร้านค้า / ผู้ขาย — {supplier.name}
       </h1>
       <div className="mt-6">
         <SupplierForm

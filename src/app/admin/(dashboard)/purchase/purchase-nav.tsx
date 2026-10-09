@@ -3,22 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faFileLines,
-  faCartFlatbed,
-  faTruckRampBox,
-  faFileInvoiceDollar,
-  faTruck,
-  faScaleBalanced,
-} from "@fortawesome/free-solid-svg-icons";
+import { faReceipt, faStore, faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 
 const tabs = [
-  { href: "/admin/purchase/requests", label: "ขอซื้อ (PR)", icon: faFileLines },
-  { href: "/admin/purchase/orders", label: "ใบสั่งซื้อ (PO)", icon: faCartFlatbed },
-  { href: "/admin/purchase/receipts", label: "ใบรับสินค้า (GR)", icon: faTruckRampBox },
-  { href: "/admin/purchase/bills", label: "บิลซื้อ", icon: faFileInvoiceDollar },
-  { href: "/admin/purchase/suppliers", label: "ซัพพลายเออร์", icon: faTruck },
-  { href: "/admin/purchase/payables", label: "ยอดค้างจ่าย", icon: faScaleBalanced },
+  { href: "/admin/purchase/bills", label: "รายการซื้อ", icon: faReceipt },
+  { href: "/admin/purchase/payables", label: "ค้างจ่าย", icon: faScaleBalanced },
+  { href: "/admin/purchase/suppliers", label: "ร้านค้า / ผู้ขาย", icon: faStore },
 ];
 
 export function PurchaseNav() {

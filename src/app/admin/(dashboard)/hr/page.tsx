@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPen, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { deleteEmployee } from "./actions";
 import { DeleteButton } from "@/components/ui/delete-button";
+import { MaskedValue } from "@/components/ui/masked-value";
 import { EMPLOYMENT_TYPES } from "./employment-types";
 
 export default async function HrPage({
@@ -77,12 +78,23 @@ export default async function HrPage({
                 <td className="px-4 py-3 text-teal-700">
                   {EMPLOYMENT_TYPES[e.employment_type] ?? e.employment_type}
                 </td>
-                <td className="px-4 py-3 text-teal-700">{e.base_salary.toLocaleString()}</td>
-                <td className="px-4 py-3 text-right">
-                  <DeleteButton
-                    action={deleteEmployee.bind(null, e.id)}
-                    confirmMessage={`ลบพนักงาน "${e.first_name} ${e.last_name}"?`}
-                  />
+                <td className="px-4 py-3 text-teal-700">
+                  <MaskedValue value={e.base_salary.toLocaleString()} />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/admin/hr/${e.id}`}
+                      title="แก้ไข"
+                      className="rounded-full border border-teal-200 p-1.5 text-teal-600 transition-colors hover:bg-teal-50"
+                    >
+                      <FontAwesomeIcon icon={faPen} />
+                    </Link>
+                    <DeleteButton
+                      action={deleteEmployee.bind(null, e.id)}
+                      confirmMessage={`ลบพนักงาน "${e.first_name} ${e.last_name}"?`}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}

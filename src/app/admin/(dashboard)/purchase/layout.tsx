@@ -9,9 +9,9 @@ export default async function PurchaseLayout({ children }: { children: React.Rea
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-teal-950">🚚 ระบบจัดซื้อ</h1>
+      <h1 className="text-2xl font-semibold text-teal-950">🛍️ ซื้อของ / ค่าใช้จ่าย</h1>
       <p className="mt-1 text-teal-700">
-        ขอซื้อ → ใบสั่งซื้อ → รับสินค้า → บันทึกบิลซื้อ → จ่ายชำระ
+        จดว่าซื้ออะไร จากร้านไหน เท่าไหร่ จ่ายแล้วหรือยัง
       </p>
       {allowed && (
         <div className="mt-5">
@@ -19,7 +19,7 @@ export default async function PurchaseLayout({ children }: { children: React.Rea
         </div>
       )}
       <div className="mt-6">
-        {allowed ? children : <AccessDenied moduleName="ระบบจัดซื้อ" />}
+        {allowed ? children : <AccessDenied moduleName="ซื้อของ / ค่าใช้จ่าย" />}
       </div>
     </div>
   );

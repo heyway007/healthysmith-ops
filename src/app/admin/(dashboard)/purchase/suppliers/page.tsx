@@ -16,13 +16,14 @@ export default async function PurchasePage({
   const { data: suppliers } = await supabase
     .from("suppliers")
     .select("*")
+    .eq("is_active", true)
     .order("created_at", { ascending: false });
 
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-teal-950">ซัพพลายเออร์</h2>
+          <h2 className="text-lg font-semibold text-teal-950">ร้านค้า / ผู้ขาย</h2>
           <p className="mt-1 text-sm text-teal-700">รายชื่อคู่ค้า/ผู้ขาย</p>
         </div>
         <Link
@@ -30,7 +31,7 @@ export default async function PurchasePage({
           className={`flex shrink-0 items-center gap-2 ${submitButtonClassName}`}
         >
           <FontAwesomeIcon icon={faPlus} />
-          เพิ่มซัพพลายเออร์ใหม่
+          เพิ่มร้านค้า / ผู้ขายใหม่
         </Link>
       </div>
 
@@ -69,7 +70,7 @@ export default async function PurchasePage({
                 <td className="px-4 py-3 text-right">
                   <DeleteButton
                     action={deleteSupplier.bind(null, s.id)}
-                    confirmMessage={`ลบซัพพลายเออร์ "${s.name}"?`}
+                    confirmMessage={`ลบร้านค้า / ผู้ขาย "${s.name}"?`}
                   />
                 </td>
               </tr>
@@ -77,7 +78,7 @@ export default async function PurchasePage({
             {(!suppliers || suppliers.length === 0) && (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-teal-400">
-                  ยังไม่มีข้อมูลซัพพลายเออร์
+                  ยังไม่มีข้อมูลร้านค้า / ผู้ขาย
                 </td>
               </tr>
             )}

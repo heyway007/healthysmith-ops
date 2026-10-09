@@ -13,10 +13,14 @@ export async function resolveSupplierIdByName(
 
   const { data: existing } = await supabase
     .from("suppliers")
-    .select("id")
+    .select("id, is_active")
     .eq("name", name)
     .maybeSingle();
-  if (existing) return existing.id;
+  if (existing) {
+    // buying from a hidden shop again brings it back into the list
+    if (!existing.is_active) await supabase.from("suppliers").update({ is_active: true }).eq("id", existing.id);
+    return existing.id;
+  }
 
   const { count } = await supabase.from("suppliers").select("id", { count: "exact", head: true });
   const supplier_code = `SUP-${String((count ?? 0) + 1).padStart(4, "0")}`;

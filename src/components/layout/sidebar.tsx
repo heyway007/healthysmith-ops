@@ -19,7 +19,7 @@ import { canAccess, type Role } from "@/lib/role";
 const navItems: { href: string; label: string; icon: typeof faGaugeHigh; allowed: Role[] }[] = [
   { href: "/admin", label: "หน้าหลัก", icon: faGaugeHigh, allowed: ["admin", "sales", "purchase", "hr"] },
   { href: "/admin/sales", label: "ระบบขาย", icon: faCartShopping, allowed: ["sales"] },
-  { href: "/admin/purchase", label: "ระบบจัดซื้อ", icon: faTruck, allowed: ["purchase"] },
+  { href: "/admin/purchase", label: "ซื้อของ / ค่าใช้จ่าย", icon: faTruck, allowed: ["purchase"] },
   { href: "/admin/hr", label: "พนักงาน & เงินเดือน", icon: faUsers, allowed: ["hr"] },
   { href: "/admin/teams", label: "ทีม", icon: faPeopleGroup, allowed: ["hr"] },
   { href: "/admin/holidays", label: "วันหยุด & WFH", icon: faCalendarDays, allowed: ["hr"] },

@@ -20,9 +20,12 @@ function emptyRow(columns: LineItemColumn[]): Record<string, string> {
 export function LineItemsEditor({
   columns,
   initialRows,
+  totalOf,
 }: {
   columns: LineItemColumn[];
   initialRows?: Record<string, string>[];
+  /** column keys multiplied per row and summed into a running total shown under the table */
+  totalOf?: [quantityKey: string, priceKey: string];
 }) {
   const [rows, setRows] = useState<Record<string, string>[]>(
     initialRows && initialRows.length > 0 ? initialRows : [emptyRow(columns)]
@@ -84,14 +87,32 @@ export function LineItemsEditor({
           </tbody>
         </table>
       </div>
-      <button
-        type="button"
-        onClick={addRow}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-teal-200 px-3 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50"
-      >
-        <FontAwesomeIcon icon={faPlus} className="text-xs" />
-        เพิ่มรายการ
-      </button>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={addRow}
+          className="flex items-center gap-2 rounded-lg border border-teal-200 px-3 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50"
+        >
+          <FontAwesomeIcon icon={faPlus} className="text-xs" />
+          เพิ่มรายการ
+        </button>
+        {totalOf && (
+          <p className="text-sm text-teal-700">
+            รวม{" "}
+            <span className="font-semibold text-teal-950">
+              {rows
+                .reduce((sum, row) => {
+                  // blank quantity counts as 1, same as the server-side default
+                  const qty = row[totalOf[0]].trim() === "" ? 1 : Number(row[totalOf[0]]);
+                  const price = Number(row[totalOf[1]] || 0);
+                  return sum + (Number.isFinite(qty * price) ? qty * price : 0);
+                }, 0)
+                .toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>{" "}
+            บาท
+          </p>
+        )}
+      </div>
     </div>
   );
 }

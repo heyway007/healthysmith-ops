@@ -7,7 +7,6 @@ const ITEMS = [
   { href: "/", label: "หน้าหลัก", public: false },
   { href: "/leave", label: "ใบลาของฉัน", public: false },
   { href: "/holidays", label: "วันหยุดบริษัท", public: true },
-  { href: "/profile", label: "โปรไฟล์ของฉัน", public: false },
 ];
 
 /** Front-office menu; visitors who aren't signed in only see the public pages. */
