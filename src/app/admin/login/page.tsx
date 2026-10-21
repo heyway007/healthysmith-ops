@@ -1,6 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { faUserShield } from "@fortawesome/free-solid-svg-icons";
+import { VersionBadge } from "@/components/ui/version-badge";
+import { APP_VERSION } from "@/lib/version";
 import { adminLogin } from "./actions";
 
 export default async function AdminLoginPage({
@@ -11,7 +13,7 @@ export default async function AdminLoginPage({
   const { error } = await searchParams;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-teal-100 via-teal-50 to-orange-50 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-linear-to-br from-teal-100 via-teal-50 to-orange-50 px-4">
       <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-teal-100 bg-white shadow-xl shadow-teal-900/10">
         <div className="h-1.5 bg-linear-to-r from-teal-500 via-cyan-500 to-orange-400" />
         <div className="p-8">
@@ -65,6 +67,7 @@ export default async function AdminLoginPage({
           </p>
         </div>
       </div>
+      <VersionBadge version={APP_VERSION} tone="teal" />
     </div>
   );
 }

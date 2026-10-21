@@ -16,6 +16,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { canAccess, type Role } from "@/lib/role";
+import { VersionBadge } from "@/components/ui/version-badge";
 
 const navItems: { href: string; label: string; icon: typeof faGaugeHigh; allowed: Role[] }[] = [
   { href: "/admin", label: "หน้าหลัก", icon: faGaugeHigh, allowed: ["admin", "sales", "purchase", "hr"] },
@@ -28,7 +29,7 @@ const navItems: { href: string; label: string; icon: typeof faGaugeHigh; allowed
   { href: "/admin/audit-logs", label: "ประวัติการใช้งาน", icon: faClockRotateLeft, allowed: [] },
 ];
 
-export function Sidebar({ roles }: { roles: Role[] }) {
+export function Sidebar({ roles, version }: { roles: Role[]; version: string }) {
   const pathname = usePathname();
   const visibleItems = navItems.filter((item) => canAccess(roles, item.allowed));
 
@@ -46,6 +47,7 @@ export function Sidebar({ roles }: { roles: Role[] }) {
         <div>
           <p className="font-semibold text-white">ระบบบัญชีและหลังบ้าน</p>
           <p className="text-xs text-teal-200 mt-0.5">Sales · Purchase · HR</p>
+          <VersionBadge version={version} tone="dark" className="mt-1.5" />
         </div>
         <label
           htmlFor="mobile-nav"

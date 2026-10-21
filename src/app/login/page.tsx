@@ -2,6 +2,8 @@ import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { faCalendarDays, faUser } from "@fortawesome/free-solid-svg-icons";
+import { VersionBadge } from "@/components/ui/version-badge";
+import { APP_VERSION } from "@/lib/version";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -12,7 +14,7 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-mist-100 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-mist-100 px-4">
       <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-mist-200 bg-white shadow-sm">
         <div className="h-1 bg-mist-800" />
         <div className="p-8">
@@ -70,6 +72,7 @@ export default async function LoginPage({
           </Link>
         </div>
       </div>
+      <VersionBadge version={APP_VERSION} />
     </div>
   );
 }
