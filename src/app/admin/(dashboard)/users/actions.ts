@@ -8,6 +8,7 @@ import { emptyToNull } from "@/lib/forms";
 import { getCurrentRoles } from "@/lib/current-role";
 import { resolveOrCreateEmployeeId } from "@/lib/employee-picker";
 import { ROLE_LABELS, type Role } from "@/lib/role";
+import { logAuditEvent } from "@/lib/audit";
 
 async function assertAdmin() {
   const roles = await getCurrentRoles();
@@ -56,6 +57,7 @@ export async function createUser(formData: FormData) {
       await admin.auth.admin.deleteUser(created.user.id);
       throw roleError;
     }
+    await logAuditEvent("account.create", { accountId: created.user.id, accountEmail: email });
 
     // Keep employees.user_id (used elsewhere to resolve "which employee is
     // the signed-in user") pointed at the same employee.
@@ -92,18 +94,33 @@ export async function updateUser(userId: string, formData: FormData) {
       isEmployee
     );
 
+    const admin = createAdminClient();
+    const { data: before } = await admin.auth.admin.getUserById(userId);
+    const previousEmail = before.user?.email ?? null;
+
     const { data: previous } = await supabase
       .from("user_roles")
       .select("employee_id")
       .eq("user_id", userId)
       .single();
 
-    const admin = createAdminClient();
     const { error: authError } = await admin.auth.admin.updateUserById(userId, {
       email,
       ...(password ? { password } : {}),
     });
     if (authError) throw authError;
+    // Role/employee changes are logged by the user_roles trigger; this covers
+    // what lives in Supabase Auth. Never log the password itself.
+    if (previousEmail !== email || password) {
+      await logAuditEvent("account.update", {
+        accountId: userId,
+        accountEmail: email,
+        details: {
+          ...(previousEmail !== email ? { email_from: previousEmail, email_to: email } : {}),
+          ...(password ? { password_changed: true } : {}),
+        },
+      });
+    }
 
     const { error: roleError } = await supabase
       .from("user_roles")

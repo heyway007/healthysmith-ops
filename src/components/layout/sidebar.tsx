@@ -12,6 +12,7 @@ import {
   faPeopleGroup,
   faCalendarDays,
   faUserShield,
+  faClockRotateLeft,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { canAccess, type Role } from "@/lib/role";
@@ -24,6 +25,7 @@ const navItems: { href: string; label: string; icon: typeof faGaugeHigh; allowed
   { href: "/admin/teams", label: "ทีม", icon: faPeopleGroup, allowed: ["hr"] },
   { href: "/admin/holidays", label: "วันหยุด & WFH", icon: faCalendarDays, allowed: ["hr"] },
   { href: "/admin/users", label: "ผู้ใช้งานและสิทธิ์", icon: faUserShield, allowed: [] },
+  { href: "/admin/audit-logs", label: "ประวัติการใช้งาน", icon: faClockRotateLeft, allowed: [] },
 ];
 
 export function Sidebar({ roles }: { roles: Role[] }) {

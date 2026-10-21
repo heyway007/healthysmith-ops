@@ -1963,6 +1963,52 @@ export interface Database {
         };
         Relationships: [];
       };
+      audit_logs: {
+        Row: {
+          id: number;
+          occurred_at: string;
+          txid: number;
+          actor_user_id: string | null;
+          actor_email: string | null;
+          action: string;
+          table_name: string | null;
+          record_id: string | null;
+          record_label: string | null;
+          old_data: Json | null;
+          new_data: Json | null;
+          changed_fields: string[] | null;
+          details: Json | null;
+        };
+        Insert: {
+          occurred_at?: string;
+          txid?: number;
+          actor_user_id?: string | null;
+          actor_email?: string | null;
+          action: string;
+          table_name?: string | null;
+          record_id?: string | null;
+          record_label?: string | null;
+          old_data?: Json | null;
+          new_data?: Json | null;
+          changed_fields?: string[] | null;
+          details?: Json | null;
+        };
+        Update: {
+          occurred_at?: string;
+          txid?: number;
+          actor_user_id?: string | null;
+          actor_email?: string | null;
+          action?: string;
+          table_name?: string | null;
+          record_id?: string | null;
+          record_label?: string | null;
+          old_data?: Json | null;
+          new_data?: Json | null;
+          changed_fields?: string[] | null;
+          details?: Json | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       sales_order_list: {

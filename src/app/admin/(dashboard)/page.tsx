@@ -5,6 +5,7 @@ import {
   faArrowUpRightFromSquare,
   faCalendarDays,
   faCartShopping,
+  faClockRotateLeft,
   faPeopleGroup,
   faTruck,
   faUserShield,
@@ -109,6 +110,13 @@ export default async function DashboardHome() {
       icon: faUserShield,
       title: "🔐 ผู้ใช้งานและสิทธิ์",
       desc: "บัญชีผู้ใช้หลังบ้าน / สิทธิ์ตามฝ่าย / ผูกบัญชีพนักงานกับหน้าบ้าน",
+      allowed: [],
+    },
+    {
+      href: "/admin/audit-logs",
+      icon: faClockRotateLeft,
+      title: "🕘 ประวัติการใช้งาน",
+      desc: "ใครเพิ่ม / แก้ไข / ลบข้อมูลอะไร เมื่อไหร่ / การเข้า-ออกระบบ",
       allowed: [],
     },
   ];

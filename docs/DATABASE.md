@@ -12,6 +12,7 @@
 | `0004_purchase.sql` | โมดูล 4: ระบบจัดซื้อ |
 | `0005_rls_policies.sql` | เปิด Row Level Security ทุกตาราง (สิทธิ์เริ่มต้น: ผู้ใช้ที่ login แล้วทำได้ทุกอย่าง) |
 | `0014_marketplace_orders_tax_invoices.sql` | นำเข้าออเดอร์ Shopee/Lazada/TikTok + ออกใบกำกับภาษีแยก/รวมออเดอร์ |
+| `0015_audit_log.sql` | Audit log: บันทึกการเพิ่ม/แก้ไข/ลบทุกตาราง + การเข้า-ออกระบบ |
 
 > **หมายเหตุสำคัญ:** ตาราง `products` ใน `0001_common.sql` เป็นแค่โครงชั่วคราว
 > (sku, ชื่อ, ราคา) ให้ Sales/Purchase อ้างอิงได้ก่อน เมื่อสร้างโมดูล 3
@@ -130,6 +131,34 @@ purchase_approvals   -- ประวัติอนุมัติ ใช้ร�
 (ระบบผู้ใช้งานและสิทธิ์) ให้กลับมาแก้ policy พวกนี้ให้ตรวจสอบ role/สิทธิ์
 ของผู้ใช้แต่ละคน เช่น พนักงานทั่วไปเห็นได้แค่ payslip ของตัวเอง,
 เฉพาะฝ่ายบัญชีอนุมัติ purchase_bills ได้ ฯลฯ
+
+## Audit log (`0015_audit_log.sql`)
+
+ตาราง `audit_logs` เก็บว่าใครเพิ่ม / แก้ไข / ลบข้อมูลอะไร เมื่อไหร่ — ดูได้ที่
+หลังบ้าน **ประวัติการใช้งาน** (`/admin/audit-logs`, เฉพาะ admin)
+
+- **การเปลี่ยนแปลงข้อมูล** บันทึกโดย trigger `trg_audit` (ฟังก์ชัน
+  `audit_row_change()`) ที่ติดไว้ทุกตาราง จึงครอบคลุมทั้ง server action, RPC
+  และหน้าบ้านโดยไม่ต้องเขียนโค้ดเพิ่ม ผู้กระทำอ่านจาก JWT (`auth.uid()` + email)
+  ถ้าเขียนด้วย service-role key จะไม่มีผู้กระทำ (แสดงเป็น "ระบบ")
+  - update: เก็บเฉพาะคอลัมน์ที่เปลี่ยน (`old_data` / `new_data` / `changed_fields`)
+    ถ้าเปลี่ยนแค่ `updated_at` จะไม่บันทึก
+  - insert แล้ว update แถวเดิมใน transaction เดียวกัน (เช่น RPC ที่สร้างเอกสาร
+    แล้วค่อยเติมยอดรวม) จะรวมเป็นรายการ insert เดียว
+  - ไม่บันทึก: `document_number_sequences`, `sales_order_items` (สร้างใหม่ทุกครั้งที่
+    นำเข้าซ้ำ), `tax_invoice_items` (คัดลอกจากออเดอร์ตอนออกใบ)
+  - `sales_orders`: ถ้านำเข้าซ้ำแล้วเปลี่ยนแค่ `order_import_id` จะไม่บันทึก
+- **การเข้า-ออกระบบ และบัญชีผู้ใช้ใน Supabase Auth** (สร้างบัญชี, เปลี่ยนอีเมล /
+  รหัสผ่าน) บันทึกจากฝั่งแอปผ่าน `logAuditEvent()` ใน `src/lib/audit.ts`
+- แก้ไข / ลบรายการ log ผ่าน API ไม่ได้ (admin อ่านได้อย่างเดียว)
+
+**ตารางใหม่ต้องเปิด audit เอง** ใน migration ของตารางนั้น:
+
+```sql
+select public.enable_audit('public.<table>');
+-- หรือระบุคอลัมน์ที่เปลี่ยนแล้วไม่ต้องบันทึก
+select public.enable_audit('public.<table>', array['some_column']);
+```
 
 ## การรันบนเครื่อง (local development)
 
