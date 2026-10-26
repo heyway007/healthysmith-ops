@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { emptyToNull } from "@/lib/forms";
 
-/** Seller details printed on every tax invoice (single company row). */
+/** Our company details printed on every tax invoice and 50 ทวิ certificate (single row). */
 export async function saveCompany(formData: FormData) {
   const supabase = await createClient();
   const taxId = emptyToNull(formData.get("tax_id"))?.replace(/[\s-]/g, "") ?? null;
@@ -31,8 +31,8 @@ export async function saveCompany(formData: FormData) {
     if (error) message = error.message;
   }
 
-  if (message) redirect(`/admin/sales/settings?error=${encodeURIComponent(message)}`);
-  revalidatePath("/admin/sales", "layout");
-  revalidatePath("/admin/print/tax-invoices");
-  redirect("/admin/sales/settings?saved=1");
+  if (message) redirect(`/admin/tax-documents/company?error=${encodeURIComponent(message)}`);
+  revalidatePath("/admin/tax-documents", "layout");
+  revalidatePath("/admin/print", "layout");
+  redirect("/admin/tax-documents/company?saved=1");
 }

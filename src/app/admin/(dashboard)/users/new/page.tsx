@@ -3,6 +3,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { Field } from "@/components/ui/field";
 import { PasswordFields } from "@/components/ui/password-fields";
 import { RoleCheckboxes } from "@/components/ui/role-checkboxes";
+import { DocPermissionCheckboxes } from "@/components/ui/doc-permission-checkboxes";
 import { formCardClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { employeeLabel } from "@/lib/employee-picker";
 import { createUser } from "../actions";
@@ -76,6 +77,16 @@ export default async function NewUserPage({
             </div>
             <p className="mt-1 text-xs text-teal-500">
               ไม่เลือกเลย = พนักงานทั่วไป เข้าได้แค่ระบบพนักงาน (หน้าบ้าน) เท่านั้น ไม่เห็นเมนูหลังบ้านใดๆ
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-teal-800">สิทธิ์เอกสารภาษี (ใบกำกับภาษี / หนังสือหัก ณ ที่จ่าย)</label>
+            <div className="mt-1">
+              <DocPermissionCheckboxes defaultPermissions={["view", "create"]} />
+            </div>
+            <p className="mt-1 text-xs text-teal-500">
+              ใช้คู่กับบทบาท: ฝ่ายขายเห็นใบกำกับภาษี ฝ่ายจัดซื้อเห็นหนังสือหัก ณ ที่จ่าย — ผู้ดูแลระบบได้ทุกสิทธิ์อัตโนมัติ
             </p>
           </div>
 

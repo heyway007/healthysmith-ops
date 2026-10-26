@@ -13,7 +13,10 @@ export type AuditEvent =
   | "auth.login_failed"
   | "auth.logout"
   | "account.create"
-  | "account.update";
+  | "account.update"
+  | "document.print"
+  | "data.export"
+  | "data.backup";
 
 type Actor = { id: string; email: string | null };
 
@@ -46,6 +49,40 @@ export async function logAuditEvent(
         details: { ...opts.details, ip, user_agent: h.get("user-agent") },
       });
     if (error) throw error;
+  } catch (err) {
+    console.error("audit log write failed", action, err);
+  }
+}
+
+/**
+ * One entry per document for things done *to* issued documents that don't
+ * change them (printing). Filed under the document's table/id so it shows in
+ * that document's history. Never throws.
+ */
+export async function logDocumentEvents(
+  action: "document.print",
+  table: "tax_invoices" | "wht_certificates",
+  docs: { id: string; label: string }[],
+  details: Record<string, Json | undefined> = {}
+) {
+  if (docs.length === 0) return;
+  try {
+    const actor = await currentActor();
+    const h = await headers();
+    const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip");
+    const rows = docs.map((d) => ({
+      action,
+      actor_user_id: actor?.id ?? null,
+      actor_email: actor?.email ?? null,
+      table_name: table,
+      record_id: d.id,
+      record_label: d.label,
+      details: { ...details, ip, user_agent: h.get("user-agent") },
+    }));
+    for (let i = 0; i < rows.length; i += 500) {
+      const { error } = await createAdminClient().from("audit_logs").insert(rows.slice(i, i + 500));
+      if (error) throw error;
+    }
   } catch (err) {
     console.error("audit log write failed", action, err);
   }

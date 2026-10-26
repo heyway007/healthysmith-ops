@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { formCardClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { saveCompany } from "./actions";
 
-export default async function SalesSettingsPage({
+export default async function CompanySettingsPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string; saved?: string }>;
@@ -21,16 +21,16 @@ export default async function SalesSettingsPage({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-teal-950">ข้อมูลผู้ขาย</h2>
+      <h2 className="text-lg font-semibold text-teal-950">ข้อมูลบริษัท (ผู้ออกเอกสาร)</h2>
       <p className="mt-1 text-sm text-teal-700">
-        ชื่อ ที่อยู่ และเลขประจำตัวผู้เสียภาษีของบริษัท ที่จะพิมพ์บนหัวใบกำกับภาษีทุกใบ — ต้องตรงกับที่จดทะเบียน ภ.พ.20
+        ชื่อ ที่อยู่ และเลขประจำตัวผู้เสียภาษีของบริษัท ที่จะพิมพ์บนใบกำกับภาษี และหนังสือรับรองหัก ณ ที่จ่ายทุกใบ — ต้องตรงกับที่จดทะเบียน ภ.พ.20
       </p>
 
       {error && <p className="mt-4 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{error}</p>}
       {saved && <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">บันทึกแล้ว</p>}
       {!company && (
         <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          ⚠️ ยังไม่ได้ตั้งค่า — ใบกำกับภาษีจะยังไม่มีข้อมูลผู้ขาย
+          ⚠️ ยังไม่ได้ตั้งค่า — ใบกำกับภาษีและหนังสือหัก ณ ที่จ่ายจะยังไม่มีข้อมูลบริษัท
         </p>
       )}
       {!isAdmin && (

@@ -81,7 +81,7 @@ export function PasswordFields({
           </button>
         </div>
         <p className="mt-1 text-xs text-teal-500">
-          {helperText ?? (required ? "อย่างน้อย 8 ตัวอักษร" : "เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน")}
+          {helperText ?? (required ? "อย่างน้อย 8 ตัวอักษร มีทั้งตัวอักษรภาษาอังกฤษและตัวเลข" : "เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน")}
         </p>
       </div>
 

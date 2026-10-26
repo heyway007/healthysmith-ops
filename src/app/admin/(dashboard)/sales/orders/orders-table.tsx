@@ -10,7 +10,7 @@ import { startNavigationProgress } from "@/components/ui/navigation-progress";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { formatMoney, thaiDate } from "@/lib/thai-money";
 import { ChannelBadge, ORDER_STATUS } from "../status";
-import { issueTaxInvoicesPerOrder } from "../tax-invoices/actions";
+import { issueTaxInvoicesPerOrder } from "../../tax-documents/tax-invoices/actions";
 
 export type OrderRow = {
   id: string;
@@ -62,7 +62,7 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
 
   const combine = () => {
     startNavigationProgress();
-    router.push(`/admin/sales/tax-invoices/new?orders=${chosen.map((r) => r.id).join(",")}`);
+    router.push(`/admin/tax-documents/tax-invoices/new?orders=${chosen.map((r) => r.id).join(",")}`);
   };
 
   return (
@@ -102,7 +102,7 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
         <div className="mb-3 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           <p>
             {message.text} —{" "}
-            <Link href="/admin/sales/tax-invoices" className="font-medium underline hover:text-orange-600">
+            <Link href="/admin/tax-documents/tax-invoices" className="font-medium underline hover:text-orange-600">
               ไปพิมพ์ที่หน้าใบกำกับภาษี
             </Link>
           </p>
@@ -184,7 +184,7 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
                 <td className="whitespace-nowrap px-4 py-3">
                   {r.taxInvoiceId ? (
                     <Link
-                      href={`/admin/sales/tax-invoices/${r.taxInvoiceId}`}
+                      href={`/admin/tax-documents/tax-invoices/${r.taxInvoiceId}`}
                       className="font-mono text-xs font-medium text-emerald-700 hover:text-orange-600"
                     >
                       {r.taxInvoiceNumber}

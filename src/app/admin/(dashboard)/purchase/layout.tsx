@@ -1,7 +1,7 @@
 import { getCurrentRoles } from "@/lib/current-role";
 import { canAccess } from "@/lib/role";
 import { AccessDenied } from "@/components/ui/access-denied";
-import { PurchaseNav } from "./purchase-nav";
+import { SectionTabs } from "@/components/layout/section-tabs";
 
 export default async function PurchaseLayout({ children }: { children: React.ReactNode }) {
   const roles = await getCurrentRoles();
@@ -15,7 +15,7 @@ export default async function PurchaseLayout({ children }: { children: React.Rea
       </p>
       {allowed && (
         <div className="mt-5">
-          <PurchaseNav />
+          <SectionTabs group="purchase" roles={roles} />
         </div>
       )}
       <div className="mt-6">

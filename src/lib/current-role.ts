@@ -10,3 +10,10 @@ export async function getCurrentRoles(): Promise<Role[]> {
   const { data } = await supabase.rpc("current_roles");
   return (data as Role[] | null) ?? [];
 }
+
+/** The signed-in user's tax-document permissions (admin: all). Server-only. */
+export async function getDocPermissions(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("current_doc_permissions");
+  return (data as string[] | null) ?? [];
+}

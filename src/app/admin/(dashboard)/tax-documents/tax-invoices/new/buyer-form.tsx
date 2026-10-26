@@ -14,6 +14,7 @@ export type BuyerDefaults = {
   branch: string;
   address: string;
   phone: string;
+  note?: string;
 };
 
 type Customer = { id: string; name: string; tax_id: string | null; address: string | null; phone: string | null };
@@ -29,31 +30,40 @@ export function BuyerForm({
   lastIssueDate,
   customers,
   backHref,
+  replace,
+  children,
 }: {
-  action: (formData: FormData) => Promise<void>;
-  orderIds: string[];
+  action: (formData: FormData) => void | Promise<void>;
+  /** omitted for an invoice keyed in by hand */
+  orderIds?: string[];
   defaults: BuyerDefaults;
   defaultDate: string;
   lastIssueDate: string | null;
   customers: Customer[];
   backHref: string;
+  /** correcting an issued invoice: it is cancelled and linked to the new one */
+  replace?: { id: string; number: string };
+  /** extra sections (e.g. the line items) placed between the buyer and the submit button */
+  children?: React.ReactNode;
 }) {
   const [buyer, setBuyer] = useState(defaults);
   const [customerId, setCustomerId] = useState("");
   const [issueDate, setIssueDate] = useState(defaultDate);
+  const [editReason, setEditReason] = useState("");
   const set = (k: keyof BuyerDefaults) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setBuyer((b) => ({ ...b, [k]: e.target.value }));
 
   const pickCustomer = (id: string) => {
     setCustomerId(id);
     const c = customers.find((x) => x.id === id);
-    if (!c) return setBuyer(defaults);
+    if (!c) return setBuyer({ ...defaults, note: buyer.note });
     setBuyer({
       name: c.name,
       taxId: c.tax_id ?? "",
       branch: c.tax_id ? "สำนักงานใหญ่" : "",
       address: c.address ?? "",
       phone: c.phone ?? "",
+      note: buyer.note,
     });
   };
 
@@ -62,8 +72,29 @@ export function BuyerForm({
 
   return (
     <form action={action} className={formCardClassName}>
-      <input type="hidden" name="order_ids" value={orderIds.join(",")} />
+      {orderIds && <input type="hidden" name="order_ids" value={orderIds.join(",")} />}
       <input type="hidden" name="customer_id" value={customerId} />
+      {replace && (
+        <div className="mb-6 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3">
+          <input type="hidden" name="replaces_id" value={replace.id} />
+          <p className="text-sm text-sky-900">
+            แก้ไขใบกำกับภาษีเลขที่ <span className="font-mono font-semibold">{replace.number}</span> — เมื่อกดออก ระบบจะออกฉบับใหม่
+            (เลขที่ใหม่) และยกเลิกฉบับเดิมโดยเก็บไว้พร้อมเหตุผล
+          </p>
+          <label className="mt-3 block text-sm font-medium text-sky-900" htmlFor="edit_reason">
+            เหตุผลที่แก้ไข <span className="text-orange-500">*</span>
+          </label>
+          <input
+            id="edit_reason"
+            name="edit_reason"
+            required
+            value={editReason}
+            onChange={(e) => setEditReason(e.target.value)}
+            placeholder="เช่น ลูกค้าแจ้งแก้ชื่อบริษัท / ที่อยู่ผิด"
+            className={inputClassName}
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {customers.length > 0 && (
@@ -72,7 +103,7 @@ export function BuyerForm({
               ดึงข้อมูลจากรายชื่อลูกค้า (ถ้ามี)
             </label>
             <select id="pick_customer" value={customerId} onChange={(e) => pickCustomer(e.target.value)} className={selectClassName}>
-              <option value="">— ใช้ข้อมูลจากออเดอร์ —</option>
+              <option value="">{orderIds ? "— ใช้ข้อมูลจากออเดอร์ —" : "— กรอกเอง —"}</option>
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -148,7 +179,7 @@ export function BuyerForm({
           <label className="block text-sm font-medium text-teal-800" htmlFor="note">
             หมายเหตุ (พิมพ์ในใบกำกับ)
           </label>
-          <input id="note" name="note" className={inputClassName} />
+          <input id="note" name="note" value={buyer.note ?? ""} onChange={set("note")} className={inputClassName} />
         </div>
       </div>
 
@@ -159,10 +190,12 @@ export function BuyerForm({
         </p>
       )}
 
+      {children}
+
       <div className="mt-6 flex items-center gap-4 border-t border-teal-100 pt-5">
         <SubmitButton className={submitButtonClassName} pendingLabel="กำลังออกใบกำกับ...">
           <FontAwesomeIcon icon={faFileInvoice} />
-          ออกใบกำกับภาษี
+          {replace ? "ออกฉบับแก้ไข" : "ออกใบกำกับภาษี"}
         </SubmitButton>
         <Link href={backHref} className={secondaryButtonClassName}>
           ยกเลิก

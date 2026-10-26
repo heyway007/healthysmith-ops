@@ -12,11 +12,14 @@ export function SubmitButton({
   className,
   pendingLabel = "กำลังบันทึก...",
   onClick,
+  formAction,
   children,
 }: {
   className: string;
   pendingLabel?: string;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  /** a different server action for this button (several submit buttons in one form) */
+  formAction?: (formData: FormData) => void | Promise<void>;
   children: React.ReactNode;
 }) {
   const { pending } = useFormStatus();
@@ -26,6 +29,7 @@ export function SubmitButton({
       disabled={pending}
       aria-busy={pending}
       onClick={onClick}
+      formAction={formAction}
       className={`${className} inline-flex items-center justify-center gap-2 disabled:cursor-wait disabled:opacity-70`}
     >
       {pending ? (

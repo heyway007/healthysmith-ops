@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
       { source: "/admin/hr/holidays/:path*", destination: "/admin/holidays/:path*", permanent: true },
       // Teams moved out of the HR module into their own menu.
       { source: "/admin/hr/teams", destination: "/admin/teams", permanent: true },
+      // Tax invoices, 50 ทวิ certificates and the company details moved into
+      // their own "เอกสารภาษี" menu.
+      { source: "/admin/sales/tax-invoices/:path*", destination: "/admin/tax-documents/tax-invoices/:path*", permanent: true },
+      { source: "/admin/sales/settings", destination: "/admin/tax-documents/company", permanent: true },
+      { source: "/admin/purchase/wht/:path*", destination: "/admin/tax-documents/wht/:path*", permanent: true },
     ];
   },
 };

@@ -50,7 +50,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </div>
         {canIssue && (
           <Link
-            href={`/admin/sales/tax-invoices/new?orders=${order.id}`}
+            href={`/admin/tax-documents/tax-invoices/new?orders=${order.id}`}
             className={`flex shrink-0 items-center gap-2 ${submitButtonClassName}`}
           >
             <FontAwesomeIcon icon={faFileInvoice} />
@@ -144,7 +144,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             {invoices?.map((t) => (
               <li key={t.id}>
                 <Link
-                  href={`/admin/sales/tax-invoices/${t.id}`}
+                  href={`/admin/tax-documents/tax-invoices/${t.id}`}
                   className={`font-mono font-medium hover:text-orange-600 ${t.is_cancelled ? "text-gray-400 line-through" : "text-emerald-700"}`}
                 >
                   {t.tax_invoice_number}

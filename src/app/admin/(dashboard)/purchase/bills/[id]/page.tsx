@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BackLink } from "@/components/ui/back-link";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { formCardClassName, submitButtonClassName } from "@/lib/ui-classes";
+import { formCardClassName, secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { updateBill } from "../actions";
 import { BillForm } from "../bill-form";
 import { BILL_STATUS, PAYMENT_METHODS } from "../status";
@@ -43,11 +43,18 @@ export default async function BillDetailPage({
             <Amount label="จ่ายแล้ว" value={bill.paid_amount} className="text-emerald-700" />
             <Amount label="ค้างจ่าย" value={outstanding} className={outstanding > 0 ? "text-rose-600" : undefined} />
           </dl>
-          {outstanding > 0 && bill.status !== "cancelled" && (
-            <Link href={`/admin/purchase/payables?bill=${id}`} className={submitButtonClassName}>
-              บันทึกจ่ายเงิน
-            </Link>
-          )}
+          <div className="flex flex-wrap gap-3">
+            {bill.status !== "cancelled" && (
+              <Link href={`/admin/tax-documents/wht/new?bill=${id}`} className={secondaryButtonClassName}>
+                ออกหนังสือหัก ณ ที่จ่าย
+              </Link>
+            )}
+            {outstanding > 0 && bill.status !== "cancelled" && (
+              <Link href={`/admin/purchase/payables?bill=${id}`} className={submitButtonClassName}>
+                บันทึกจ่ายเงิน
+              </Link>
+            )}
+          </div>
         </div>
 
         {payments && payments.length > 0 && (

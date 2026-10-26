@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DOC_PERMISSION_LABELS, type DocPermission } from "@/lib/doc-permissions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faPen } from "@fortawesome/free-solid-svg-icons";
 import { createClient } from "@/lib/supabase/server";
@@ -83,6 +84,16 @@ export default async function UsersPage({
                       ))
                     )}
                   </div>
+                  {(u.roles as Role[]).some((r) => r === "admin" || r === "sales" || r === "purchase") && (
+                    <p className="mt-1 text-xs text-teal-500">
+                      เอกสารภาษี:{" "}
+                      {(u.roles as Role[]).includes("admin")
+                        ? "ทุกสิทธิ์"
+                        : u.doc_permissions.length
+                          ? u.doc_permissions.map((p) => DOC_PERMISSION_LABELS[p as DocPermission] ?? p).join(" · ")
+                          : "ไม่มีสิทธิ์"}
+                    </p>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <span

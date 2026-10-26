@@ -7,9 +7,10 @@ import { BuyerForm } from "./buyer-form";
 export default async function NewTaxInvoicePage({
   searchParams,
 }: {
-  searchParams: Promise<{ orders?: string; error?: string }>;
+  searchParams: Promise<{ orders?: string; error?: string; replace?: string }>;
 }) {
-  const { orders: orderParam, error } = await searchParams;
+  const { orders: orderParam, error, replace: replaceParam } = await searchParams;
+  const replaceId = /^[0-9a-f-]{36}$/i.test(replaceParam ?? "") ? replaceParam! : null;
   const ids = (orderParam ?? "").split(",").filter((s) => /^[0-9a-f-]{36}$/i.test(s)).slice(0, 200);
 
   const supabase = await createClient();
@@ -23,6 +24,10 @@ export default async function NewTaxInvoicePage({
     supabase.from("customers").select("id, name, tax_id, address, phone").eq("is_active", true).order("name"),
     supabase.from("tax_invoices").select("issue_date").order("issue_date", { ascending: false }).limit(1).maybeSingle(),
   ]);
+  // Correcting an issued invoice: it is cancelled and linked on issue.
+  const { data: original } = replaceId
+    ? await supabase.from("tax_invoices").select("*").eq("id", replaceId).is("replaced_by_id", null).maybeSingle()
+    : { data: null };
 
   const list = orders ?? [];
   const backHref = list[0] ? `/admin/sales/orders?month=${list[0].order_date.slice(0, 7)}` : "/admin/sales/orders";
@@ -37,7 +42,7 @@ export default async function NewTaxInvoicePage({
   }
 
   const problems = [
-    ...list.filter((o) => o.tax_invoice_id).map((o) => `${o.external_order_id ?? o.order_number} ออกใบกำกับไปแล้ว (${o.tax_invoice_number})`),
+    ...list.filter((o) => o.tax_invoice_id && o.tax_invoice_id !== original?.id).map((o) => `${o.external_order_id ?? o.order_number} ออกใบกำกับไปแล้ว (${o.tax_invoice_number})`),
     ...list.filter((o) => o.status === "cancelled").map((o) => `${o.external_order_id ?? o.order_number} ถูกยกเลิก`),
     ...(new Set(list.map((o) => o.order_date.slice(0, 7))).size > 1 ? ["ออเดอร์อยู่ต่างเดือนกัน — รวมเป็นใบเดียวไม่ได้"] : []),
   ];
@@ -45,13 +50,23 @@ export default async function NewTaxInvoicePage({
 
   // Pre-fill from the first order that has a tax-invoice request, else the first order.
   const src = list.find((o) => o.billing_name || o.billing_tax_id) ?? list[0];
-  const defaults = {
+  const fromOrders = {
     name: src.billing_name ?? src.buyer_name ?? src.buyer_username ?? "",
     taxId: src.billing_tax_id ?? "",
     branch: src.billing_branch ? (/^0+$/.test(src.billing_branch) ? "สำนักงานใหญ่" : src.billing_branch) : "",
     address: src.billing_address ?? src.shipping_address ?? "",
     phone: src.buyer_phone ?? "",
   };
+  const defaults = original
+    ? {
+        name: original.buyer_name,
+        taxId: original.buyer_tax_id ?? "",
+        branch: original.buyer_branch ?? "",
+        address: original.buyer_address ?? "",
+        phone: original.buyer_phone ?? "",
+        note: original.note ?? "",
+      }
+    : fromOrders;
 
   const directShipping = list.filter((o) => !o.is_marketplace).reduce((s, o) => s + o.shipping_fee, 0);
   const subtotal = (items ?? []).reduce((s, i) => s + (i.amount ?? 0), 0) + directShipping;
@@ -63,7 +78,8 @@ export default async function NewTaxInvoicePage({
     <div>
       <BackLink href={backHref} label="กลับไปหน้ารายการออเดอร์" />
       <h2 className="mt-3 text-lg font-semibold text-teal-950">
-        ออกใบเสร็จรับเงิน/ใบกำกับภาษี {list.length > 1 && `— รวม ${list.length} ออเดอร์`}
+        {original ? `แก้ไขใบกำกับภาษี ${original.tax_invoice_number}` : "ออกใบเสร็จรับเงิน/ใบกำกับภาษี"}{" "}
+        {list.length > 1 && `— รวม ${list.length} ออเดอร์`}
       </h2>
 
       {error && <p className="mt-4 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{error}</p>}
@@ -139,7 +155,8 @@ export default async function NewTaxInvoicePage({
           defaultDate={list[list.length - 1].order_date}
           lastIssueDate={last?.issue_date ?? null}
           customers={customers ?? []}
-          backHref={backHref}
+          backHref={original ? `/admin/tax-documents/tax-invoices/${original.id}` : backHref}
+          replace={original ? { id: original.id, number: original.tax_invoice_number } : undefined}
         />
       </div>
     </div>

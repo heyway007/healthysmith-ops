@@ -3,12 +3,12 @@ import { faRightFromBracket, faBars } from "@fortawesome/free-solid-svg-icons";
 import { Sidebar } from "@/components/layout/sidebar";
 import { AccessDenied } from "@/components/ui/access-denied";
 import { adminLogout } from "@/app/admin/login/actions";
-import { getCurrentRoles } from "@/lib/current-role";
+import { getCurrentRoles, getDocPermissions } from "@/lib/current-role";
 import { ROLE_LABELS } from "@/lib/role";
 import { APP_VERSION } from "@/lib/version";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const roles = await getCurrentRoles();
+  const [roles, docPermissions] = await Promise.all([getCurrentRoles(), getDocPermissions()]);
 
   return (
     <div className="flex min-h-screen bg-linear-to-br from-teal-50 via-cyan-50 to-teal-100 text-teal-950">
@@ -21,7 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         aria-hidden="true"
       />
 
-      <Sidebar roles={roles} version={APP_VERSION} />
+      <Sidebar roles={roles} docPermissions={docPermissions} version={APP_VERSION} />
 
       <div className="flex-1">
         <header className="flex items-center gap-4 border-b border-teal-100 bg-white/80 backdrop-blur px-4 sm:px-8 py-3 shadow-sm">

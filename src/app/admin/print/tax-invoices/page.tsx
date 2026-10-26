@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { TaxInvoiceDocument, COPY_LABELS } from "@/components/sales/tax-invoice-document";
-import { monthRange } from "@/lib/thai-money";
+import { parseDocFilters } from "@/lib/doc-list-filters";
+import { logDocumentEvents } from "@/lib/audit";
 import type { Database } from "@/types/database.types";
 import { TaxInvoicePrintControls, type Copies } from "./print-controls";
 
@@ -15,7 +16,15 @@ const MAX = 500;
 export default async function PrintTaxInvoicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string | string[]; month?: string; status?: string; q?: string; copies?: string }>;
+  searchParams: Promise<{
+    id?: string | string[];
+    month?: string;
+    from?: string;
+    to?: string;
+    status?: string;
+    q?: string;
+    copies?: string;
+  }>;
 }) {
   const params = await searchParams;
   const ids = [params.id ?? []].flat().filter((s) => /^[0-9a-f-]{36}$/i.test(s)).slice(0, MAX);
@@ -30,12 +39,14 @@ export default async function PrintTaxInvoicesPage({
       const { data } = await supabase.from("tax_invoice_list").select("*").in("id", ids.slice(i, i + 100));
       invoices.push(...(data ?? []));
     }
-  } else if (/^\d{4}-\d{2}$/.test(params.month ?? "")) {
-    const [from, to] = monthRange(params.month!);
-    let query = supabase.from("tax_invoice_list").select("*").gte("issue_date", from).lte("issue_date", to).limit(MAX);
-    if (params.status === "cancelled") query = query.eq("is_cancelled", true);
-    else if (params.status !== "all") query = query.eq("is_cancelled", false);
-    const q = (params.q ?? "").replace(/[,()*%\\]/g, " ").trim();
+  } else if (params.month || params.from || params.to) {
+    // "Print everything shown": the same filters as the list.
+    const f = parseDocFilters(params);
+    let query = supabase.from("tax_invoice_list").select("*").gte("issue_date", f.from).lte("issue_date", f.to).limit(MAX);
+    if (f.status === "active") query = query.eq("is_cancelled", false);
+    if (f.status === "cancelled") query = query.eq("is_cancelled", true);
+    if (f.status === "pending") query = query.eq("is_cancelled", false).not("cancel_requested_at", "is", null);
+    const q = f.q;
     if (q) {
       query = query.or(
         ["tax_invoice_number", "buyer_name", "buyer_tax_id", "order_refs"].map((c) => `${c}.ilike.*${q}*`).join(","),
@@ -59,6 +70,13 @@ export default async function PrintTaxInvoicesPage({
       else itemsByInvoice.set(item.tax_invoice_id, [item]);
     }
   }
+
+  await logDocumentEvents(
+    "document.print",
+    "tax_invoices",
+    invoices.map((t) => ({ id: t.id, label: t.tax_invoice_number })),
+    { copies: copies === "both" ? "ต้นฉบับ + สำเนา" : copies === "original" ? "ต้นฉบับ" : "สำเนา" },
+  );
 
   const sheets = invoices.flatMap((t) =>
     (copies === "both" ? (["original", "copy"] as const) : [copies]).map((copy) => ({ t, copy })),

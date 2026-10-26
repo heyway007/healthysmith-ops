@@ -7,7 +7,7 @@ import { emptyToNull } from "@/lib/forms";
 
 function revalidateSales() {
   revalidatePath("/admin/sales/orders");
-  revalidatePath("/admin/sales/tax-invoices");
+  revalidatePath("/admin/tax-documents/tax-invoices");
 }
 
 /** "สำนักงานใหญ่" for a VAT-registered buyer that didn't say otherwise. */
@@ -72,30 +72,63 @@ export async function createTaxInvoice(formData: FormData) {
     p_buyer_phone: emptyToNull(formData.get("buyer_phone")),
     p_customer_id: emptyToNull(formData.get("customer_id")),
     p_note: emptyToNull(formData.get("note")),
+    p_replaces_id: emptyToNull(formData.get("replaces_id")),
+    p_edit_reason: emptyToNull(formData.get("edit_reason")),
   });
 
   if (error || !id) {
     const msg = encodeURIComponent(error?.message ?? "ออกใบกำกับภาษีไม่สำเร็จ");
-    redirect(`/admin/sales/tax-invoices/new?orders=${orderIds.join(",")}&error=${msg}`);
+    const replace = emptyToNull(formData.get("replaces_id"));
+    redirect(`/admin/tax-documents/tax-invoices/new?orders=${orderIds.join(",")}${replace ? `&replace=${replace}` : ""}&error=${msg}`);
   }
   revalidateSales();
-  redirect(`/admin/sales/tax-invoices/${id}`);
+  redirect(`/admin/tax-documents/tax-invoices/${id}`);
 }
 
-/** Tax invoices are never deleted: cancelling keeps the number (it isn't
- * reused) and frees the orders so a corrected one can be issued. */
-export async function cancelTaxInvoice(id: string, formData: FormData) {
+export type ManualInvoiceState = { error: string } | null;
+
+type ManualItem = {
+  product_id: string | null;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  discount_amount: number;
+};
+
+/** Issue a tax invoice from lines keyed in on the form (no imported order). */
+export async function createManualTaxInvoice(_prev: ManualInvoiceState, formData: FormData): Promise<ManualInvoiceState> {
+  let items: ManualItem[];
+  try {
+    items = JSON.parse(String(formData.get("items") ?? "[]"));
+  } catch {
+    return { error: "ข้อมูลรายการสินค้าไม่ถูกต้อง" };
+  }
+  if (!Array.isArray(items) || items.length === 0) return { error: "กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ" };
+
   const supabase = await createClient();
-  const reason = emptyToNull(formData.get("cancel_reason"));
-  if (!reason) redirect(`/admin/sales/tax-invoices/${id}?error=${encodeURIComponent("กรุณาระบุเหตุผลที่ยกเลิก")}`);
+  const taxId = emptyToNull(formData.get("buyer_tax_id"))?.replace(/[\s-]/g, "") ?? null;
 
-  const { error } = await supabase
-    .from("tax_invoices")
-    .update({ is_cancelled: true, cancelled_at: new Date().toISOString(), cancel_reason: reason })
-    .eq("id", id)
-    .eq("is_cancelled", false);
+  const { data: id, error } = await supabase.rpc("issue_manual_tax_invoice", {
+    p_issue_date: String(formData.get("issue_date") ?? ""),
+    p_buyer_name: String(formData.get("buyer_name") ?? "").trim(),
+    p_buyer_tax_id: taxId,
+    p_buyer_branch: defaultBranch(taxId, emptyToNull(formData.get("buyer_branch"))),
+    p_buyer_address: emptyToNull(formData.get("buyer_address")),
+    p_buyer_phone: emptyToNull(formData.get("buyer_phone")),
+    p_items: items,
+    p_discount: Number(formData.get("discount_amount") || 0),
+    p_customer_id: emptyToNull(formData.get("customer_id")),
+    p_note: emptyToNull(formData.get("note")),
+    p_payment_method: emptyToNull(formData.get("payment_method")),
+    p_payment_bank: emptyToNull(formData.get("payment_bank")),
+    p_payment_branch: emptyToNull(formData.get("payment_branch")),
+    p_payment_ref: emptyToNull(formData.get("payment_ref")),
+    p_payment_date: emptyToNull(formData.get("payment_date")),
+    p_replaces_id: emptyToNull(formData.get("replaces_id")),
+    p_edit_reason: emptyToNull(formData.get("edit_reason")),
+  });
 
-  if (error) redirect(`/admin/sales/tax-invoices/${id}?error=${encodeURIComponent(error.message)}`);
+  if (error || !id) return { error: error?.message ?? "ออกใบกำกับภาษีไม่สำเร็จ" };
   revalidateSales();
-  redirect(`/admin/sales/tax-invoices/${id}`);
+  redirect(`/admin/tax-documents/tax-invoices/${id}`);
 }

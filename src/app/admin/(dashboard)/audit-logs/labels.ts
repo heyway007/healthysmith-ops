@@ -9,6 +9,9 @@ export const ACTION_LABELS: Record<string, { label: string; className: string }>
   "auth.logout": { label: "ออกจากระบบ", className: "bg-gray-200 text-gray-600" },
   "account.create": { label: "สร้างบัญชี", className: "bg-indigo-100 text-indigo-700" },
   "account.update": { label: "แก้ไขบัญชี", className: "bg-indigo-100 text-indigo-700" },
+  "document.print": { label: "พิมพ์เอกสาร", className: "bg-sky-100 text-sky-700" },
+  "data.export": { label: "ส่งออกข้อมูล", className: "bg-violet-100 text-violet-700" },
+  "data.backup": { label: "สำรองข้อมูล", className: "bg-violet-100 text-violet-700" },
 };
 
 /** Grouped for the table filter; also the Thai name shown per entry. */
@@ -31,6 +34,14 @@ export const TABLE_GROUPS: { label: string; tables: Record<string, string> }[] =
       shipments: "การจัดส่ง",
       sales_returns: "รับคืนสินค้า",
       sales_return_items: "รายการรับคืนสินค้า",
+    },
+  },
+  {
+    label: "เอกสารภาษี",
+    tables: {
+      wht_certificates: "หนังสือรับรองหัก ณ ที่จ่าย",
+      wht_certificate_lines: "รายการในหนังสือหัก ณ ที่จ่าย",
+      tax_invoice_items: "รายการในใบกำกับภาษี",
     },
   },
   {
@@ -88,8 +99,9 @@ export const TABLE_LABELS: Record<string, string> = Object.assign(
 
 const RECORD_PATHS: Record<string, string> = {
   sales_orders: "/admin/sales/orders",
-  tax_invoices: "/admin/sales/tax-invoices",
-  tax_invoice_orders: "/admin/sales/tax-invoices",
+  tax_invoices: "/admin/tax-documents/tax-invoices",
+  tax_invoice_orders: "/admin/tax-documents/tax-invoices",
+  wht_certificates: "/admin/tax-documents/wht",
   customers: "/admin/sales/customers",
   purchase_bills: "/admin/purchase/bills",
   suppliers: "/admin/purchase/suppliers",

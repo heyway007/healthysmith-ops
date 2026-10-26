@@ -9,6 +9,14 @@ import { getCurrentRoles } from "@/lib/current-role";
 import { resolveOrCreateEmployeeId } from "@/lib/employee-picker";
 import { ROLE_LABELS, type Role } from "@/lib/role";
 import { logAuditEvent } from "@/lib/audit";
+import { docPermissionsFromForm } from "@/lib/doc-permissions";
+
+/** At least 8 characters with both letters and digits. Returns an error message or null. */
+function passwordProblem(password: string) {
+  if (password.length < 8) return "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return "รหัสผ่านต้องมีทั้งตัวอักษรภาษาอังกฤษและตัวเลข";
+  return null;
+}
 
 async function assertAdmin() {
   const roles = await getCurrentRoles();
@@ -31,7 +39,8 @@ export async function createUser(formData: FormData) {
     const roles = rolesFromForm(formData);
 
     if (!email || !password) throw new Error("กรุณากรอกอีเมลและรหัสผ่าน");
-    if (password.length < 8) throw new Error("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
+    const weak = passwordProblem(password);
+    if (weak) throw new Error(weak);
     if (password !== passwordConfirmation) throw new Error("รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน");
     const isEmployee = formData.get("is_employee") === "1";
 
@@ -52,7 +61,7 @@ export async function createUser(formData: FormData) {
 
     const { error: roleError } = await supabase
       .from("user_roles")
-      .insert({ user_id: created.user.id, roles, employee_id });
+      .insert({ user_id: created.user.id, roles, employee_id, doc_permissions: docPermissionsFromForm(formData) });
     if (roleError) {
       await admin.auth.admin.deleteUser(created.user.id);
       throw roleError;
@@ -82,7 +91,8 @@ export async function updateUser(userId: string, formData: FormData) {
 
     if (!email) throw new Error("กรุณากรอกอีเมล");
     if (password || passwordConfirmation) {
-      if (password.length < 8) throw new Error("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
+      const weak = passwordProblem(password);
+      if (weak) throw new Error(weak);
       if (password !== passwordConfirmation) throw new Error("รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน");
     }
     const isEmployee = formData.get("is_employee") === "1";
@@ -124,7 +134,7 @@ export async function updateUser(userId: string, formData: FormData) {
 
     const { error: roleError } = await supabase
       .from("user_roles")
-      .update({ roles, employee_id })
+      .update({ roles, employee_id, doc_permissions: docPermissionsFromForm(formData) })
       .eq("user_id", userId);
     if (roleError) throw roleError;
 
