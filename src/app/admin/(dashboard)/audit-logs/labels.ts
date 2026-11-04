@@ -61,6 +61,16 @@ export const TABLE_GROUPS: { label: string; tables: Record<string, string> }[] =
     },
   },
   {
+    label: "คลังสินค้า & ผลิต",
+    tables: {
+      products: "สินค้า",
+      production_orders: "ใบผลิตสินค้า",
+      production_order_items: "รายการในใบผลิต",
+      production_receipts: "รับสินค้าจากการผลิต",
+      stock_movements: "เอกสารสต๊อก (รับเข้า / เบิก / ปรับยอด)",
+    },
+  },
+  {
     label: "พนักงาน & เงินเดือน",
     tables: {
       employees: "พนักงาน",
@@ -87,7 +97,6 @@ export const TABLE_GROUPS: { label: string; tables: Record<string, string> }[] =
       auth_users: "บัญชีผู้ใช้",
       user_roles: "สิทธิ์ผู้ใช้",
       companies: "ข้อมูลบริษัท",
-      products: "สินค้า",
     },
   },
 ];
@@ -105,6 +114,8 @@ const RECORD_PATHS: Record<string, string> = {
   customers: "/admin/sales/customers",
   purchase_bills: "/admin/purchase/bills",
   suppliers: "/admin/purchase/suppliers",
+  products: "/admin/inventory/products",
+  production_orders: "/admin/inventory/production",
   employees: "/admin/hr",
   teams: "/admin/teams",
   company_holidays: "/admin/holidays",

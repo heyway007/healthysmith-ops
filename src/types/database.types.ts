@@ -101,6 +101,8 @@ export interface Database {
           product_type: string;
           cost_price: number;
           sale_price: number;
+          min_stock: number;
+          note: string | null;
           is_active: boolean;
           created_at: string;
           updated_at: string;
@@ -114,6 +116,8 @@ export interface Database {
           product_type?: string;
           cost_price?: number;
           sale_price?: number;
+          min_stock?: number;
+          note?: string | null;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -127,6 +131,8 @@ export interface Database {
           product_type?: string;
           cost_price?: number;
           sale_price?: number;
+          min_stock?: number;
+          note?: string | null;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -2140,6 +2146,201 @@ export interface Database {
         };
         Relationships: [];
       };
+      production_orders: {
+        Row: {
+          id: string;
+          production_number: string;
+          order_date: string;
+          due_date: string | null;
+          producer_name: string | null;
+          status: string;
+          note: string | null;
+          closed_at: string | null;
+          closed_by_email: string | null;
+          close_reason: string | null;
+          created_by_email: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          production_number?: string;
+          order_date?: string;
+          due_date?: string | null;
+          producer_name?: string | null;
+          status?: string;
+          note?: string | null;
+          closed_at?: string | null;
+          closed_by_email?: string | null;
+          close_reason?: string | null;
+          created_by_email?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          production_number?: string;
+          order_date?: string;
+          due_date?: string | null;
+          producer_name?: string | null;
+          status?: string;
+          note?: string | null;
+          closed_at?: string | null;
+          closed_by_email?: string | null;
+          close_reason?: string | null;
+          created_by_email?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      production_order_items: {
+        Row: {
+          id: string;
+          production_order_id: string;
+          product_id: string;
+          quantity: number;
+          received_quantity: number;
+          sort_order: number;
+        };
+        Insert: {
+          id?: string;
+          production_order_id: string;
+          product_id: string;
+          quantity: number;
+          received_quantity?: number;
+          sort_order?: number;
+        };
+        Update: {
+          id?: string;
+          production_order_id?: string;
+          product_id?: string;
+          quantity?: number;
+          received_quantity?: number;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      production_receipts: {
+        Row: {
+          id: string;
+          receipt_number: string;
+          production_order_id: string;
+          receipt_date: string;
+          note: string | null;
+          is_cancelled: boolean;
+          cancelled_at: string | null;
+          cancelled_by_email: string | null;
+          cancel_reason: string | null;
+          created_by_email: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          receipt_number?: string;
+          production_order_id: string;
+          receipt_date?: string;
+          note?: string | null;
+          is_cancelled?: boolean;
+          cancelled_at?: string | null;
+          cancelled_by_email?: string | null;
+          cancel_reason?: string | null;
+          created_by_email?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          receipt_number?: string;
+          production_order_id?: string;
+          receipt_date?: string;
+          note?: string | null;
+          is_cancelled?: boolean;
+          cancelled_at?: string | null;
+          cancelled_by_email?: string | null;
+          cancel_reason?: string | null;
+          created_by_email?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      production_receipt_items: {
+        Row: {
+          id: string;
+          production_receipt_id: string;
+          production_order_item_id: string;
+          product_id: string;
+          quantity: number;
+          lot_number: string | null;
+          expiry_date: string | null;
+        };
+        Insert: {
+          id?: string;
+          production_receipt_id: string;
+          production_order_item_id: string;
+          product_id: string;
+          quantity: number;
+          lot_number?: string | null;
+          expiry_date?: string | null;
+        };
+        Update: {
+          id?: string;
+          production_receipt_id?: string;
+          production_order_item_id?: string;
+          product_id?: string;
+          quantity?: number;
+          lot_number?: string | null;
+          expiry_date?: string | null;
+        };
+        Relationships: [];
+      };
+      stock_movements: {
+        Row: {
+          id: string;
+          doc_number: string | null;
+          movement_date: string;
+          product_id: string;
+          movement_type: string;
+          quantity: number;
+          lot_number: string | null;
+          expiry_date: string | null;
+          ref_no: string | null;
+          note: string | null;
+          production_receipt_id: string | null;
+          created_by_email: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          doc_number?: string | null;
+          movement_date?: string;
+          product_id: string;
+          movement_type: string;
+          quantity: number;
+          lot_number?: string | null;
+          expiry_date?: string | null;
+          ref_no?: string | null;
+          note?: string | null;
+          production_receipt_id?: string | null;
+          created_by_email?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          doc_number?: string | null;
+          movement_date?: string;
+          product_id?: string;
+          movement_type?: string;
+          quantity?: number;
+          lot_number?: string | null;
+          expiry_date?: string | null;
+          ref_no?: string | null;
+          note?: string | null;
+          production_receipt_id?: string | null;
+          created_by_email?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       user_roles: {
         Row: {
           id: string;
@@ -2242,6 +2443,14 @@ export interface Database {
       };
       supplier_purchase_history: {
         Row: { [key: string]: unknown };
+        Relationships: [];
+      };
+      product_stock: {
+        Row: Database["public"]["Tables"]["products"]["Row"] & {
+          on_hand: number;
+          in_production: number;
+          last_movement_date: string | null;
+        };
         Relationships: [];
       };
       employee_directory: {
@@ -2353,6 +2562,30 @@ export interface Database {
       verify_document: {
         Args: { p_kind: string; p_id: string };
         Returns: { stored_hash: string | null; current_hash: string | null; matches: boolean }[];
+      };
+      save_production_order: {
+        Args: { p_id: string | null; p_header: Json; p_items: Json };
+        Returns: string;
+      };
+      receive_production: {
+        Args: { p_order_id: string; p_date: string | null; p_note: string | null; p_lines: Json };
+        Returns: string;
+      };
+      cancel_production_receipt: {
+        Args: { p_receipt_id: string; p_reason: string };
+        Returns: undefined;
+      };
+      set_production_order_status: {
+        Args: { p_id: string; p_action: string; p_reason?: string | null };
+        Returns: undefined;
+      };
+      post_stock_movements: {
+        Args: { p_type: string; p_date: string | null; p_ref_no: string | null; p_note: string | null; p_lines: Json };
+        Returns: string;
+      };
+      post_stock_count: {
+        Args: { p_date: string | null; p_note: string | null; p_lines: Json };
+        Returns: string | null;
       };
       current_employee_id: {
         Args: Record<PropertyKey, never>;

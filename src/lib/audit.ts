@@ -61,7 +61,7 @@ export async function logAuditEvent(
  */
 export async function logDocumentEvents(
   action: "document.print",
-  table: "tax_invoices" | "wht_certificates",
+  table: "tax_invoices" | "wht_certificates" | "production_orders" | "production_receipts" | "stock_movements",
   docs: { id: string; label: string }[],
   details: Record<string, Json | undefined> = {}
 ) {

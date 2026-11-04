@@ -16,12 +16,13 @@
 | `0016_manual_tax_invoices.sql` | ออกใบเสร็จรับเงิน/ใบกำกับภาษีแบบกรอกรายการเอง (ขายหน้าร้าน/ขายตรง ไม่อ้างอิงออเดอร์) |
 | `0017_wht_certificates.sql` | หนังสือรับรองการหักภาษี ณ ที่จ่าย (50 ทวิ) เลขที่ `DDMMYY-NN` รันใหม่ทุกวัน |
 | `0018_document_controls.sql` | สิทธิ์เอกสารรายคน (ดู/เพิ่ม/แก้ไข/ยกเลิก/อนุมัติ), ล็อกเอกสารที่ออกแล้ว (แก้ผ่าน RPC เท่านั้น), ฉบับแก้ไขอ้างอิงฉบับเดิม, ขอยกเลิก→อนุมัติ, SHA-256 ต้นฉบับ |
+| `0019_inventory_production.sql` | โมดูล 3: คลังสินค้า & ผลิต — role `warehouse`, ใบผลิตสินค้า (รับแยกได้หลายครั้ง), สมุดสต๊อกเข้า-ออก, นับสต๊อก |
+| `0020_stock_documents.sql` | เลขที่เอกสารบนรายการสต๊อก (IN / OUT / CNT / FG) เพื่อพิมพ์ใบรับเข้า / ใบเบิก / ใบปรับยอด |
+| `0021_seed_protein_products.sql` | ข้อมูลสินค้าโปรตีน 3 สูตร (Active / Daily / Flow) × รสชาติ × 2 แบบ (กระปุก 840 ก. / กล่อง 10 ซอง 420 ก.) — 12 SKU |
 
-> **หมายเหตุสำคัญ:** ตาราง `products` ใน `0001_common.sql` เป็นแค่โครงชั่วคราว
-> (sku, ชื่อ, ราคา) ให้ Sales/Purchase อ้างอิงได้ก่อน เมื่อสร้างโมดูล 3
-> (ระบบสินค้าและสต๊อก) จริง จะต้องขยายตารางนี้เพิ่ม (Lot, วันหมดอายุ,
-> คลังสินค้า, ประวัติสต๊อกเข้า-ออก) — โครงสร้างตอนนี้ตั้งใจไม่ผูก logic
-> stock เข้าไปเพื่อไม่ให้ชนกับตอนสร้างโมดูล Inventory ทีหลัง
+> **หมายเหตุ:** ตาราง `products` (จาก `0001_common.sql`) ถูกขยายใน `0019` ให้เป็นข้อมูลสินค้าของ
+> โมดูลคลังสินค้า (เพิ่ม `min_stock`, `note`) — ฝ่ายผลิต/คลังสินค้าเพิ่ม/แก้ไขได้ ส่วนยอดคงเหลืออยู่ที่
+> `stock_movements` (ดูโมดูล 3 ด้านล่าง) ยังเป็นคลังเดียว (ไม่แยกหลายคลัง) และยังไม่ตัดสต๊อกอัตโนมัติจากออเดอร์ขาย
 
 ## เลขที่เอกสารอัตโนมัติ
 
@@ -125,6 +126,37 @@ purchase_approvals   -- ประวัติอนุมัติ ใช้ร�
   (ตาม requirement "ประวัติการซื้อ") ไม่ต้องสร้างตารางแยก
 - `purchase_order_items.received_quantity` และ `goods_receipt_items` ใช้ตรวจสอบ
   สถานะรับของบางส่วน (partially_received) ได้
+
+## โมดูล 3 — คลังสินค้า & การผลิต (`0019_inventory_production.sql`)
+
+```
+products  (+ min_stock สต๊อกขั้นต่ำ)
+   │
+stock_movements        สมุดสต๊อก: 1 แถว = 1 รายการเข้า/ออก (quantity มีเครื่องหมาย +/-)
+   │                   in = รับเข้า · out = เบิกออก · adjust = ปรับยอดจากการนับ · production = รับจากการผลิต
+view: product_stock    products + on_hand (คงเหลือ) + in_production (สั่งผลิตแล้วยังค้างรับ)
+
+production_orders (ใบผลิต MO26-0001) → production_order_items (สินค้าละ 1 แถว, received_quantity)
+    ↓ รับเข้าคลังได้หลายครั้ง
+production_receipts (FG26-0001) → production_receipt_items (จำนวน + Lot + วันหมดอายุ)
+                                 └→ stock_movements (production, +)
+```
+
+- สิทธิ์: role ใหม่ `warehouse` (ฝ่ายผลิต / คลังสินค้า) + admin — หน้าจออยู่ที่ `/admin/inventory`
+- สถานะใบผลิต: `open` รอรับ → `partial` รับบางส่วน → `completed` รับครบ (คำนวณอัตโนมัติจากยอดรับ)
+  หรือ `closed` ปิดใบเมื่อจะไม่รับส่วนที่เหลือ (เปิดใหม่ได้), `cancelled` ยกเลิกได้เฉพาะยังไม่มีการรับ
+- รับเกินจำนวนที่สั่งผลิตไม่ได้ — ถ้าผลิตได้เกิน ให้แก้จำนวนในใบผลิตก่อน (แก้ได้ไม่ต่ำกว่าที่รับแล้ว)
+- **สมุดสต๊อกแก้ไข/ลบไม่ได้** (RLS ให้แค่ select + insert) — แก้ผิดด้วยรายการใหม่:
+  ยกเลิกใบรับจากการผลิต = ลงรายการ production ติดลบกลับ, ยอดไม่ตรง = นับสต๊อก (adjust)
+- ทุก RPC ที่ทำให้สต๊อกลด (`post_stock_movements` out, `cancel_production_receipt`,
+  `post_stock_count`) ตรวจว่าคงเหลือไม่ติดลบ โดยล็อกรายสินค้า (`pg_advisory_xact_lock`) กันบันทึกพร้อมกัน
+- rpc: `save_production_order`, `receive_production`, `cancel_production_receipt`,
+  `set_production_order_status`, `post_stock_movements`, `post_stock_count`
+- เลขที่เอกสาร (`stock_movements.doc_number`, `0020`): รายการที่บันทึกพร้อมกันได้เลขเดียวกันและพิมพ์เป็น
+  เอกสารเดียว — `IN26-0001` ใบรับเข้า, `OUT26-0001` ใบเบิก, `CNT26-0001` ใบปรับยอด (ออกเลขเฉพาะเมื่อมียอดไม่ตรง),
+  รายการจากการผลิตใช้เลขใบรับ `FG…` (trigger เติมให้) — หน้าพิมพ์อยู่ที่ `/admin/print/inventory/*`
+- Audit log: `production_orders`, `production_order_items`, `production_receipts`, `products`
+  (`stock_movements` ไม่เข้า audit เพราะแต่ละแถวเก็บผู้บันทึก/เวลาไว้เองและไม่มีการแก้ไข)
 
 ## Row Level Security (RLS)
 

@@ -9,6 +9,7 @@ import {
   faPeopleGroup,
   faTruck,
   faUserShield,
+  faWarehouse,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { createClient } from "@/lib/supabase/server";
@@ -81,6 +82,13 @@ export default async function DashboardHome() {
       title: "🛍️ ซื้อของ / ค่าใช้จ่าย",
       desc: "จดรายการซื้อ / ร้านค้า / ยอดค้างจ่าย",
       allowed: ["purchase"],
+    },
+    {
+      href: "/admin/inventory",
+      icon: faWarehouse,
+      title: "🏭 คลังสินค้า & ผลิต",
+      desc: "ใบผลิตสินค้า (รับแยกได้หลายครั้ง) / สต๊อกคงเหลือ / รับเข้า-เบิกออก / นับสต๊อก",
+      allowed: ["warehouse"],
     },
     {
       href: "/admin/hr",

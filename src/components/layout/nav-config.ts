@@ -3,9 +3,11 @@
 // Client-safe.
 
 import {
+  faBoxesStacked,
   faBuilding,
   faCalendarDays,
   faCartShopping,
+  faClipboardCheck,
   faClockRotateLeft,
   faDatabase,
   faFileImport,
@@ -13,12 +15,16 @@ import {
   faFileInvoiceDollar,
   faFileSignature,
   faGaugeHigh,
+  faIndustry,
   faPenToSquare,
   faPeopleGroup,
+  faRightLeft,
   faReceipt,
   faScaleBalanced,
   faStore,
+  faTag,
   faTruck,
+  faWarehouse,
   faUsers,
   faUserShield,
   type IconDefinition,
@@ -45,7 +51,7 @@ export type NavGroup = {
 };
 
 export const NAV: NavGroup[] = [
-  { key: "home", label: "หน้าหลัก", icon: faGaugeHigh, href: "/admin", allowed: ["admin", "sales", "purchase", "hr"] },
+  { key: "home", label: "หน้าหลัก", icon: faGaugeHigh, href: "/admin", allowed: ["admin", "sales", "purchase", "hr", "warehouse"] },
   {
     key: "sales",
     label: "ระบบขาย",
@@ -79,6 +85,19 @@ export const NAV: NavGroup[] = [
       { href: "/admin/purchase/bills", label: "รายการซื้อ", icon: faReceipt, allowed: ["purchase"] },
       { href: "/admin/purchase/payables", label: "ค้างจ่าย", icon: faScaleBalanced, allowed: ["purchase"] },
       { href: "/admin/purchase/suppliers", label: "ร้านค้า / ผู้ขาย", icon: faStore, allowed: ["purchase"] },
+    ],
+  },
+  {
+    key: "inventory",
+    label: "คลังสินค้า & ผลิต",
+    icon: faWarehouse,
+    allowed: ["warehouse"],
+    children: [
+      { href: "/admin/inventory/production", label: "ใบผลิตสินค้า", icon: faIndustry, allowed: ["warehouse"] },
+      { href: "/admin/inventory/stock", label: "สต๊อกคงเหลือ", icon: faBoxesStacked, allowed: ["warehouse"] },
+      { href: "/admin/inventory/movements", label: "รับเข้า / เบิกออก", icon: faRightLeft, allowed: ["warehouse"] },
+      { href: "/admin/inventory/count", label: "นับสต๊อก", icon: faClipboardCheck, allowed: ["warehouse"] },
+      { href: "/admin/inventory/products", label: "สินค้า", icon: faTag, allowed: ["warehouse"] },
     ],
   },
   { key: "hr", label: "พนักงาน & เงินเดือน", icon: faUsers, href: "/admin/hr", allowed: ["hr"] },
