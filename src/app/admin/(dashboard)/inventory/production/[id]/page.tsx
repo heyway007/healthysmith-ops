@@ -11,6 +11,7 @@ import { bangkokToday } from "@/components/holidays/holiday-views";
 import { dangerButtonClassName, formCardClassName, secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { PRODUCTION_STATUS, formatQty } from "../../labels";
 import { cancelProductionReceipt, receiveProduction, setProductionOrderStatus } from "../actions";
+import { DateInput } from "@/components/ui/date-input";
 
 const cellInput =
   "w-full rounded-md border border-teal-200 px-2 py-1.5 text-sm focus:border-teal-600 focus:outline-none";
@@ -81,7 +82,7 @@ export default async function ProductionOrderPage({
             )}
             {order.producer_name && <> · ผู้ผลิต: {order.producer_name}</>}
           </p>
-          {order.note && <p className="mt-1 text-sm text-teal-600">หมายเหตุ: {order.note}</p>}
+          {order.note && <p className="mt-1 whitespace-pre-line text-sm text-teal-600">หมายเหตุ: {order.note}</p>}
           {order.close_reason && (
             <p className="mt-1 text-sm text-gray-600">
               {order.status === "cancelled" ? "เหตุผลที่ยกเลิก" : "เหตุผลที่ปิดใบ"}: {order.close_reason}
@@ -125,7 +126,7 @@ export default async function ProductionOrderPage({
 
       {/* Items and progress */}
       <div className="mt-6 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[640px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">สินค้า</th>
@@ -141,19 +142,19 @@ export default async function ProductionOrderPage({
               const pct = Math.min(100, Math.round((i.received_quantity / i.quantity) * 100));
               return (
                 <tr key={i.id} className="border-t border-teal-100">
-                  <td className="px-4 py-3">
+                  <td data-label="สินค้า" className="px-4 py-3">
                     <Link href={`/admin/inventory/stock/${i.product_id}`} className="text-teal-900 hover:text-orange-600">
                       <span className="font-medium">{p?.sku}</span> {p?.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-right text-teal-800">
+                  <td data-label="สั่งผลิต" className="px-4 py-3 text-right text-teal-800">
                     {formatQty(i.quantity)} <span className="text-xs text-teal-500">{p?.unit}</span>
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-emerald-700">{formatQty(i.received_quantity)}</td>
-                  <td className="px-4 py-3 text-right font-medium text-amber-700">
+                  <td data-label="รับแล้ว" className="px-4 py-3 text-right font-medium text-emerald-700">{formatQty(i.received_quantity)}</td>
+                  <td data-label="ค้างรับ" className="px-4 py-3 text-right font-medium text-amber-700">
                     {formatQty(Math.max(i.quantity - i.received_quantity, 0))}
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="ความคืบหน้า" className="px-4 py-3">
                     <ProgressBar pct={pct} />
                   </td>
                 </tr>
@@ -163,12 +164,12 @@ export default async function ProductionOrderPage({
           <tfoot>
             <tr className="border-t border-teal-200 bg-teal-50/60">
               <td className="px-4 py-3 text-right text-teal-700">รวม</td>
-              <td className="px-4 py-3 text-right font-semibold text-teal-900">{formatQty(totalOrdered)}</td>
-              <td className="px-4 py-3 text-right font-semibold text-emerald-700">{formatQty(totalReceived)}</td>
-              <td className="px-4 py-3 text-right font-semibold text-amber-700">
+              <td data-label="สั่งผลิต" className="px-4 py-3 text-right font-semibold text-teal-900">{formatQty(totalOrdered)}</td>
+              <td data-label="รับแล้ว" className="px-4 py-3 text-right font-semibold text-emerald-700">{formatQty(totalReceived)}</td>
+              <td data-label="ค้างรับ" className="px-4 py-3 text-right font-semibold text-amber-700">
                 {formatQty(Math.max(totalOrdered - totalReceived, 0))}
               </td>
-              <td className="px-4 py-3">
+              <td data-label="ความคืบหน้า" className="px-4 py-3">
                 <ProgressBar pct={totalOrdered ? Math.min(100, Math.round((totalReceived / totalOrdered) * 100)) : 0} />
               </td>
             </tr>
@@ -192,10 +193,9 @@ export default async function ProductionOrderPage({
                 <label className="block text-sm font-medium text-teal-800" htmlFor="receipt_date">
                   วันที่รับ
                 </label>
-                <input
+                <DateInput
                   id="receipt_date"
                   name="receipt_date"
-                  type="date"
                   defaultValue={bangkokToday()}
                   required
                   className="mt-1 w-full rounded-lg border border-teal-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
@@ -205,16 +205,17 @@ export default async function ProductionOrderPage({
                 <label className="block text-sm font-medium text-teal-800" htmlFor="receipt_note">
                   หมายเหตุ (เช่น เลขที่ใบส่งของจากโรงงาน)
                 </label>
-                <input
+                <textarea
                   id="receipt_note"
                   name="note"
+                  rows={3}
                   className="mt-1 w-full rounded-lg border border-teal-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
                 />
               </div>
             </div>
 
             <div className="mt-4 overflow-x-auto rounded-lg border border-teal-100 bg-white">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="stack-table w-full text-sm md:min-w-[720px]">
                 <thead>
                   <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
                     <th className="px-3 py-2">สินค้า</th>
@@ -232,13 +233,13 @@ export default async function ProductionOrderPage({
                       const remaining = i.quantity - i.received_quantity;
                       return (
                         <tr key={i.id} className="border-t border-teal-100">
-                          <td className="px-3 py-2 text-teal-900">
+                          <td data-label="สินค้า" className="px-3 py-2 text-teal-900">
                             <span className="font-medium">{p?.sku}</span> {p?.name}
                           </td>
-                          <td className="px-3 py-2 text-right text-amber-700">
+                          <td data-label="ค้างรับ" className="px-3 py-2 text-right text-amber-700">
                             {formatQty(remaining)} <span className="text-xs text-teal-500">{p?.unit}</span>
                           </td>
-                          <td className="px-2 py-1.5">
+                          <td data-label="รับรอบนี้" className="px-2 py-1.5">
                             <input type="hidden" name="item_id" value={i.id} />
                             <input
                               name="quantity"
@@ -252,11 +253,11 @@ export default async function ProductionOrderPage({
                               className={`${cellInput} text-right`}
                             />
                           </td>
-                          <td className="px-2 py-1.5">
+                          <td data-label="Lot" className="px-2 py-1.5">
                             <input name="lot_number" aria-label="Lot" className={cellInput} />
                           </td>
-                          <td className="px-2 py-1.5">
-                            <input name="expiry_date" type="date" aria-label="วันหมดอายุ" className={cellInput} />
+                          <td data-label="วันหมดอายุ" className="px-2 py-1.5">
+                            <DateInput name="expiry_date" aria-label="วันหมดอายุ" className={cellInput} />
                           </td>
                         </tr>
                       );
@@ -317,7 +318,7 @@ export default async function ProductionOrderPage({
                   );
                 })}
               </ul>
-              {r.note && <p className="mt-1 text-xs text-teal-500">หมายเหตุ: {r.note}</p>}
+              {r.note && <p className="mt-1 whitespace-pre-line text-xs text-teal-500">หมายเหตุ: {r.note}</p>}
               {r.is_cancelled ? (
                 <p className="mt-1 text-xs text-gray-500">
                   ยกเลิกโดย {r.cancelled_by_email ?? "-"}: {r.cancel_reason}

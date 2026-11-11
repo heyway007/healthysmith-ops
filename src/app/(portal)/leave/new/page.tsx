@@ -4,6 +4,7 @@ import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { createClient } from "@/lib/supabase/server";
 import { cardClassName, inputClassName, primaryButtonClassName, secondaryButtonClassName } from "../../ui";
 import { createLeaveRequest } from "../actions";
+import { DateInput } from "@/components/ui/date-input";
 
 export default async function NewLeaveRequestPage({
   searchParams,
@@ -49,10 +50,9 @@ export default async function NewLeaveRequestPage({
               <label className="block text-sm font-medium text-mist-800" htmlFor="start_date">
                 วันที่เริ่มลา
               </label>
-              <input
+              <DateInput
                 id="start_date"
                 name="start_date"
-                type="date"
                 required
                 defaultValue={today}
                 className={inputClassName}
@@ -62,10 +62,9 @@ export default async function NewLeaveRequestPage({
               <label className="block text-sm font-medium text-mist-800" htmlFor="end_date">
                 วันที่สิ้นสุด
               </label>
-              <input
+              <DateInput
                 id="end_date"
                 name="end_date"
-                type="date"
                 required
                 defaultValue={today}
                 className={inputClassName}

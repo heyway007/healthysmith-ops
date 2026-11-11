@@ -9,7 +9,7 @@ export default async function InventoryLayout({ children }: { children: React.Re
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-teal-950">🏭 คลังสินค้า & ผลิต</h1>
+      <h1 className="text-xl font-semibold sm:text-2xl text-teal-950">🏭 คลังสินค้า & ผลิต</h1>
       <p className="mt-1 text-teal-700">สั่งผลิต รับสินค้าเข้าคลังทีละล็อต และดูยอดสินค้าเข้า-ออก-คงเหลือ</p>
       {allowed && (
         <div className="mt-5">

@@ -1,3 +1,5 @@
+import { DateInput } from "@/components/ui/date-input";
+
 export function Field({
   label,
   name,
@@ -8,6 +10,7 @@ export function Field({
   list,
   listOptions,
   step,
+  rows,
 }: {
   label: string;
   name: string;
@@ -21,12 +24,34 @@ export function Field({
   listOptions?: string[];
   /** defaults to "any" for type="number" so decimal amounts/quantities are always valid */
   step?: string;
+  /** when set, renders a multi-line <textarea> with this many rows instead of an <input> */
+  rows?: number;
 }) {
+  const inputClass =
+    "mt-1 w-full rounded-lg border border-teal-300 px-3 py-2 text-sm transition-shadow focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100";
   return (
     <div className={className}>
       <label className="block text-sm font-medium text-teal-800" htmlFor={name}>
         {label}
       </label>
+      {type === "date" ? (
+        <DateInput
+          id={name}
+          name={name}
+          required={required}
+          defaultValue={defaultValue == null ? undefined : String(defaultValue)}
+          className={inputClass}
+        />
+      ) : rows ? (
+        <textarea
+          id={name}
+          name={name}
+          rows={rows}
+          required={required}
+          defaultValue={defaultValue ?? undefined}
+          className={`${inputClass} resize-y`}
+        />
+      ) : (
       <input
         id={name}
         name={name}
@@ -36,8 +61,9 @@ export function Field({
         list={list}
         step={type === "number" ? (step ?? "any") : undefined}
         autoComplete="off"
-        className="mt-1 w-full rounded-lg border border-teal-300 px-3 py-2 text-sm transition-shadow focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+        className={inputClass}
       />
+      )}
       {list && listOptions && (
         <datalist id={list}>
           {listOptions.map((option) => (

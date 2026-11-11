@@ -14,6 +14,7 @@ import {
   isSensitiveField,
   recordHref,
 } from "./labels";
+import { DateInput } from "@/components/ui/date-input";
 
 const PAGE_SIZE = 50;
 
@@ -109,10 +110,10 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Pr
       <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
         {record && <input type="hidden" name="record" value={record} />}
         <Filter label="ตั้งแต่วันที่">
-          <input type="date" name="from" defaultValue={from} className={inputClassName} />
+          <DateInput name="from" defaultValue={from} className={inputClassName} />
         </Filter>
         <Filter label="ถึงวันที่">
-          <input type="date" name="to" defaultValue={to} className={inputClassName} />
+          <DateInput name="to" defaultValue={to} className={inputClassName} />
         </Filter>
         <Filter label="ข้อมูล">
           <select name="table" defaultValue={table} className={selectClassName}>

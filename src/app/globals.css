@@ -63,3 +63,65 @@ select:not([multiple]):not([size]) {
   background-size: 1.1rem 1.1rem;
   padding-right: 2.5rem;
 }
+
+/* Tables that turn into stacked cards on phones (below md) instead of scrolling
+   sideways. Put `stack-table` on <table> and `data-label` on every <td> that
+   should show a caption; `data-stack="block"` puts the caption above the value
+   (for inputs / long text). Empty cells are hidden. */
+@media (max-width: 767px) {
+  .stack-table,
+  .stack-table tbody,
+  .stack-table tfoot,
+  .stack-table tr {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  .stack-table thead {
+    display: none;
+  }
+  .stack-table tr {
+    padding: 0.5rem 1rem;
+  }
+  .stack-table td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.25rem 0;
+    text-align: right;
+    white-space: normal;
+    width: auto;
+  }
+  .stack-table td:empty {
+    display: none;
+  }
+  .stack-table td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-teal-600);
+    text-align: left;
+  }
+  .stack-table td[data-stack="block"] {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    text-align: left;
+  }
+  .stack-table td[data-stack="title"] {
+    display: block;
+    text-align: left;
+    font-size: 0.95rem;
+  }
+  .stack-table td > input:not([type="hidden"]),
+  .stack-table td > select {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .stack-table td[colspan] {
+    justify-content: center;
+    text-align: center;
+  }
+}

@@ -59,7 +59,7 @@ export default async function StockCountPage({
       )}
 
       <form className="mt-6 flex flex-wrap items-end gap-3">
-        <div className="relative">
+        <div className="relative w-full sm:w-72">
           <FontAwesomeIcon
             icon={faMagnifyingGlass}
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-teal-400"
@@ -68,7 +68,7 @@ export default async function StockCountPage({
             name="q"
             defaultValue={q}
             placeholder="นับเฉพาะ: รหัส / ชื่อ / บาร์โค้ด"
-            className="w-72 max-w-full rounded-lg border border-teal-300 py-2 pl-8 pr-3 text-sm focus:border-teal-600 focus:outline-none"
+            className="w-full rounded-lg border border-teal-300 py-2 pl-8 pr-3 text-sm focus:border-teal-600 focus:outline-none"
           />
         </div>
         <select name="type" defaultValue={type} aria-label="ประเภทสินค้า" className={`${selectClassName} mt-0 w-auto`}>
@@ -97,11 +97,11 @@ export default async function StockCountPage({
       <form action={postStockCount} className={`mt-4 ${formCardClassName}`}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="วันที่นับ" name="count_date" type="date" defaultValue={bangkokToday()} />
-          <Field label="หมายเหตุ (เช่น นับสิ้นเดือน / ผู้นับ)" name="note" className="sm:col-span-2" />
+          <Field label="หมายเหตุ (เช่น นับสิ้นเดือน / ผู้นับ)" name="note" rows={3} className="sm:col-span-2" />
         </div>
 
         <div className="mt-5 overflow-x-auto rounded-lg border border-teal-100 bg-white">
-          <table className="w-full min-w-[560px] text-sm">
+          <table className="stack-table w-full text-sm">
             <thead>
               <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
                 <th className="px-4 py-2">รหัส</th>
@@ -114,10 +114,10 @@ export default async function StockCountPage({
             <tbody>
               {products?.map((p) => (
                 <tr key={p.id} className="border-t border-teal-100">
-                  <td className="whitespace-nowrap px-4 py-2 font-medium text-teal-800">{p.sku}</td>
-                  <td className="px-4 py-2 text-teal-950">{p.name}</td>
-                  <td className="px-4 py-2 text-right text-teal-700">{formatQty(p.on_hand)}</td>
-                  <td className="px-4 py-1.5">
+                  <td data-label="รหัส" className="whitespace-nowrap px-4 py-2 font-medium text-teal-800">{p.sku}</td>
+                  <td data-label="ชื่อสินค้า" className="px-4 py-2 text-teal-950">{p.name}</td>
+                  <td data-label="ในระบบ" className="px-4 py-2 text-right text-teal-700">{formatQty(p.on_hand)}</td>
+                  <td data-label="นับได้จริง" className="px-4 py-1.5">
                     <input type="hidden" name="product_id" value={p.id} />
                     <input
                       name="counted"
@@ -129,7 +129,7 @@ export default async function StockCountPage({
                       className="w-full rounded-md border border-teal-200 px-2 py-1.5 text-right text-sm focus:border-teal-600 focus:outline-none"
                     />
                   </td>
-                  <td className="px-4 py-2 text-teal-600">{p.unit}</td>
+                  <td data-label="หน่วย" className="px-4 py-2 text-teal-600">{p.unit}</td>
                 </tr>
               ))}
               {(!products || products.length === 0) && (

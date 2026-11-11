@@ -53,7 +53,7 @@ export function ProductionForm({
             list="producer-options"
             listOptions={producers}
           />
-          <Field label="หมายเหตุ" name="note" defaultValue={defaults.note} className="sm:col-span-2 lg:col-span-3" />
+          <Field label="หมายเหตุ" name="note" rows={3} defaultValue={defaults.note} className="sm:col-span-2 lg:col-span-3" />
         </FormSection>
 
         <FormSection title="สินค้าที่จะผลิต">

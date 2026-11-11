@@ -7,6 +7,7 @@ import { faFileInvoice } from "@fortawesome/free-solid-svg-icons";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { formCardClassName, secondaryButtonClassName, selectClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { thaiDate } from "@/lib/thai-money";
+import { DateInput } from "@/components/ui/date-input";
 
 export type BuyerDefaults = {
   name: string;
@@ -124,10 +125,9 @@ export function BuyerForm({
           <label className="block text-sm font-medium text-teal-800" htmlFor="issue_date">
             วันที่ใบกำกับ <span className="text-orange-500">*</span>
           </label>
-          <input
+          <DateInput
             id="issue_date"
             name="issue_date"
-            type="date"
             required
             value={issueDate}
             onChange={(e) => setIssueDate(e.target.value)}

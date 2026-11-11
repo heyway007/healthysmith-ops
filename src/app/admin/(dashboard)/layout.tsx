@@ -23,7 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       <Sidebar roles={roles} docPermissions={docPermissions} version={APP_VERSION} />
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <header className="flex items-center gap-4 border-b border-teal-100 bg-white/80 backdrop-blur px-4 sm:px-8 py-3 shadow-sm">
           <label
             htmlFor="mobile-nav"
@@ -33,9 +33,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <FontAwesomeIcon icon={faBars} />
           </label>
 
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-4">
             {roles.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="hidden flex-wrap items-center gap-1.5 sm:flex">
                 {roles.map((r) => (
                   <span
                     key={r}
@@ -57,7 +57,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </form>
           </div>
         </header>
-        <main className="p-6 sm:p-8">
+        <main className="p-4 sm:p-8">
           {roles.length > 0 ? children : <AccessDenied moduleName="ระบบหลังบ้าน" />}
         </main>
       </div>

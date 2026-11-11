@@ -119,7 +119,7 @@ export default async function MovementsPage({
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full min-w-[860px] text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[860px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">วันที่</th>
@@ -138,8 +138,8 @@ export default async function MovementsPage({
               const printHref = movementPrintHref(m);
               return (
                 <tr key={m.id} className="border-t border-teal-100 hover:bg-teal-50">
-                  <td className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(m.movement_date, true)}</td>
-                  <td className="whitespace-nowrap px-4 py-3">
+                  <td data-label="วันที่" className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(m.movement_date, true)}</td>
+                  <td data-label="เลขที่เอกสาร" className="whitespace-nowrap px-4 py-3">
                     {printHref ? (
                       <Link href={printHref} target="_blank" title="พิมพ์เอกสาร" className="font-medium text-teal-800 hover:text-orange-600">
                         {m.doc_number ?? "พิมพ์"}
@@ -148,27 +148,28 @@ export default async function MovementsPage({
                       <span className="text-teal-400">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="ประเภท" className="px-4 py-3">
                     <StatusBadge status={m.movement_type} config={MOVEMENT_TYPES} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="สินค้า" className="px-4 py-3">
                     <Link href={`/admin/inventory/stock/${m.product_id}`} className="text-teal-900 hover:text-orange-600">
                       <span className="font-medium">{p?.sku}</span> {p?.name}
                     </Link>
                   </td>
                   <td
+                    data-label="จำนวน"
                     className={`whitespace-nowrap px-4 py-3 text-right font-semibold ${
                       m.quantity > 0 ? "text-emerald-700" : "text-orange-600"
                     }`}
                   >
                     {formatSignedQty(m.quantity)} <span className="text-xs font-normal text-teal-500">{p?.unit}</span>
                   </td>
-                  <td className="px-4 py-3 text-teal-700">{m.lot_number ?? "-"}</td>
-                  <td className="px-4 py-3 text-teal-800">
+                  <td data-label="Lot" className="px-4 py-3 text-teal-700">{m.lot_number ?? "-"}</td>
+                  <td data-label="อ้างอิง / หมายเหตุ" className="px-4 py-3 text-teal-800">
                     {m.ref_no ?? ""}
                     {m.note && <span className="block text-xs text-teal-500">{m.note}</span>}
                   </td>
-                  <td className="px-4 py-3 text-xs text-teal-500">{m.created_by_email ?? "-"}</td>
+                  <td data-label="ผู้บันทึก" className="px-4 py-3 text-xs text-teal-500">{m.created_by_email ?? "-"}</td>
                 </tr>
               );
             })}

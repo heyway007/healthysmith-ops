@@ -67,7 +67,7 @@ export function ProductForm({
             type="number"
             defaultValue={defaultValues?.min_stock}
           />
-          <Field label="หมายเหตุ" name="note" defaultValue={defaultValues?.note} className="sm:col-span-2 lg:col-span-3" />
+          <Field label="หมายเหตุ" name="note" rows={3} defaultValue={defaultValues?.note} className="sm:col-span-2 lg:col-span-3" />
           {defaultValues && (
             <label className="flex items-center gap-2 text-sm text-teal-800">
               <input

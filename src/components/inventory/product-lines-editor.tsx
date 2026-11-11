@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { emptyLine, labelOf, type PickableProduct, type ProductLine } from "./product-lines";
+import { DateInput } from "@/components/ui/date-input";
 
 export type { PickableProduct, ProductLine };
 
@@ -54,7 +55,7 @@ export function ProductLinesEditor({
       <input type="hidden" name={name} value={JSON.stringify(payload)} />
 
       <div className="overflow-x-auto rounded-lg border border-teal-100 bg-white">
-        <table className={`w-full text-sm ${withLot ? "min-w-[760px]" : "min-w-[520px]"}`}>
+        <table className={`stack-table w-full text-sm ${withLot ? "md:min-w-[760px]" : "md:min-w-[520px]"}`}>
           <thead>
             <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="w-10 px-3 py-2 text-center">#</th>
@@ -71,8 +72,8 @@ export function ProductLinesEditor({
               const min = minQuantity[l.productId];
               return (
                 <tr key={i} className="border-t border-teal-100 align-top">
-                  <td className="px-3 py-2.5 text-center text-teal-500">{i + 1}</td>
-                  <td className="px-2 py-1.5">
+                  <td className="px-3 py-2.5 text-center text-teal-500 max-md:hidden">{i + 1}</td>
+                  <td data-label="สินค้า" data-stack="block" className="px-2 py-1.5">
                     <select
                       value={l.productId}
                       onChange={(e) => update(i, { productId: e.target.value })}
@@ -101,7 +102,7 @@ export function ProductLinesEditor({
                       </p>
                     )}
                   </td>
-                  <td className="px-2 py-1.5">
+                  <td data-label="จำนวน" className="px-2 py-1.5">
                     <input
                       type="number"
                       inputMode="decimal"
@@ -115,7 +116,7 @@ export function ProductLinesEditor({
                     />
                   </td>
                   {withLot && (
-                    <td className="px-2 py-1.5">
+                    <td data-label="Lot" className="px-2 py-1.5">
                       <input
                         value={l.lot}
                         onChange={(e) => update(i, { lot: e.target.value })}
@@ -125,9 +126,8 @@ export function ProductLinesEditor({
                     </td>
                   )}
                   {withLot && (
-                    <td className="px-2 py-1.5">
-                      <input
-                        type="date"
+                    <td data-label="วันหมดอายุ" className="px-2 py-1.5">
+                      <DateInput
                         value={l.expiry}
                         onChange={(e) => update(i, { expiry: e.target.value })}
                         aria-label="วันหมดอายุ"

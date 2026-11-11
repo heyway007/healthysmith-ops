@@ -6,6 +6,7 @@ import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { formatMoney, splitVat } from "@/lib/thai-money";
 import { createManualTaxInvoice } from "../actions";
 import { BuyerForm, type BuyerDefaults } from "../new/buyer-form";
+import { DateInput } from "@/components/ui/date-input";
 
 type Customer = { id: string; name: string; tax_id: string | null; address: string | null; phone: string | null };
 type Product = { id: string; sku: string; name: string; unit: string; sale_price: number };
@@ -332,7 +333,11 @@ function PayField({
       <label htmlFor={name} className="block text-xs font-medium text-teal-700">
         {label}
       </label>
-      <input id={name} name={name} type={type} value={value} onChange={onChange} className={`${cellClassName} mt-1`} />
+      {type === "date" ? (
+        <DateInput id={name} name={name} value={value} onChange={onChange} className={`${cellClassName} mt-1`} />
+      ) : (
+        <input id={name} name={name} type={type} value={value} onChange={onChange} className={`${cellClassName} mt-1`} />
+      )}
     </div>
   );
 }

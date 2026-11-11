@@ -39,7 +39,7 @@ export default async function ProductsPage({
       {params.error && <p className="mt-4 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{params.error}</p>}
 
       <form className="mt-6 flex flex-wrap items-center gap-3">
-        <div className="relative">
+        <div className="relative w-full sm:w-72">
           <FontAwesomeIcon
             icon={faMagnifyingGlass}
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-teal-400"
@@ -48,7 +48,7 @@ export default async function ProductsPage({
             name="q"
             defaultValue={q}
             placeholder="ค้นหารหัส / ชื่อ / บาร์โค้ด"
-            className="w-72 max-w-full rounded-lg border border-teal-300 py-2 pl-8 pr-3 text-sm focus:border-teal-600 focus:outline-none"
+            className="w-full rounded-lg border border-teal-300 py-2 pl-8 pr-3 text-sm focus:border-teal-600 focus:outline-none"
           />
         </div>
         <label className="flex items-center gap-2 text-sm text-teal-700">
@@ -61,7 +61,7 @@ export default async function ProductsPage({
       </form>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">รหัส</th>
@@ -76,21 +76,21 @@ export default async function ProductsPage({
           <tbody>
             {products?.map((p) => (
               <tr key={p.id} className={`border-t border-teal-100 hover:bg-teal-50 ${p.is_active ? "" : "opacity-50"}`}>
-                <td className="whitespace-nowrap px-4 py-3">
+                <td data-label="รหัส" className="whitespace-nowrap px-4 py-3">
                   <Link href={`/admin/inventory/products/${p.id}`} className="font-medium text-teal-800 hover:text-orange-600">
                     {p.sku}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-teal-950">
+                <td data-label="ชื่อสินค้า" className="px-4 py-3 text-teal-950">
                   <Link href={`/admin/inventory/products/${p.id}`} className="hover:text-orange-600">
                     {p.name}
                   </Link>
                   {!p.is_active && <span className="ml-2 text-xs text-teal-500">(ปิดใช้งาน)</span>}
                 </td>
-                <td className="px-4 py-3 text-teal-700">{PRODUCT_TYPES[p.product_type] ?? p.product_type}</td>
-                <td className="px-4 py-3 text-teal-700">{p.unit}</td>
-                <td className="px-4 py-3 text-right text-teal-700">{p.sale_price.toLocaleString()}</td>
-                <td className="px-4 py-3 text-right font-medium text-teal-950">
+                <td data-label="ประเภท" className="px-4 py-3 text-teal-700">{PRODUCT_TYPES[p.product_type] ?? p.product_type}</td>
+                <td data-label="หน่วย" className="px-4 py-3 text-teal-700">{p.unit}</td>
+                <td data-label="ราคาขาย" className="px-4 py-3 text-right text-teal-700">{p.sale_price.toLocaleString()}</td>
+                <td data-label="คงเหลือ" className="px-4 py-3 text-right font-medium text-teal-950">
                   {p.product_type === "service" ? (
                     "-"
                   ) : (

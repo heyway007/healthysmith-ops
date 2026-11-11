@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight, faFileExcel, faPrint, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { DOC_STATUS_OPTIONS, docFilterQuery, type parseDocFilters } from "@/lib/doc-list-filters";
 import { secondaryButtonClassName, selectClassName } from "@/lib/ui-classes";
+import { DateInput } from "@/components/ui/date-input";
 
 type Filters = ReturnType<typeof parseDocFilters>;
 
@@ -79,13 +80,13 @@ export function DocListToolbar({
           <label className="block text-xs font-medium text-teal-700" htmlFor="from">
             ตั้งแต่วันที่
           </label>
-          <input id="from" name="from" type="date" defaultValue={f.rawFrom} className={inputClassName} />
+          <DateInput id="from" name="from" defaultValue={f.rawFrom} className={inputClassName} />
         </div>
         <div>
           <label className="block text-xs font-medium text-teal-700" htmlFor="to">
             ถึงวันที่
           </label>
-          <input id="to" name="to" type="date" defaultValue={f.rawTo} className={inputClassName} />
+          <DateInput id="to" name="to" defaultValue={f.rawTo} className={inputClassName} />
         </div>
         <div>
           <label className="block text-xs font-medium text-teal-700" htmlFor="status">

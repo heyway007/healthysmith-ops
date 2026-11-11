@@ -21,13 +21,13 @@ export function SectionTabs({
   const current = activeHref(pathname, tabs.map((t) => t.href));
 
   return (
-    <nav className="flex flex-wrap gap-1 border-b border-teal-100 pb-3">
+    <nav className="-mx-4 flex gap-1 overflow-x-auto border-b border-teal-100 px-4 pb-3 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
       {tabs.map((tab) => (
         <Link
           key={tab.href}
           href={tab.href}
           aria-current={current === tab.href ? "page" : undefined}
-          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+          className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
             current === tab.href
               ? "bg-linear-to-r from-teal-600 to-teal-700 text-white shadow-sm"
               : "text-teal-700 hover:bg-teal-50"

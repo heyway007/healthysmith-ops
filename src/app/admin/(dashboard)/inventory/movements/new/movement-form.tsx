@@ -34,7 +34,7 @@ export function MovementForm({
             label={type === "in" ? "เลขที่อ้างอิง (ใบส่งของ / ใบสั่งซื้อ)" : "เลขที่อ้างอิง (ออเดอร์ / ใบเบิก)"}
             name="ref_no"
           />
-          <Field label="หมายเหตุ" name="note" />
+          <Field label="หมายเหตุ" name="note" rows={3} />
           <div className="sm:col-span-2 lg:col-span-3">
             <ProductLinesEditor products={products} initialLines={initialLines} withLot={type === "in"} showOnHand />
             {type === "out" && (

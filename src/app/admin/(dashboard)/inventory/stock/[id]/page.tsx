@@ -81,7 +81,7 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full min-w-[860px] text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[860px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">วันที่</th>
@@ -100,8 +100,8 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
               const printHref = movementPrintHref(m);
               return (
                 <tr key={m.id} className="border-t border-teal-100">
-                  <td className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(m.movement_date, true)}</td>
-                  <td className="whitespace-nowrap px-4 py-3">
+                  <td data-label="วันที่" className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(m.movement_date, true)}</td>
+                  <td data-label="เลขที่เอกสาร" className="whitespace-nowrap px-4 py-3">
                     {printHref ? (
                       <Link href={printHref} target="_blank" title="พิมพ์เอกสาร" className="font-medium text-teal-800 hover:text-orange-600">
                         {m.doc_number ?? "พิมพ์"}
@@ -110,10 +110,10 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
                       <span className="text-teal-400">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="ประเภท" className="px-4 py-3">
                     <StatusBadge status={m.movement_type} config={MOVEMENT_TYPES} />
                   </td>
-                  <td className="px-4 py-3 text-teal-800">
+                  <td data-label="อ้างอิง / หมายเหตุ" className="px-4 py-3 text-teal-800">
                     {orderId ? (
                       <Link href={`/admin/inventory/production/${orderId}`} className="hover:text-orange-600">
                         {m.ref_no}
@@ -124,17 +124,17 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
                     {m.note && <span className="block text-xs text-teal-500">{m.note}</span>}
                     {m.created_by_email && <span className="block text-xs text-teal-400">โดย {m.created_by_email}</span>}
                   </td>
-                  <td className="px-4 py-3 text-teal-700">
+                  <td data-label="Lot / หมดอายุ" className="px-4 py-3 text-teal-700">
                     {m.lot_number ?? "-"}
                     {m.expiry_date && <span className="block text-xs text-teal-500">หมดอายุ {thaiDate(m.expiry_date, true)}</span>}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-emerald-700">
+                  <td data-label="เข้า" className="px-4 py-3 text-right font-medium text-emerald-700">
                     {m.quantity > 0 ? formatSignedQty(m.quantity) : ""}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-orange-600">
+                  <td data-label="ออก" className="px-4 py-3 text-right font-medium text-orange-600">
                     {m.quantity < 0 ? formatSignedQty(m.quantity) : ""}
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold text-teal-950">{formatQty(m.after)}</td>
+                  <td data-label="คงเหลือ" className="px-4 py-3 text-right font-semibold text-teal-950">{formatQty(m.after)}</td>
                 </tr>
               );
             })}
@@ -152,8 +152,8 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
                 <td colSpan={5} className="px-4 py-3 text-right text-teal-700">
                   รวม{rows.length === LIMIT ? ` (${LIMIT} รายการล่าสุด)` : ""}
                 </td>
-                <td className="px-4 py-3 text-right font-semibold text-emerald-700">+{formatQty(totalIn)}</td>
-                <td className="px-4 py-3 text-right font-semibold text-orange-600">-{formatQty(totalOut)}</td>
+                <td data-label="รวมเข้า" className="px-4 py-3 text-right font-semibold text-emerald-700">+{formatQty(totalIn)}</td>
+                <td data-label="รวมออก" className="px-4 py-3 text-right font-semibold text-orange-600">-{formatQty(totalOut)}</td>
                 <td />
               </tr>
             </tfoot>

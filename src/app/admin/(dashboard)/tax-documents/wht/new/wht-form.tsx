@@ -9,6 +9,7 @@ import { bahtText, formatMoney } from "@/lib/thai-money";
 import { formCardClassName, secondaryButtonClassName, selectClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { PAYER_CONDITIONS, WHT_FORM_TYPES, WHT_INCOME_TYPES, WHT_RATES, formatTaxId13 } from "@/lib/wht";
 import { createWhtCertificate } from "../actions";
+import { DateInput } from "@/components/ui/date-input";
 
 type Supplier = { id: string; name: string; tax_id: string | null; address: string | null };
 type Payer = { name: string; taxId: string | null; address: string | null } | null;
@@ -243,10 +244,9 @@ export function WhtForm({
             <label className="block text-sm font-medium text-teal-800" htmlFor="issue_date">
               วันที่ออกหนังสือ <span className="text-orange-500">*</span>
             </label>
-            <input
+            <DateInput
               id="issue_date"
               name="issue_date"
-              type="date"
               required
               value={issueDate}
               onChange={(e) => setIssueDate(e.target.value)}
@@ -323,8 +323,7 @@ export function WhtForm({
                       )}
                     </td>
                     <td className="px-2 py-1.5">
-                      <input
-                        type="date"
+                      <DateInput
                         value={r.payDate}
                         onChange={(e) => update(i, { payDate: e.target.value })}
                         required

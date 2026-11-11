@@ -81,7 +81,7 @@ export default async function StockPage({
       </div>
 
       <form className="mt-6 flex flex-wrap items-end gap-3">
-        <div className="relative">
+        <div className="relative w-full sm:w-72">
           <FontAwesomeIcon
             icon={faMagnifyingGlass}
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-teal-400"
@@ -90,7 +90,7 @@ export default async function StockPage({
             name="q"
             defaultValue={q}
             placeholder="ค้นหารหัส / ชื่อ / บาร์โค้ด"
-            className="w-72 max-w-full rounded-lg border border-teal-300 py-2 pl-8 pr-3 text-sm focus:border-teal-600 focus:outline-none"
+            className="w-full rounded-lg border border-teal-300 py-2 pl-8 pr-3 text-sm focus:border-teal-600 focus:outline-none"
           />
         </div>
         <select name="type" defaultValue={type} aria-label="ประเภทสินค้า" className={`${selectClassName} mt-0 w-auto`}>
@@ -125,42 +125,43 @@ export default async function StockPage({
       </div>
 
       <div className="mt-3 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
-              <th className="px-4 py-3">รหัส</th>
-              <th className="px-4 py-3">ชื่อสินค้า</th>
-              <th className="px-4 py-3 text-right">คงเหลือ</th>
-              <th className="px-4 py-3">หน่วย</th>
-              <th className="px-4 py-3 text-right">ขั้นต่ำ</th>
-              <th className="px-4 py-3 text-right">กำลังผลิต</th>
-              <th className="px-4 py-3">เคลื่อนไหวล่าสุด</th>
+              <th className="px-3 py-3 sm:px-4">รหัส</th>
+              <th className="px-3 py-3 sm:px-4">ชื่อสินค้า</th>
+              <th className="px-3 py-3 sm:px-4 text-right">คงเหลือ</th>
+              <th className="px-3 py-3 sm:px-4">หน่วย</th>
+              <th className="px-3 py-3 sm:px-4 text-right">ขั้นต่ำ</th>
+              <th className="px-3 py-3 sm:px-4 text-right">กำลังผลิต</th>
+              <th className="px-3 py-3 sm:px-4">เคลื่อนไหวล่าสุด</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((p) => (
               <tr key={p.id} className="border-t border-teal-100 hover:bg-teal-50">
-                <td className="whitespace-nowrap px-4 py-3">
+                <td data-label="รหัส" className="whitespace-nowrap px-3 py-3 sm:px-4">
                   <Link href={`/admin/inventory/stock/${p.id}`} className="font-medium text-teal-800 hover:text-orange-600">
                     {p.sku}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-teal-950">
+                <td data-label="ชื่อสินค้า" className="px-3 py-3 sm:px-4 text-teal-950">
                   <Link href={`/admin/inventory/stock/${p.id}`} className="hover:text-orange-600">
                     {p.name}
                   </Link>
                 </td>
                 <td
-                  className={`px-4 py-3 text-right font-semibold ${
+                  data-label="คงเหลือ"
+                  className={`px-3 py-3 sm:px-4 text-right font-semibold ${
                     p.on_hand <= 0 ? "text-rose-600" : isLow(p) ? "text-amber-600" : "text-teal-950"
                   }`}
                 >
                   {formatQty(p.on_hand)}
                 </td>
-                <td className="px-4 py-3 text-teal-700">{p.unit}</td>
-                <td className="px-4 py-3 text-right text-teal-600">{p.min_stock > 0 ? formatQty(p.min_stock) : "-"}</td>
-                <td className="px-4 py-3 text-right text-cyan-700">{p.in_production > 0 ? formatQty(p.in_production) : "-"}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-teal-600">
+                <td data-label="หน่วย" className="px-3 py-3 sm:px-4 text-teal-700">{p.unit}</td>
+                <td data-label="ขั้นต่ำ" className="px-3 py-3 sm:px-4 text-right text-teal-600">{p.min_stock > 0 ? formatQty(p.min_stock) : "-"}</td>
+                <td data-label="กำลังผลิต" className="px-3 py-3 sm:px-4 text-right text-cyan-700">{p.in_production > 0 ? formatQty(p.in_production) : "-"}</td>
+                <td data-label="เคลื่อนไหวล่าสุด" className="whitespace-nowrap px-3 py-3 sm:px-4 text-teal-600">
                   {thaiDate(p.last_movement_date, true)}
                 </td>
               </tr>

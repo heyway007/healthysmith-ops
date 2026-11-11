@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { DateInput } from "@/components/ui/date-input";
 
 const inputClassName =
   "mt-1 w-full rounded-lg border border-teal-300 px-3 py-2 text-sm transition-shadow focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100";
@@ -29,10 +30,9 @@ export function HolidayDateFields({ defaultDate, originalDate }: { defaultDate?:
         <label className="block text-sm font-medium text-teal-800" htmlFor="holiday_date">
           วันที่
         </label>
-        <input
+        <DateInput
           id="holiday_date"
           name="holiday_date"
-          type="date"
           required
           value={date}
           onChange={(e) => setDate(e.target.value)}
@@ -58,10 +58,9 @@ export function HolidayDateFields({ defaultDate, originalDate }: { defaultDate?:
           <label className="block text-sm font-medium text-teal-800" htmlFor="holiday_date">
             เป็นวันที่
           </label>
-          <input
+          <DateInput
             id="holiday_date"
             name="holiday_date"
-            type="date"
             required
             value={date}
             onChange={(e) => setDate(e.target.value)}

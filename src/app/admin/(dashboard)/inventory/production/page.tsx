@@ -73,7 +73,7 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
       </div>
 
       <div className="mt-3 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full min-w-[760px] text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[760px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">เลขที่</th>
@@ -94,27 +94,27 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
               const overdue = (o.status === "open" || o.status === "partial") && o.due_date && o.due_date < today;
               return (
                 <tr key={o.id} className="border-t border-teal-100 hover:bg-teal-50">
-                  <td className="whitespace-nowrap px-4 py-3">
+                  <td data-label="เลขที่" className="whitespace-nowrap px-4 py-3">
                     <Link href={`/admin/inventory/production/${o.id}`} className="font-medium text-teal-800 hover:text-orange-600">
                       {o.production_number}
                     </Link>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(o.order_date, true)}</td>
-                  <td className={`whitespace-nowrap px-4 py-3 ${overdue ? "font-medium text-rose-600" : "text-teal-700"}`}>
+                  <td data-label="วันที่สั่ง" className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(o.order_date, true)}</td>
+                  <td data-label="ต้องการภายใน" className={`whitespace-nowrap px-4 py-3 ${overdue ? "font-medium text-rose-600" : "text-teal-700"}`}>
                     {o.due_date ? thaiDate(o.due_date, true) : "-"}
                     {overdue && <span className="block text-xs">เลยกำหนด</span>}
                   </td>
-                  <td className="px-4 py-3 text-teal-900">
+                  <td data-label="สินค้า" className="px-4 py-3 text-teal-900">
                     <Link href={`/admin/inventory/production/${o.id}`} className="hover:text-orange-600">
                       {first ? `${first.sku} ${first.name}` : "-"}
                     </Link>
                     {lines.length > 1 && <span className="text-teal-500"> และอีก {lines.length - 1} รายการ</span>}
                   </td>
-                  <td className="px-4 py-3 text-teal-700">{o.producer_name ?? "-"}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right text-teal-900">
+                  <td data-label="ผู้ผลิต" className="px-4 py-3 text-teal-700">{o.producer_name ?? "-"}</td>
+                  <td data-label="รับแล้ว / สั่ง" className="whitespace-nowrap px-4 py-3 text-right text-teal-900">
                     <span className="font-medium text-emerald-700">{formatQty(received)}</span> / {formatQty(ordered)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="สถานะ" className="px-4 py-3">
                     <StatusBadge status={o.status} config={PRODUCTION_STATUS} />
                   </td>
                 </tr>
