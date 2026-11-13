@@ -29,3 +29,15 @@ export function zipLineItems(formData: FormData, keys: string[]): Record<string,
   }
   return rows;
 }
+
+/** Readable message for anything a server action catches. Supabase/PostgREST
+ * errors are plain objects (not `Error`), so read their `message` too instead
+ * of falling back to a generic text that hides the real cause. */
+export function errorMessage(err: unknown, fallback = "เกิดข้อผิดพลาด"): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (err && typeof err === "object" && "message" in err && typeof err.message === "string" && err.message) {
+    const details = "details" in err && typeof err.details === "string" && err.details ? ` (${err.details})` : "";
+    return err.message + details;
+  }
+  return fallback;
+}

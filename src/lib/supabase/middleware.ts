@@ -1,4 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
+import { fetchWithRetry } from "./fetch-retry";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
 import { AUTH_AREA_HEADER, AUTH_COOKIE_NAME, authAreaForPath } from "./auth-area";
@@ -30,6 +32,7 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookieOptions: { name: AUTH_COOKIE_NAME[area] },
+      global: { fetch: fetchWithRetry },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -45,9 +48,20 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the session's JWT locally against the project's
+  // signing key (ES256; the public key is cached), so this check no longer
+  // calls Supabase on every request. It only goes out to refresh a session
+  // that is about to expire.
+  const { data, error } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
+
+  // Supabase couldn't be reached (network hiccup while refreshing): that says
+  // nothing about whether the user is signed in, so don't send them to the
+  // login page for it. The page's own queries still run under RLS.
+  if (!user && error && isAuthRetryableFetchError(error)) {
+    console.warn(`[auth] could not reach Supabase for ${pathname}: ${error.message}`);
+    return supabaseResponse;
+  }
 
   const isAdminSection = area === "admin";
   const isAuthRoute = isAdminSection ? pathname.startsWith("/admin/login") : pathname === "/login";

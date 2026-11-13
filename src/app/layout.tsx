@@ -4,6 +4,7 @@ import "@/lib/fontawesome";
 import "./globals.css";
 import { Suspense } from "react";
 import { NavigationProgress } from "@/components/ui/navigation-progress";
+import { ThaiValidation } from "@/components/ui/thai-validation";
 
 const kanit = Kanit({
   subsets: ["thai", "latin"],
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>
+        <ThaiValidation />
         {children}
       </body>
     </html>

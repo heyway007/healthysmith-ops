@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies, headers } from "next/headers";
 import type { Database } from "@/types/database.types";
 import { AUTH_AREA_HEADER, AUTH_COOKIE_NAME, type AuthArea } from "./auth-area";
+import { fetchWithRetry } from "./fetch-retry";
 
 /**
  * Supabase client for use in Server Components, Server Actions, and Route
@@ -20,6 +21,7 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookieOptions: { name: AUTH_COOKIE_NAME[area] },
+      global: { fetch: fetchWithRetry },
       cookies: {
         getAll() {
           return cookieStore.getAll();
