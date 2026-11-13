@@ -95,7 +95,7 @@ export default async function PayablesPage({
               defaultValue={payingBill.outstanding_amount}
             />
             <Field label="เลขที่อ้างอิง" name="reference_number" />
-            <Field label="หมายเหตุ" name="note" />
+            <Field label="หมายเหตุ" name="note" rows={3} />
             <div className="flex items-center gap-4">
               <button type="submit" className={submitButtonClassName}>
                 บันทึกจ่ายเงิน

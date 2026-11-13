@@ -6,7 +6,18 @@ import { LineItemsEditor } from "@/components/ui/line-items-editor";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { formCardClassName, secondaryButtonClassName, selectClassName, submitButtonClassName } from "@/lib/ui-classes";
 import type { Database } from "@/types/database.types";
+import { ImageAttachInput } from "@/components/ui/image-attach-input";
+import { ImageGallery, type GalleryImage } from "@/components/ui/image-gallery";
 import { PAYMENT_METHODS } from "./status";
+import { EntryModeSwitch } from "./entry-mode-switch";
+import {
+  FULL_MAX_SIDE,
+  MAX_ATTACHMENTS,
+  MAX_ORIGINAL_BYTES,
+  MAX_PDF_BYTES,
+  MAX_STORED_BYTES,
+  THUMB_MAX_SIDE,
+} from "./attachment-rules";
 
 type PurchaseBill = Database["public"]["Tables"]["purchase_bills"]["Row"];
 
@@ -16,6 +27,8 @@ export async function BillForm({
   defaultItems,
   submitLabel,
   error,
+  attachments = [],
+  onDeleteAttachment,
 }: {
   action: (formData: FormData) => Promise<void>;
   /** set when editing -- payment is then handled from the ค้างจ่าย tab instead */
@@ -23,6 +36,9 @@ export async function BillForm({
   defaultItems?: { description: string | null; quantity: number; unit_price: number }[];
   submitLabel: string;
   error?: string;
+  /** photos already saved on this purchase (edit mode) */
+  attachments?: GalleryImage[];
+  onDeleteAttachment?: (attachmentId: string) => Promise<void>;
 }) {
   const supabase = await createClient();
   const { data: suppliers } = await supabase
@@ -64,32 +80,70 @@ export async function BillForm({
             name="supplier_invoice_number"
             defaultValue={defaultValues?.supplier_invoice_number}
           />
-          <div className="sm:col-span-2 lg:col-span-3">
-            <LineItemsEditor
-              columns={[
-                { key: "description", label: "รายการ" },
-                { key: "quantity", label: "จำนวน", type: "number", step: "any", className: "w-24" },
-                { key: "unit_price", label: "ราคา/หน่วย", type: "number", step: "0.01", className: "w-32" },
-              ]}
-              initialRows={defaultItems?.map((i) => ({
-                description: i.description ?? "",
-                quantity: String(i.quantity),
-                unit_price: String(i.unit_price),
-              }))}
-              totalOf={["quantity", "unit_price"]}
-            />
-          </div>
           <Field
-            label="VAT (บาท, ถ้ามี)"
-            name="vat_amount"
-            type="number"
-            defaultValue={defaultValues?.vat_amount || null}
+            label="เลขที่ใบแจ้งหนี้ (ถ้ามี)"
+            name="invoice_number"
+            defaultValue={defaultValues?.invoice_number}
+          />
+          <Field
+            label="เลขที่ใบส่งของ (ถ้ามี)"
+            name="delivery_note_number"
+            defaultValue={defaultValues?.delivery_note_number}
+          />
+        </FormSection>
+
+        <FormSection title="รายการที่ซื้อ">
+          <EntryModeSwitch
+            // new purchases start with "แนบรูป"; an existing one without line items was recorded that way
+            defaultMode={defaultValues && (defaultItems?.length ?? 0) > 0 ? "items" : "attachment"}
+            items={
+              <LineItemsEditor
+                columns={[
+                  { key: "description", label: "รายการ" },
+                  { key: "quantity", label: "จำนวน", type: "number", step: "any", className: "w-24" },
+                  { key: "unit_price", label: "ราคา/หน่วย", type: "number", step: "0.01", className: "w-32" },
+                ]}
+                initialRows={defaultItems?.map((i) => ({
+                  description: i.description ?? "",
+                  quantity: String(i.quantity),
+                  unit_price: String(i.unit_price),
+                }))}
+                totalOf={["quantity", "unit_price"]}
+              />
+            }
+            amount={
+              <Field
+                label="ยอดเงิน (บาท, ก่อน VAT)"
+                name="amount"
+                type="number"
+                required
+                defaultValue={defaultValues?.subtotal || null}
+              />
+            }
+            vat={
+              <Field label="VAT (บาท, ถ้ามี)" name="vat_amount" type="number" defaultValue={defaultValues?.vat_amount || null} />
+            }
+            attachments={
+              <div className="space-y-4">
+                {attachments.length > 0 && <ImageGallery images={attachments} onDelete={onDeleteAttachment} />}
+                <ImageAttachInput
+                  maxFiles={MAX_ATTACHMENTS}
+                  existingCount={attachments.length}
+                  maxOriginalBytes={MAX_ORIGINAL_BYTES}
+                  maxStoredBytes={MAX_STORED_BYTES}
+                  maxPdfBytes={MAX_PDF_BYTES}
+                  fullMaxSide={FULL_MAX_SIDE}
+                  thumbMaxSide={THUMB_MAX_SIDE}
+                />
+              </div>
+            }
           />
           <Field
             label="หมายเหตุ"
             name="note"
+            rows={3}
             defaultValue={defaultValues?.note}
-            className="sm:col-span-1 lg:col-span-2"
+            className="sm:col-span-2 lg:col-span-3"
           />
         </FormSection>
 

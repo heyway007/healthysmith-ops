@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faChevronRight, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight, faEye, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { bangkokToday, formatThaiDate } from "@/components/holidays/holiday-views";
+import { ImageGallery } from "@/components/ui/image-gallery";
 import { deleteBill } from "./actions";
+import { attachmentViewsByBill } from "./attachments";
 import { BILL_STATUS } from "./status";
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
@@ -40,13 +42,16 @@ export default async function PurchaseBillsPage({
   const supplierNameById = new Map((suppliers ?? []).map((s) => [s.id, s.name]));
 
   const billIds = (bills ?? []).map((b) => b.id);
-  const { data: items } = billIds.length
-    ? await supabase
-        .from("purchase_bill_items")
-        .select("purchase_bill_id, description, sort_order")
-        .in("purchase_bill_id", billIds)
-        .order("sort_order")
-    : { data: [] };
+  const [{ data: items }, attachmentsByBill] = await Promise.all([
+    billIds.length
+      ? supabase
+          .from("purchase_bill_items")
+          .select("purchase_bill_id, description, sort_order")
+          .in("purchase_bill_id", billIds)
+          .order("sort_order")
+      : Promise.resolve({ data: [] as { purchase_bill_id: string; description: string | null }[] }),
+    attachmentViewsByBill(supabase, billIds),
+  ]);
   const itemsByBill = new Map<string, string[]>();
   for (const item of items ?? []) {
     const list = itemsByBill.get(item.purchase_bill_id) ?? [];
@@ -106,11 +111,13 @@ export default async function PurchaseBillsPage({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
+              <th className="px-4 py-3">เลขที่</th>
               <th className="px-4 py-3">วันที่</th>
               <th className="px-4 py-3">ร้าน / ผู้ขาย</th>
               <th className="px-4 py-3">รายการ</th>
               <th className="px-4 py-3 text-right">ยอดรวม</th>
               <th className="px-4 py-3">จ่ายเงิน</th>
+              <th className="px-4 py-3">ไฟล์แนบ</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -119,6 +126,14 @@ export default async function PurchaseBillsPage({
               const descriptions = itemsByBill.get(b.id) ?? [];
               return (
                 <tr key={b.id} className="border-t border-teal-100 hover:bg-teal-50">
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <Link
+                      href={`/admin/purchase/bills/${b.id}`}
+                      className="font-mono text-xs font-medium text-teal-700 hover:text-orange-600"
+                    >
+                      {b.bill_number}
+                    </Link>
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3 text-teal-700">
                     {formatThaiDate(b.bill_date, { day: "numeric", month: "short" })}
                   </td>
@@ -128,7 +143,7 @@ export default async function PurchaseBillsPage({
                       href={`/admin/purchase/bills/${b.id}`}
                       className="font-medium text-teal-800 hover:text-orange-600"
                     >
-                      {descriptions[0] ?? b.bill_number}
+                      {descriptions[0] ?? ((attachmentsByBill.get(b.id)?.length ?? 0) > 0 ? "ตามไฟล์แนบ" : "-")}
                     </Link>
                     {descriptions.length > 1 && (
                       <span className="text-teal-500"> และอีก {descriptions.length - 1} รายการ</span>
@@ -140,18 +155,30 @@ export default async function PurchaseBillsPage({
                   <td className="px-4 py-3">
                     <StatusBadge status={b.status} config={BILL_STATUS} />
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <DeleteButton
-                      action={deleteBill.bind(null, b.id)}
-                      confirmMessage={`ลบรายการซื้อ "${descriptions[0] ?? b.bill_number}"?`}
-                    />
+                  <td className="px-4 py-3">
+                    <ImageGallery images={attachmentsByBill.get(b.id) ?? []} compact />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/admin/purchase/bills/${b.id}`}
+                        className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-teal-200 px-3 py-1 text-xs font-medium text-teal-700 transition-colors hover:border-teal-400 hover:bg-teal-50 hover:text-teal-900"
+                      >
+                        <FontAwesomeIcon icon={faEye} />
+                        ดูรายละเอียด
+                      </Link>
+                      <DeleteButton
+                        action={deleteBill.bind(null, b.id)}
+                        confirmMessage={`ลบรายการซื้อ ${b.bill_number}${descriptions[0] ? ` "${descriptions[0]}"` : ""}?`}
+                      />
+                    </div>
                   </td>
                 </tr>
               );
             })}
             {(!bills || bills.length === 0) && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-teal-400">
+                <td colSpan={8} className="px-4 py-6 text-center text-teal-400">
                   เดือนนี้ยังไม่มีรายการซื้อ
                 </td>
               </tr>

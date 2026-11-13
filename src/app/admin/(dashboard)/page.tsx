@@ -79,7 +79,7 @@ export default async function DashboardHome() {
     {
       href: "/admin/purchase",
       icon: faTruck,
-      title: "🛍️ ซื้อของ / ค่าใช้จ่าย",
+      title: "🛍️ ภาษีซื้อ",
       desc: "จดรายการซื้อ / ร้านค้า / ยอดค้างจ่าย",
       allowed: ["purchase"],
     },

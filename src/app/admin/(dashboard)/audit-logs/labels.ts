@@ -45,7 +45,7 @@ export const TABLE_GROUPS: { label: string; tables: Record<string, string> }[] =
     },
   },
   {
-    label: "ซื้อของ / ค่าใช้จ่าย",
+    label: "ภาษีซื้อ",
     tables: {
       purchase_bills: "บิลซื้อ / ค่าใช้จ่าย",
       purchase_bill_items: "รายการในบิลซื้อ",

@@ -1968,6 +1968,8 @@ export interface Database {
           id: string;
           bill_number: string;
           supplier_invoice_number: string | null;
+          invoice_number: string | null;
+          delivery_note_number: string | null;
           purchase_order_id: string | null;
           supplier_id: string;
           bill_date: string;
@@ -1989,6 +1991,8 @@ export interface Database {
           id?: string;
           bill_number?: string;
           supplier_invoice_number?: string | null;
+          invoice_number?: string | null;
+          delivery_note_number?: string | null;
           purchase_order_id?: string | null;
           supplier_id: string;
           bill_date?: string;
@@ -2010,6 +2014,8 @@ export interface Database {
           id?: string;
           bill_number?: string;
           supplier_invoice_number?: string | null;
+          invoice_number?: string | null;
+          delivery_note_number?: string | null;
           purchase_order_id?: string | null;
           supplier_id?: string;
           bill_date?: string;
@@ -2065,6 +2071,45 @@ export interface Database {
           discount_amount?: number;
           amount?: number | null;
           sort_order?: number;
+        };
+        Relationships: [];
+      };
+      purchase_bill_attachments: {
+        Row: {
+          id: string;
+          purchase_bill_id: string;
+          storage_path: string;
+          thumb_path: string | null;
+          file_name: string | null;
+          mime_type: string;
+          size_bytes: number | null;
+          sort_order: number;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          purchase_bill_id: string;
+          storage_path: string;
+          thumb_path?: string | null;
+          file_name?: string | null;
+          mime_type?: string;
+          size_bytes?: number | null;
+          sort_order?: number;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          purchase_bill_id?: string;
+          storage_path?: string;
+          thumb_path?: string | null;
+          file_name?: string | null;
+          mime_type?: string;
+          size_bytes?: number | null;
+          sort_order?: number;
+          created_by?: string | null;
+          created_at?: string;
         };
         Relationships: [];
       };

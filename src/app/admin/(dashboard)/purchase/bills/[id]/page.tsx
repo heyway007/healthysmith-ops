@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { BackLink } from "@/components/ui/back-link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formCardClassName, secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
-import { updateBill } from "../actions";
+import { deleteBillAttachment, updateBill } from "../actions";
+import { attachmentViewsByBill } from "../attachments";
 import { BillForm } from "../bill-form";
 import { BILL_STATUS, PAYMENT_METHODS } from "../status";
 
@@ -22,9 +23,10 @@ export default async function BillDetailPage({
   const { data: bill } = await supabase.from("purchase_bills").select("*").eq("id", id).single();
   if (!bill) notFound();
 
-  const [{ data: items }, { data: payments }] = await Promise.all([
+  const [{ data: items }, { data: payments }, attachmentsByBill] = await Promise.all([
     supabase.from("purchase_bill_items").select("*").eq("purchase_bill_id", id).order("sort_order"),
     supabase.from("ap_payments").select("*").eq("purchase_bill_id", id).order("payment_date"),
+    attachmentViewsByBill(supabase, [id]),
   ]);
   const outstanding = bill.outstanding_amount ?? bill.total_amount - bill.paid_amount;
 
@@ -77,6 +79,8 @@ export default async function BillDetailPage({
           defaultItems={items ?? []}
           submitLabel="บันทึกการแก้ไข"
           error={error}
+          attachments={attachmentsByBill.get(id) ?? []}
+          onDeleteAttachment={deleteBillAttachment.bind(null, id)}
         />
       </div>
     </div>

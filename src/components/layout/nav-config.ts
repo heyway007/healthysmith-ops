@@ -78,7 +78,7 @@ export const NAV: NavGroup[] = [
   },
   {
     key: "purchase",
-    label: "ซื้อของ / ค่าใช้จ่าย",
+    label: "ภาษีซื้อ",
     icon: faTruck,
     allowed: ["purchase"],
     children: [

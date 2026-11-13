@@ -11,8 +11,9 @@ export const config = {
      * Match all request paths except:
      * - _next/static, _next/image (Next.js internals)
      * - favicon.ico
-     * - static asset extensions
+     * - static asset extensions (.mjs: the pdf.js worker in public/, which
+     *   must load without a session or the portal area would redirect it)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mjs)$).*)",
   ],
 };

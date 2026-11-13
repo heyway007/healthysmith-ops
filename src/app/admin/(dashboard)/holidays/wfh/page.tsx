@@ -122,7 +122,7 @@ export default async function RecurringWfhPage({
                 <WeekdayCheckboxes label={`${teamName} WFH ทุกวัน (เลือกได้หลายวัน)`} />
                 {period}
                 <Field label="ชื่อที่แสดงในปฏิทิน" name="name" defaultValue="Work From Home" />
-                <Field label="หมายเหตุ (ถ้ามี)" name="note" />
+                <Field label="หมายเหตุ (ถ้ามี)" name="note" rows={3} />
                 <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-800">
                   วันหยุดบริษัท หรือวันที่ทีมนี้มี WFH อยู่แล้ว จะถูกข้ามให้อัตโนมัติ
                 </p>

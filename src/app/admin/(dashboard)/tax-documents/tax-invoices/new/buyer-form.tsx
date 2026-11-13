@@ -179,7 +179,7 @@ export function BuyerForm({
           <label className="block text-sm font-medium text-teal-800" htmlFor="note">
             หมายเหตุ (พิมพ์ในใบกำกับ)
           </label>
-          <input id="note" name="note" value={buyer.note ?? ""} onChange={set("note")} className={inputClassName} />
+          <textarea id="note" name="note" rows={3} value={buyer.note ?? ""} onChange={set("note")} className={inputClassName} />
         </div>
       </div>
 
