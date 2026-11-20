@@ -4,15 +4,23 @@ import { createClient } from "@/lib/supabase/server";
 import { thaiDate } from "@/lib/thai-money";
 import { BackLink } from "@/components/ui/back-link";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { MOVEMENT_TYPES, formatQty, formatSignedQty, movementPrintHref } from "../../labels";
+import { MOVEMENT_TYPES, formatQty, formatSignedQty, movementViewHref } from "../../labels";
 import { bangkokToday } from "@/components/holidays/holiday-views";
+import { CancelStockDocumentButton } from "@/components/inventory/cancel-stock-document";
 import { UNLOTTED_LABEL, expiryStatus, fefoSort, shortDate } from "@/components/inventory/lots";
 
 const LIMIT = 300;
 
 /** Stock card: every movement of one product, newest first, with the balance after each. */
-export default async function StockCardPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function StockCardPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ cancelled?: string; error?: string }>;
+}) {
   const { id } = await params;
+  const { cancelled, error } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: product }, { data: movements }, { data: lotData }] = await Promise.all([
@@ -43,6 +51,13 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
     ? await supabase.from("production_receipts").select("id, production_order_id").in("id", receiptIds)
     : { data: [] };
   const orderByReceipt = new Map((receipts ?? []).map((r) => [r.id, r.production_order_id]));
+
+  const docNumbers = [...new Set((movements ?? []).map((m) => m.doc_number).filter((d): d is string => !!d))];
+  const { data: cancellations } = docNumbers.length
+    ? await supabase.from("stock_document_cancellations").select("doc_number").in("doc_number", docNumbers)
+    : { data: [] };
+  const cancelledDocs = new Set((cancellations ?? []).map((c) => c.doc_number));
+  const formShown = new Set<string>(); // cancel form on the first row of each IN / OUT document
 
   // Walk back from the current balance so the latest rows are right even
   // when older history is beyond the page limit.
@@ -77,6 +92,13 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
           {product.min_stock > 0 && <Stat label="ขั้นต่ำ" value={`${formatQty(product.min_stock)} ${product.unit}`} />}
         </div>
       </div>
+
+      {error && <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
+      {cancelled && (
+        <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          ยกเลิกเอกสาร {cancelled} แล้ว — ระบบบันทึกรายการกลับสต๊อกให้เรียบร้อย
+        </p>
+      )}
 
       <div className="mt-4 flex flex-wrap gap-2 text-sm">
         <Link
@@ -175,21 +197,40 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
           <tbody>
             {rows.map((m) => {
               const orderId = m.production_receipt_id ? orderByReceipt.get(m.production_receipt_id) : undefined;
-              const printHref = movementPrintHref(m);
+              const viewHref = movementViewHref(m, orderId);
+              const isCancelled = !!m.doc_number && cancelledDocs.has(m.doc_number);
+              const canCancel =
+                !!m.doc_number &&
+                !m.is_reversal &&
+                (m.movement_type === "in" || m.movement_type === "out") &&
+                !isCancelled &&
+                !formShown.has(m.doc_number);
+              if (canCancel) formShown.add(m.doc_number!);
               return (
                 <tr key={m.id} className="border-t border-teal-100">
                   <td data-label="วันที่" className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(m.movement_date, true)}</td>
                   <td data-label="เลขที่เอกสาร" className="whitespace-nowrap px-4 py-3">
-                    {printHref ? (
-                      <Link href={printHref} target="_blank" title="พิมพ์เอกสาร" className="font-medium text-teal-800 hover:text-orange-600">
+                    {viewHref ? (
+                      <Link href={viewHref} title="ดูเอกสาร" className="font-medium text-teal-800 hover:text-orange-600">
                         {m.doc_number ?? "พิมพ์"}
                       </Link>
                     ) : (
                       <span className="text-teal-400">-</span>
                     )}
+                    {canCancel && (
+                      <div className="mt-1.5">
+                        <CancelStockDocumentButton docNumber={m.doc_number!} returnTo={`/admin/inventory/stock/${id}`} />
+                      </div>
+                    )}
                   </td>
                   <td data-label="ประเภท" className="px-4 py-3">
                     <StatusBadge status={m.movement_type} config={MOVEMENT_TYPES} />
+                    {m.is_reversal && (
+                      <span className="ml-1 rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">รายการกลับ</span>
+                    )}
+                    {isCancelled && !m.is_reversal && (
+                      <span className="ml-1 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700">ยกเลิกแล้ว</span>
+                    )}
                   </td>
                   <td data-label="อ้างอิง / หมายเหตุ" className="px-4 py-3 text-teal-800">
                     {orderId ? (

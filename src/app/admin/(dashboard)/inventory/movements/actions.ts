@@ -37,16 +37,18 @@ export async function postMovements(_prev: MovementFormState, formData: FormData
 }
 
 /** ยกเลิกใบรับเข้า / ใบเบิก: posts reversing rows under the same document number. */
-export async function cancelStockDocument(docNumber: string, formData: FormData) {
+export async function cancelStockDocument(docNumber: string, returnTo: string, formData: FormData) {
+  // only come back to an inventory page of ours
+  const back = /^\/admin\/inventory\/[\w/-]*$/.test(returnTo) ? returnTo : "/admin/inventory/movements";
   const supabase = await createClient();
   const { error } = await supabase.rpc("cancel_stock_document", {
     p_doc_number: docNumber,
     p_reason: String(formData.get("reason") ?? ""),
   });
-  if (error) redirect(`/admin/inventory/movements?error=${encodeURIComponent(error.message)}`);
+  if (error) redirect(`${back}?error=${encodeURIComponent(error.message)}`);
 
   revalidatePath("/admin/inventory", "layout");
-  redirect(`/admin/inventory/movements?cancelled=${encodeURIComponent(docNumber)}`);
+  redirect(`${back}?cancelled=${encodeURIComponent(docNumber)}`);
 }
 
 /** นับสต๊อก: blank = not counted; every counted product (or lot, for lot-tracked ones) is adjusted to the count. */

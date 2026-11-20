@@ -44,6 +44,20 @@ export function movementPrintHref(m: { doc_number: string | null; production_rec
   return m.doc_number ? `/admin/print/inventory/stock-documents?doc=${encodeURIComponent(m.doc_number)}` : null;
 }
 
+/** In-app (form) view of a movement's document: the production order for a production receipt, else its IN/OUT/CNT page. */
+export function movementViewHref(
+  m: { doc_number: string | null; production_receipt_id: string | null },
+  productionOrderId?: string,
+) {
+  if (m.production_receipt_id) return productionOrderId ? `/admin/inventory/production/${productionOrderId}` : null;
+  return m.doc_number ? `/admin/inventory/movements/${encodeURIComponent(m.doc_number)}` : null;
+}
+
+/** timestamptz -> 'YYYY-MM-DD' in Bangkok time. */
+export function bangkokDate(ts: string) {
+  return new Date(ts).toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+}
+
 export function productLabel(p: { sku: string; name: string } | null | undefined) {
   return p ? `${p.sku} · ${p.name}` : "-";
 }

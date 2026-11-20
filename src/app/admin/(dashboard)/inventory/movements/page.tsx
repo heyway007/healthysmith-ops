@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowDown, faArrowUp, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import { dangerButtonClassName, secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
+import { faArrowDown, faArrowUp, faChevronLeft, faChevronRight, faEye } from "@fortawesome/free-solid-svg-icons";
+import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { thaiDate } from "@/lib/thai-money";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { SubmitButton } from "@/components/ui/submit-button";
 import { bangkokToday, formatThaiDate } from "@/components/holidays/holiday-views";
-import { MOVEMENT_TYPES, formatSignedQty, movementPrintHref } from "../labels";
-import { cancelStockDocument } from "./actions";
+import { MOVEMENT_TYPES, formatSignedQty, movementViewHref } from "../labels";
+import { CancelStockDocumentButton } from "@/components/inventory/cancel-stock-document";
+import { IconLinkButton } from "@/components/ui/icon-link-button";
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
 
@@ -49,8 +49,11 @@ export default async function MovementsPage({
     ? await supabase.from("stock_document_cancellations").select("doc_number, reason").in("doc_number", docNumbers)
     : { data: [] };
   const cancelledDocs = new Map((cancellations ?? []).map((c) => [c.doc_number, c.reason]));
-  // the cancel form goes on the first row of each IN / OUT document
-  const formShown = new Set<string>();
+  const receiptIds = [...new Set((movements ?? []).map((m) => m.production_receipt_id).filter((x): x is string => !!x))];
+  const { data: receipts } = receiptIds.length
+    ? await supabase.from("production_receipts").select("id, production_order_id").in("id", receiptIds)
+    : { data: [] };
+  const orderByReceipt = new Map((receipts ?? []).map((r) => [r.id, r.production_order_id]));
 
   const href = (m: string, t: string) => {
     const sp = new URLSearchParams({ month: m });
@@ -135,7 +138,7 @@ export default async function MovementsPage({
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="stack-table w-full text-sm md:min-w-[980px]">
+        <table className="stack-table w-full text-sm md:min-w-[760px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">วันที่</th>
@@ -144,29 +147,30 @@ export default async function MovementsPage({
               <th className="px-4 py-3">สินค้า</th>
               <th className="px-4 py-3 text-right">จำนวน</th>
               <th className="px-4 py-3">Lot</th>
-              <th className="px-4 py-3">อ้างอิง / หมายเหตุ</th>
-              <th className="px-4 py-3">ผู้บันทึก</th>
-              <th className="px-4 py-3">ยกเลิกเอกสาร</th>
+              <th className="px-4 py-3 text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody>
             {movements?.map((m) => {
               const p = productById.get(m.product_id);
-              const printHref = movementPrintHref(m);
+              const viewHref = movementViewHref(m, m.production_receipt_id ? orderByReceipt.get(m.production_receipt_id) : undefined);
               const cancelReason = m.doc_number ? cancelledDocs.get(m.doc_number) : undefined;
-              const canCancel =
-                !!m.doc_number &&
-                !m.is_reversal &&
-                (m.movement_type === "in" || m.movement_type === "out") &&
-                cancelReason === undefined &&
-                !formShown.has(m.doc_number);
-              if (canCancel) formShown.add(m.doc_number!);
+              const isInOut = m.movement_type === "in" || m.movement_type === "out";
+              const canCancel = !!m.doc_number && isInOut && !m.is_reversal && cancelReason === undefined;
+              // why the cancel button is greyed out on this row
+              const cancelDisabledReason = canCancel
+                ? undefined
+                : cancelReason !== undefined || m.is_reversal
+                  ? "เอกสารนี้ยกเลิกแล้ว"
+                  : m.movement_type === "adjust"
+                    ? "ใบปรับยอดสต๊อกยกเลิกไม่ได้ — ให้นับสต๊อกใหม่"
+                    : "ยกเลิกได้ที่หน้าใบผลิต (ใบรับสินค้าจากการผลิต)";
               return (
                 <tr key={m.id} className="border-t border-teal-100 hover:bg-teal-50">
                   <td data-label="วันที่" className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(m.movement_date, true)}</td>
                   <td data-label="เลขที่เอกสาร" className="whitespace-nowrap px-4 py-3">
-                    {printHref ? (
-                      <Link href={printHref} target="_blank" title="พิมพ์เอกสาร" className="font-medium text-teal-800 hover:text-orange-600">
+                    {viewHref ? (
+                      <Link href={viewHref} title="ดูเอกสาร" className="font-medium text-teal-800 hover:text-orange-600">
                         {m.doc_number ?? "พิมพ์"}
                       </Link>
                     ) : (
@@ -183,8 +187,12 @@ export default async function MovementsPage({
                     )}
                   </td>
                   <td data-label="สินค้า" className="px-4 py-3">
-                    <Link href={`/admin/inventory/stock/${m.product_id}`} className="text-teal-900 hover:text-orange-600">
-                      <span className="font-medium">{p?.sku}</span> {p?.name}
+                    <Link
+                      href={`/admin/inventory/stock/${m.product_id}`}
+                      title={p?.name}
+                      className="whitespace-nowrap font-medium text-teal-900 hover:text-orange-600"
+                    >
+                      {p?.sku}
                     </Link>
                   </td>
                   <td
@@ -196,37 +204,22 @@ export default async function MovementsPage({
                     {formatSignedQty(m.quantity)} <span className="text-xs font-normal text-teal-500">{p?.unit}</span>
                   </td>
                   <td data-label="Lot" className="px-4 py-3 text-teal-700">{m.lot_number ?? "-"}</td>
-                  <td data-label="อ้างอิง / หมายเหตุ" className="px-4 py-3 text-teal-800">
-                    {m.ref_no ?? ""}
-                    {m.note && <span className="block text-xs text-teal-500">{m.note}</span>}
-                  </td>
-                  <td data-label="ผู้บันทึก" className="px-4 py-3 text-xs text-teal-500">{m.created_by_email ?? "-"}</td>
-                  <td data-label="ยกเลิกเอกสาร" className="px-4 py-3">
-                    {canCancel && (
-                      <details>
-                        <summary className="cursor-pointer whitespace-nowrap text-xs font-medium text-rose-600">
-                          ยกเลิก {m.doc_number}
-                        </summary>
-                        <form action={cancelStockDocument.bind(null, m.doc_number!)} className="mt-2 flex flex-col gap-2">
-                          <input
-                            name="reason"
-                            required
-                            placeholder="เหตุผล เช่น บันทึกซ้ำ"
-                            className="w-56 max-w-full rounded-lg border border-teal-300 px-3 py-1.5 text-sm focus:border-teal-600 focus:outline-none"
-                          />
-                          <SubmitButton className={dangerButtonClassName} pendingLabel="กำลังยกเลิก...">
-                            ยืนยันยกเลิกทั้งใบ
-                          </SubmitButton>
-                        </form>
-                      </details>
-                    )}
+                  <td data-label="จัดการ" className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      {viewHref && <IconLinkButton href={viewHref} icon={faEye} label={`ดูเอกสาร ${m.doc_number ?? ""}`} />}
+                      <CancelStockDocumentButton
+                        docNumber={m.doc_number ?? ""}
+                        returnTo="/admin/inventory/movements"
+                        disabledReason={cancelDisabledReason}
+                      />
+                    </div>
                   </td>
                 </tr>
               );
             })}
             {(!movements || movements.length === 0) && (
               <tr>
-                <td colSpan={9} className="px-4 py-6 text-center text-teal-400">
+                <td colSpan={7} className="px-4 py-6 text-center text-teal-400">
                   เดือนนี้ยังไม่มีรายการ
                 </td>
               </tr>

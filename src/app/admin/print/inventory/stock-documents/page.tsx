@@ -9,7 +9,8 @@ import {
   docDate,
   docTableClassName,
 } from "@/components/inventory/stock-document";
-import { formatQty, formatSignedQty } from "@/app/admin/(dashboard)/inventory/labels";
+import { CancelledStamp } from "@/components/inventory/cancelled-stamp";
+import { bangkokDate, formatQty, formatSignedQty } from "@/app/admin/(dashboard)/inventory/labels";
 
 // ใบรับสินค้าเข้า (IN) / ใบเบิกสินค้า (OUT) / ใบปรับยอดสต๊อก (CNT): the
 // stock movements posted together under one document number.
@@ -76,11 +77,7 @@ export default async function PrintStockDocumentsPage({
           return (
             <DocSheet key={number} label={number}>
               <DocHeader company={company} title={kind.title} titleEn={kind.titleEn} number={number} date={first.movement_date} />
-              {cancelled && (
-                <p className="mb-2 border-2 border-black px-2 py-1 text-center text-sm font-bold">
-                  ยกเลิกแล้ว ({docDate(cancelled.cancelled_at)}) — {cancelled.reason}
-                </p>
-              )}
+              {cancelled && <CancelledStamp date={docDate(bangkokDate(cancelled.cancelled_at))} reason={cancelled.reason} />}
               <DocInfo
                 rows={[
                   ["เลขที่อ้างอิง", first.ref_no],
