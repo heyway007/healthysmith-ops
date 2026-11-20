@@ -46,7 +46,10 @@ export function TaxInvoiceDocument({
 }) {
   // Seller details as they were when the invoice was issued (snapshot); the
   // live company record is only a fallback for invoices issued before 0018.
-  const company: Seller | null = (invoice.seller_snapshot as Seller | null) ?? liveCompany;
+  // The logo is branding, not a legal particular, so it always comes from the
+  // live record (older snapshots predate the logo upload).
+  const snapshot = invoice.seller_snapshot as Seller | null;
+  const company: Seller | null = snapshot ? { ...snapshot, logo_url: liveCompany?.logo_url ?? null } : liveCompany;
   // Use the VAT stored when the invoice was issued; the document must match it.
   const vat = invoice.vat_amount;
   const net = Math.round((invoice.total_amount - vat) * 100) / 100;
@@ -176,9 +179,11 @@ export function TaxInvoiceDocument({
         )}
       </section>
 
-      {/* Payment + totals */}
-      <section className={COLS}>
-        <div className="col-span-2 space-y-2.5 pr-4 pt-2">
+      {/* Payment + totals. The totals box is sized to the table's last three
+          columns (18+24+27 mm) and its left edge sits on the column rule above
+          (1px), so its lines continue the table instead of jogging. */}
+      <section className="flex">
+        <div className="min-w-0 flex-1 space-y-2.5 pr-4 pt-2">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
             <span>รายการรับชำระเงิน</span>
             <Check on={invoice.payment_method === "cash"} label="เงินสด" />
@@ -196,43 +201,44 @@ export function TaxInvoiceDocument({
             <Fill>{shortDate(invoice.payment_date)}</Fill>
           </div>
         </div>
-        <div className="col-span-2 grid border-x-2 border-b-2 border-black text-center">
-          <div className="flex min-h-11 items-center justify-center border-b border-black px-1">รวมเงิน</div>
-          <div className="flex min-h-11 flex-col items-center justify-center border-b border-black px-1 leading-tight">
+        <div className="grid w-[calc(69mm+3px)] shrink-0 grid-cols-[1fr_27mm] border-b-2 border-l border-r-2 border-black">
+          <TotalCell label>รวมเงิน</TotalCell>
+          <TotalCell>{formatMoney(net)}</TotalCell>
+          <TotalCell label>
             <span>ภาษีมูลค่าเพิ่ม</span>
             <span>( VAT 7% )</span>
-          </div>
-          <div className="flex min-h-11 flex-col items-center justify-center px-1 leading-tight">
+          </TotalCell>
+          <TotalCell>{formatMoney(vat)}</TotalCell>
+          <TotalCell label last>
             <span className="font-semibold">ยอดเงินสุทธิ</span>
             <span>NET AMOUNT</span>
-          </div>
-        </div>
-        <div className="grid border-b-2 border-r-2 border-black text-right">
-          <div className="flex min-h-11 items-center justify-end border-b border-black px-2">{formatMoney(net)}</div>
-          <div className="flex min-h-11 items-center justify-end border-b border-black px-2">{formatMoney(vat)}</div>
-          <div className="flex min-h-11 items-center justify-end px-2 font-bold">{formatMoney(invoice.total_amount)}</div>
+          </TotalCell>
+          <TotalCell last bold>
+            {formatMoney(invoice.total_amount)}
+          </TotalCell>
         </div>
       </section>
       <p className="mt-1 text-right text-[10px] text-gray-600">ราคาสินค้ารวมภาษีมูลค่าเพิ่มแล้ว</p>
 
       {/* Amount in figures + words */}
-      <section className="mt-2 space-y-3">
-        <div className="flex items-end gap-3">
-          <span className="w-28">จำนวนเงิน/Amount</span>
-          <span className="w-[100mm] border-b border-r border-black pb-0.5 text-center font-semibold">
+      {/* right edge lines up with the left edge of the totals box above */}
+      <section className="mt-2 space-y-3 pr-[calc(69mm+3px)]">
+        <div className="flex items-center gap-3">
+          <span className="w-28 shrink-0">จำนวนเงิน/Amount</span>
+          <span className="min-w-0 flex-1 border-2 border-black py-1.5 text-center font-semibold">
             {formatMoney(invoice.total_amount)}
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="w-28 pl-4 font-semibold">ตัวอักษร</span>
-          <span className="w-[100mm] border-2 border-black py-1.5 text-center font-semibold">
+          <span className="w-28 shrink-0 pl-4 font-semibold">ตัวอักษร</span>
+          <span className="min-w-0 flex-1 border-2 border-black py-1.5 text-center font-semibold">
             ( {bahtText(invoice.total_amount)} )
           </span>
         </div>
       </section>
 
       {/* Signatures */}
-      <footer className="mt-3 grid grid-cols-[1fr_1fr_1.25fr] border-2 border-black text-center">
+      <footer className="mt-3 grid grid-cols-[1fr_1fr_calc(69mm+3px)] border-2 border-black text-center">
         <Sign title="ผู้รับสินค้า" bottom="วันที่ ........................................" />
         <Sign title="ผู้ส่งสินค้า" bottom="วันที่ ........................................" />
         <Sign title={`ในนาม ${company?.name ?? ""}`} bottom="ผู้มีอำนาจลงนาม" last />
@@ -250,6 +256,30 @@ function Line({ label, children }: { label: string; children: React.ReactNode })
     <div className="grid grid-cols-[30mm_1fr] items-end gap-2 py-0.5">
       <span className="text-[11px]">{label}</span>
       <span className="min-h-5 border-b border-dashed border-sky-600 px-1 print:border-sky-700">{children}</span>
+    </div>
+  );
+}
+
+/** One cell of the totals box. Labels sit left of the amount column and carry
+ * its dividing rule; every row but the last has a rule underneath. */
+function TotalCell({
+  label,
+  last,
+  bold,
+  children,
+}: {
+  label?: boolean;
+  last?: boolean;
+  bold?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`flex min-h-11 flex-col justify-center px-2 leading-tight ${
+        label ? "items-center border-r border-black text-center" : "items-end text-right"
+      } ${last ? "" : "border-b border-black"} ${bold ? "font-bold" : ""}`}
+    >
+      {children}
     </div>
   );
 }
