@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { thaiDate } from "@/lib/thai-money";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { CancelWithReasonButton } from "@/components/ui/cancel-with-reason-button";
+import { IconLinkButton } from "@/components/ui/icon-link-button";
+import { DisabledIconButton, RowActions } from "@/components/ui/row-actions";
+import { setProductionOrderStatus } from "./actions";
 import { bangkokToday } from "@/components/holidays/holiday-views";
 import { PRODUCTION_STATUS, formatQty } from "../labels";
 
@@ -83,6 +87,7 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
               <th className="px-4 py-3">ผู้ผลิต</th>
               <th className="px-4 py-3 text-right">รับแล้ว / สั่ง</th>
               <th className="px-4 py-3">สถานะ</th>
+              <th className="px-4 py-3 text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -105,8 +110,12 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
                     {overdue && <span className="block text-xs">เลยกำหนด</span>}
                   </td>
                   <td data-label="สินค้า" className="px-4 py-3 text-teal-900">
-                    <Link href={`/admin/inventory/production/${o.id}`} className="hover:text-orange-600">
-                      {first ? `${first.sku} ${first.name}` : "-"}
+                    <Link
+                      href={`/admin/inventory/production/${o.id}`}
+                      title={first?.name}
+                      className="whitespace-nowrap font-medium hover:text-orange-600"
+                    >
+                      {first ? first.sku : "-"}
                     </Link>
                     {lines.length > 1 && <span className="text-teal-500"> และอีก {lines.length - 1} รายการ</span>}
                   </td>
@@ -117,12 +126,43 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
                   <td data-label="สถานะ" className="px-4 py-3">
                     <StatusBadge status={o.status} config={PRODUCTION_STATUS} />
                   </td>
+                  <td data-label="จัดการ" className="px-4 py-3">
+                    <RowActions>
+                      <IconLinkButton href={`/admin/inventory/production/${o.id}`} icon={faEye} label={`ดูใบผลิต ${o.production_number}`} />
+                      {o.status === "open" || o.status === "partial" ? (
+                        <IconLinkButton
+                          href={`/admin/inventory/production/${o.id}/edit`}
+                          icon={faPenToSquare}
+                          label={`แก้ไขใบผลิต ${o.production_number}`}
+                        />
+                      ) : (
+                        <DisabledIconButton icon={faPenToSquare} label="แก้ไขไม่ได้ — ใบผลิตนี้ปิดหรือยกเลิกแล้ว" />
+                      )}
+                      <CancelWithReasonButton
+                        action={setProductionOrderStatus.bind(null, o.id, "cancel")}
+                        title={`ยกเลิกใบผลิต ${o.production_number}`}
+                        description="ยกเลิกได้เมื่อยังไม่มีการรับสินค้าเข้าคลัง"
+                        label={`ยกเลิกใบผลิต ${o.production_number}`}
+                        submitLabel="ยืนยันยกเลิกใบผลิต"
+                        reasonPlaceholder="เช่น ลูกค้ายกเลิกออเดอร์"
+                        disabledReason={
+                          o.status === "cancelled"
+                            ? "ใบผลิตนี้ยกเลิกแล้ว"
+                            : o.status === "closed" || o.status === "completed"
+                              ? "ใบผลิตนี้ปิดแล้ว ยกเลิกไม่ได้"
+                              : received > 0
+                                ? "มีการรับสินค้าเข้าคลังแล้ว — ยกเลิกใบรับที่หน้าใบผลิตก่อน"
+                                : undefined
+                        }
+                      />
+                    </RowActions>
+                  </td>
                 </tr>
               );
             })}
             {(!orders || orders.length === 0) && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-teal-400">
+                <td colSpan={8} className="px-4 py-6 text-center text-teal-400">
                   ไม่มีใบผลิตในกลุ่มนี้
                 </td>
               </tr>

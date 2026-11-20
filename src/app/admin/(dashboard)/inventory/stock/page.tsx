@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowDown, faArrowUp, faClipboardCheck, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faArrowUp, faClipboardCheck, faEye, faMagnifyingGlass, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import { IconLinkButton } from "@/components/ui/icon-link-button";
+import { RowActions } from "@/components/ui/row-actions";
 import { secondaryButtonClassName, selectClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney, thaiDate } from "@/lib/thai-money";
@@ -135,6 +137,7 @@ export default async function StockPage({
               <th className="px-3 py-3 sm:px-4 text-right">ขั้นต่ำ</th>
               <th className="px-3 py-3 sm:px-4 text-right">กำลังผลิต</th>
               <th className="px-3 py-3 sm:px-4">เคลื่อนไหวล่าสุด</th>
+              <th className="px-3 py-3 text-right sm:px-4">จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -167,11 +170,17 @@ export default async function StockPage({
                 <td data-label="เคลื่อนไหวล่าสุด" className="whitespace-nowrap px-3 py-3 sm:px-4 text-teal-600">
                   {thaiDate(p.last_movement_date, true)}
                 </td>
+                <td data-label="จัดการ" className="px-3 py-3 sm:px-4">
+                  <RowActions>
+                    <IconLinkButton href={`/admin/inventory/stock/${p.id}`} icon={faEye} label={`ดูการ์ดสต๊อก ${p.name}`} />
+                    <IconLinkButton href={`/admin/inventory/products/${p.id}`} icon={faPenToSquare} label={`แก้ไข ${p.name}`} />
+                  </RowActions>
+                </td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-teal-400">
+                <td colSpan={8} className="px-4 py-6 text-center text-teal-400">
                   {all.length === 0 ? (
                     <>
                       ยังไม่มีสินค้า —{" "}

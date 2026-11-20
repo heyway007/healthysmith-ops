@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faChevronRight, faEye, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight, faEye, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { IconLinkButton } from "@/components/ui/icon-link-button";
+import { RowActions } from "@/components/ui/row-actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { bangkokToday, formatThaiDate } from "@/components/holidays/holiday-views";
 import { ImageGallery } from "@/components/ui/image-gallery";
@@ -119,7 +120,7 @@ export default async function PurchaseBillsPage({
               <th className="px-4 py-3 text-right">ยอดรวม</th>
               <th className="px-4 py-3">จ่ายเงิน</th>
               <th className="px-4 py-3">ไฟล์แนบ</th>
-              <th className="px-4 py-3"></th>
+              <th className="px-4 py-3 text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -160,13 +161,14 @@ export default async function PurchaseBillsPage({
                     <ImageGallery images={attachmentsByBill.get(b.id) ?? []} compact />
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
+                    <RowActions>
                       <IconLinkButton href={`/admin/purchase/bills/${b.id}`} icon={faEye} label={`ดูรายละเอียด ${b.bill_number}`} />
+                      <IconLinkButton href={`/admin/purchase/bills/${b.id}`} icon={faPenToSquare} label={`แก้ไข ${b.bill_number}`} />
                       <DeleteButton
                         action={deleteBill.bind(null, b.id)}
                         confirmMessage={`ลบรายการซื้อ ${b.bill_number}${descriptions[0] ? ` "${descriptions[0]}"` : ""}?`}
                       />
-                    </div>
+                    </RowActions>
                   </td>
                 </tr>
               );

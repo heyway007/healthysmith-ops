@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPenToSquare, faPrint } from "@fortawesome/free-solid-svg-icons";
+import { faPrint } from "@fortawesome/free-solid-svg-icons";
 import { createClient } from "@/lib/supabase/server";
 import { getDocPermissions } from "@/lib/current-role";
 import { canDoc } from "@/lib/doc-permissions";
 import { parseDocFilters, type DocListParams } from "@/lib/doc-list-filters";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { formatMoney, thaiDate } from "@/lib/thai-money";
+import { faEye, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import { CancelWithReasonButton } from "@/components/ui/cancel-with-reason-button";
+import { IconLinkButton } from "@/components/ui/icon-link-button";
+import { DisabledIconButton, RowActions } from "@/components/ui/row-actions";
+import { requestCancel } from "../doc-actions";
 import { SelectAllCheckbox } from "@/components/ui/select-all-checkbox";
 import { DocListToolbar, StatusTag } from "@/components/documents/doc-list-toolbar";
 
@@ -84,6 +89,7 @@ export default async function TaxInvoicesPage({ searchParams }: { searchParams: 
                 <th className="px-4 py-3">อ้างอิงออเดอร์</th>
                 <th className="px-4 py-3 text-right">ยอดรวม</th>
                 <th className="px-4 py-3 text-right">VAT</th>
+                <th className="px-4 py-3 text-right">จัดการ</th>
               </tr>
             </thead>
             <tbody>
@@ -112,11 +118,50 @@ export default async function TaxInvoicesPage({ searchParams }: { searchParams: 
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-right font-medium">{formatMoney(t.total_amount)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">{formatMoney(t.vat_amount)}</td>
+                  <td className="px-4 py-3">
+                    <RowActions>
+                      <IconLinkButton href={`${BASE}/${t.id}`} icon={faEye} label={`ดูเอกสาร ${t.tax_invoice_number}`} />
+                      {canDoc(perms, "edit") && !t.replaced_by_id ? (
+                        <IconLinkButton
+                          href={`${BASE}/${t.id}/edit`}
+                          icon={faPenToSquare}
+                          label={t.is_cancelled ? `ออกใบใหม่แทน ${t.tax_invoice_number}` : `แก้ไข ${t.tax_invoice_number}`}
+                        />
+                      ) : (
+                        <DisabledIconButton
+                          icon={faPenToSquare}
+                          label={t.replaced_by_id ? "แก้ไขไม่ได้ — ออกฉบับใหม่แทนแล้ว" : "ไม่มีสิทธิ์แก้ไข"}
+                        />
+                      )}
+                      <CancelWithReasonButton
+                        action={requestCancel.bind(null, "tax_invoice", t.id)}
+                        title={`${canDoc(perms, "approve") ? "ยกเลิก" : "ขอยกเลิก"}เอกสาร ${t.tax_invoice_number}`}
+                        description={
+                          canDoc(perms, "approve")
+                            ? "เลขที่นี้จะไม่ถูกนำกลับมาใช้ และเอกสารยังเก็บไว้ในระบบพร้อมเหตุผล"
+                            : "คำขอจะส่งให้ผู้มีสิทธิ์อนุมัติ — ระหว่างรอ เอกสารยังมีผลอยู่"
+                        }
+                        label={`${canDoc(perms, "approve") ? "ยกเลิก" : "ขอยกเลิก"} ${t.tax_invoice_number}`}
+                        submitLabel={canDoc(perms, "approve") ? "ยืนยันยกเลิก" : "ส่งคำขอยกเลิก"}
+                        reasonName="cancel_reason"
+                        reasonPlaceholder="เช่น ลูกค้าแจ้งแก้ชื่อบริษัท"
+                        disabledReason={
+                          t.is_cancelled
+                            ? "ยกเลิกแล้ว"
+                            : t.cancel_requested_at
+                              ? "รออนุมัติยกเลิกอยู่"
+                              : canDoc(perms, "cancel") || canDoc(perms, "approve")
+                                ? undefined
+                                : "ไม่มีสิทธิ์ยกเลิก"
+                        }
+                      />
+                    </RowActions>
+                  </td>
                 </tr>
               ))}
               {(!invoices || invoices.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-teal-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-teal-400">
                     ไม่พบใบกำกับภาษีตามเงื่อนไขนี้
                     {f.status === "active" && " — ใบที่ยกเลิกแล้วดูได้โดยเลือกสถานะ “ทั้งหมด”"}
                   </td>

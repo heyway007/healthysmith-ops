@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowDown, faArrowUp, faChevronLeft, faChevronRight, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faArrowUp, faChevronLeft, faChevronRight, faEye, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { thaiDate } from "@/lib/thai-money";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { bangkokToday, formatThaiDate } from "@/components/holidays/holiday-views";
 import { MOVEMENT_TYPES, formatSignedQty, movementViewHref } from "../labels";
-import { CancelStockDocumentButton } from "@/components/inventory/cancel-stock-document";
+import { CancelWithReasonButton } from "@/components/ui/cancel-with-reason-button";
+import { DisabledIconButton, RowActions } from "@/components/ui/row-actions";
+import { cancelStockDocument } from "./actions";
 import { IconLinkButton } from "@/components/ui/icon-link-button";
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
@@ -205,14 +207,30 @@ export default async function MovementsPage({
                   </td>
                   <td data-label="Lot" className="px-4 py-3 text-teal-700">{m.lot_number ?? "-"}</td>
                   <td data-label="จัดการ" className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      {viewHref && <IconLinkButton href={viewHref} icon={faEye} label={`ดูเอกสาร ${m.doc_number ?? ""}`} />}
-                      <CancelStockDocumentButton
-                        docNumber={m.doc_number ?? ""}
-                        returnTo="/admin/inventory/movements"
+                    <RowActions>
+                      {viewHref ? (
+                        <IconLinkButton href={viewHref} icon={faEye} label={`ดูเอกสาร ${m.doc_number ?? ""}`} />
+                      ) : (
+                        <DisabledIconButton icon={faEye} label="ไม่มีเอกสารให้ดู" />
+                      )}
+                      <DisabledIconButton
+                        icon={faPenToSquare}
+                        label={
+                          m.production_receipt_id
+                            ? "แก้ไขที่หน้าใบผลิต"
+                            : "แก้ไขไม่ได้ — ให้ยกเลิกเอกสารแล้วบันทึกใหม่"
+                        }
+                      />
+                      <CancelWithReasonButton
+                        action={cancelStockDocument.bind(null, m.doc_number ?? "", "/admin/inventory/movements")}
+                        title={`ยกเลิกเอกสาร ${m.doc_number}`}
+                        description="ยกเลิกทั้งใบ ระบบจะบันทึกรายการกลับสต๊อกให้ และใบเดิมยังเก็บไว้เป็นประวัติ"
+                        label={`ยกเลิกเอกสาร ${m.doc_number}`}
+                        submitLabel="ยืนยันยกเลิกทั้งใบ"
+                        reasonPlaceholder="เช่น บันทึกซ้ำ"
                         disabledReason={cancelDisabledReason}
                       />
-                    </div>
+                    </RowActions>
                   </td>
                 </tr>
               );

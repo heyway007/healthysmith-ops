@@ -5,46 +5,47 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBan } from "@fortawesome/free-solid-svg-icons";
 import { dangerButtonClassName, secondaryButtonClassName } from "@/lib/ui-classes";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { cancelStockDocument } from "@/app/admin/(dashboard)/inventory/movements/actions";
+import { DisabledIconButton } from "@/components/ui/row-actions";
 
 /**
- * Round icon button (same size as the other row actions) that opens a dialog
- * asking for the reason, then cancels the whole IN / OUT document.
+ * Round "ยกเลิก" icon button for list rows: opens a dialog that asks for the
+ * reason, then runs `action` (a server action that reads the reason from the
+ * form field `reasonName`). With `disabledReason` it is shown greyed out.
  */
-export function CancelStockDocumentButton({
-  docNumber,
-  returnTo,
-  showLabel,
+export function CancelWithReasonButton({
+  action,
+  title,
+  description,
+  label,
+  submitLabel = "ยืนยันยกเลิก",
+  reasonName = "reason",
+  reasonPlaceholder = "เช่น บันทึกผิด",
   disabledReason,
+  showLabel,
 }: {
-  docNumber: string;
-  returnTo: string;
+  action: (formData: FormData) => void | Promise<void>;
+  /** dialog heading, e.g. "ยกเลิกเอกสาร IN26-0001" */
+  title: string;
+  description?: string;
+  /** tooltip / accessible name of the icon */
+  label: string;
+  submitLabel?: string;
+  reasonName?: string;
+  reasonPlaceholder?: string;
+  /** when set, the button can't be pressed and this is its tooltip */
+  disabledReason?: string;
   /** a labelled button instead of the round icon */
   showLabel?: boolean;
-  /** when set, the button is shown greyed out (this is the tooltip) and can't be pressed */
-  disabledReason?: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  if (disabledReason) {
-    return (
-      <button
-        type="button"
-        disabled
-        title={disabledReason}
-        aria-label={disabledReason}
-        className="flex h-[30px] w-[30px] cursor-not-allowed items-center justify-center rounded-full border border-gray-200 text-gray-300"
-      >
-        <FontAwesomeIcon icon={faBan} />
-      </button>
-    );
-  }
+  if (disabledReason) return <DisabledIconButton icon={faBan} label={disabledReason} />;
   return (
     <>
       <button
         type="button"
         onClick={() => dialog.current?.showModal()}
-        title={`ยกเลิกเอกสาร ${docNumber}`}
-        aria-label={`ยกเลิกเอกสาร ${docNumber}`}
+        title={label}
+        aria-label={label}
         className={
           showLabel
             ? `flex items-center gap-2 ${dangerButtonClassName}`
@@ -52,22 +53,22 @@ export function CancelStockDocumentButton({
         }
       >
         <FontAwesomeIcon icon={faBan} />
-        {showLabel && "ยกเลิกเอกสาร"}
+        {showLabel && label}
       </button>
       <dialog
         ref={dialog}
         className="m-auto w-[min(26rem,calc(100vw-2rem))] rounded-2xl border border-rose-100 bg-white p-0 text-left shadow-xl backdrop:bg-black/40"
       >
-        <form action={cancelStockDocument.bind(null, docNumber, returnTo)} className="flex flex-col gap-3 p-5">
-          <h3 className="text-base font-semibold text-teal-950">ยกเลิกเอกสาร {docNumber}</h3>
-          <p className="text-sm text-teal-700">ยกเลิกทั้งใบ ระบบจะบันทึกรายการกลับสต๊อกให้ และใบเดิมยังเก็บไว้เป็นประวัติ</p>
+        <form action={action} className="flex flex-col gap-3 p-5">
+          <h3 className="text-base font-semibold text-teal-950">{title}</h3>
+          {description && <p className="text-sm text-teal-700">{description}</p>}
           <label className="flex flex-col gap-1 text-sm font-medium text-teal-900">
             เหตุผลที่ยกเลิก
             <input
-              name="reason"
+              name={reasonName}
               required
               autoFocus
-              placeholder="เช่น บันทึกซ้ำ"
+              placeholder={reasonPlaceholder}
               className="rounded-lg border border-teal-300 px-3 py-2 font-normal focus:border-teal-600 focus:outline-none"
             />
           </label>
@@ -76,7 +77,7 @@ export function CancelStockDocumentButton({
               ไม่ยกเลิก
             </button>
             <SubmitButton className={dangerButtonClassName} pendingLabel="กำลังยกเลิก...">
-              ยืนยันยกเลิกทั้งใบ
+              {submitLabel}
             </SubmitButton>
           </div>
         </form>

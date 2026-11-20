@@ -5,7 +5,8 @@ import { faPrint } from "@fortawesome/free-solid-svg-icons";
 import { createClient } from "@/lib/supabase/server";
 import { thaiDate } from "@/lib/thai-money";
 import { BackLink } from "@/components/ui/back-link";
-import { CancelStockDocumentButton } from "@/components/inventory/cancel-stock-document";
+import { CancelWithReasonButton } from "@/components/ui/cancel-with-reason-button";
+import { cancelStockDocument } from "../actions";
 import { CancelledStamp } from "@/components/inventory/cancelled-stamp";
 import { formCardClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { bangkokDate, formatQty, formatSignedQty } from "../../labels";
@@ -78,7 +79,17 @@ export default async function StockDocumentPage({
             <FontAwesomeIcon icon={faPrint} />
             พิมพ์
           </Link>
-          {canCancel && <CancelStockDocumentButton docNumber={doc} returnTo={here} showLabel />}
+          {canCancel && (
+            <CancelWithReasonButton
+              action={cancelStockDocument.bind(null, doc, here)}
+              title={`ยกเลิกเอกสาร ${doc}`}
+              description="ยกเลิกทั้งใบ ระบบจะบันทึกรายการกลับสต๊อกให้ และใบเดิมยังเก็บไว้เป็นประวัติ"
+              label="ยกเลิกเอกสาร"
+              submitLabel="ยืนยันยกเลิกทั้งใบ"
+              reasonPlaceholder="เช่น บันทึกซ้ำ"
+              showLabel
+            />
+          )}
         </div>
       </div>
 

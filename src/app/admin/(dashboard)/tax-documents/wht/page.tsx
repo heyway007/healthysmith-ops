@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getDocPermissions } from "@/lib/current-role";
 import { canDoc } from "@/lib/doc-permissions";
 import { parseDocFilters, type DocListParams } from "@/lib/doc-list-filters";
+import { faEye, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import { CancelWithReasonButton } from "@/components/ui/cancel-with-reason-button";
+import { IconLinkButton } from "@/components/ui/icon-link-button";
+import { DisabledIconButton, RowActions } from "@/components/ui/row-actions";
+import { requestCancel } from "../doc-actions";
 import { SelectAllCheckbox } from "@/components/ui/select-all-checkbox";
 import { DocListToolbar, StatusTag } from "@/components/documents/doc-list-toolbar";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
@@ -85,6 +90,7 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
                 <th className="px-4 py-3">แบบ</th>
                 <th className="px-4 py-3 text-right">ยอดจ่าย</th>
                 <th className="px-4 py-3 text-right">ภาษีที่หัก</th>
+                <th className="px-4 py-3 text-right">จัดการ</th>
               </tr>
             </thead>
             <tbody>
@@ -110,11 +116,50 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
                   <td className="whitespace-nowrap px-4 py-3">{FORM_LABEL[c.form_type]}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-right">{formatMoney(c.total_paid)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-right font-medium">{formatMoney(c.total_tax)}</td>
+                  <td className="px-4 py-3">
+                    <RowActions>
+                      <IconLinkButton href={`${BASE}/${c.id}`} icon={faEye} label={`ดูเอกสาร ${c.certificate_number}`} />
+                      {canDoc(perms, "edit") && !c.replaced_by_id ? (
+                        <IconLinkButton
+                          href={`${BASE}/new?from=${c.id}&replace=1`}
+                          icon={faPenToSquare}
+                          label={c.is_cancelled ? `ออกใบใหม่แทน ${c.certificate_number}` : `แก้ไข ${c.certificate_number}`}
+                        />
+                      ) : (
+                        <DisabledIconButton
+                          icon={faPenToSquare}
+                          label={c.replaced_by_id ? "แก้ไขไม่ได้ — ออกฉบับใหม่แทนแล้ว" : "ไม่มีสิทธิ์แก้ไข"}
+                        />
+                      )}
+                      <CancelWithReasonButton
+                        action={requestCancel.bind(null, "wht", c.id)}
+                        title={`${canDoc(perms, "approve") ? "ยกเลิก" : "ขอยกเลิก"}เอกสาร ${c.certificate_number}`}
+                        description={
+                          canDoc(perms, "approve")
+                            ? "เลขที่นี้จะไม่ถูกนำกลับมาใช้ และเอกสารยังเก็บไว้ในระบบพร้อมเหตุผล"
+                            : "คำขอจะส่งให้ผู้มีสิทธิ์อนุมัติ — ระหว่างรอ เอกสารยังมีผลอยู่"
+                        }
+                        label={`${canDoc(perms, "approve") ? "ยกเลิก" : "ขอยกเลิก"} ${c.certificate_number}`}
+                        submitLabel={canDoc(perms, "approve") ? "ยืนยันยกเลิก" : "ส่งคำขอยกเลิก"}
+                        reasonName="cancel_reason"
+                        reasonPlaceholder="เช่น ลูกค้าแจ้งแก้ชื่อบริษัท"
+                        disabledReason={
+                          c.is_cancelled
+                            ? "ยกเลิกแล้ว"
+                            : c.cancel_requested_at
+                              ? "รออนุมัติยกเลิกอยู่"
+                              : canDoc(perms, "cancel") || canDoc(perms, "approve")
+                                ? undefined
+                                : "ไม่มีสิทธิ์ยกเลิก"
+                        }
+                      />
+                    </RowActions>
+                  </td>
                 </tr>
               ))}
               {(!certificates || certificates.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-teal-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-teal-400">
                     ไม่พบหนังสือรับรองตามเงื่อนไขนี้
                     {f.status === "active" && " — ใบที่ยกเลิกแล้วดูได้โดยเลือกสถานะ “ทั้งหมด”"}
                   </td>

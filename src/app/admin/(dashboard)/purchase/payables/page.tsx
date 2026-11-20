@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { faEye, faMoneyBillWave } from "@fortawesome/free-solid-svg-icons";
+import { IconLinkButton } from "@/components/ui/icon-link-button";
+import { RowActions } from "@/components/ui/row-actions";
 import { createClient } from "@/lib/supabase/server";
 import { Field } from "@/components/ui/field";
 import {
@@ -118,7 +121,7 @@ export default async function PayablesPage({
               <th className="px-4 py-3">อายุหนี้</th>
               <th className="px-4 py-3">ยอดรวม</th>
               <th className="px-4 py-3">ค้างจ่าย</th>
-              <th className="px-4 py-3"></th>
+              <th className="px-4 py-3 text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -141,13 +144,15 @@ export default async function PayablesPage({
                   <td className="px-4 py-3 font-medium text-rose-600">
                     {(b.outstanding_amount ?? 0).toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/purchase/payables?bill=${b.id}`}
-                      className="rounded-lg border border-teal-200 px-3 py-1.5 text-sm font-medium text-teal-700 hover:border-orange-300 hover:text-orange-600"
-                    >
-                      บันทึกจ่าย
-                    </Link>
+                  <td className="px-4 py-3">
+                    <RowActions>
+                      <IconLinkButton href={`/admin/purchase/bills/${b.id}`} icon={faEye} label={`ดูรายละเอียด ${b.bill_number}`} />
+                      <IconLinkButton
+                        href={`/admin/purchase/payables?bill=${b.id}`}
+                        icon={faMoneyBillWave}
+                        label={`บันทึกจ่าย ${b.bill_number}`}
+                      />
+                    </RowActions>
                   </td>
                 </tr>
               );

@@ -6,7 +6,8 @@ import { BackLink } from "@/components/ui/back-link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { MOVEMENT_TYPES, formatQty, formatSignedQty, movementViewHref } from "../../labels";
 import { bangkokToday } from "@/components/holidays/holiday-views";
-import { CancelStockDocumentButton } from "@/components/inventory/cancel-stock-document";
+import { CancelWithReasonButton } from "@/components/ui/cancel-with-reason-button";
+import { cancelStockDocument } from "../../movements/actions";
 import { UNLOTTED_LABEL, expiryStatus, fefoSort, shortDate } from "@/components/inventory/lots";
 
 const LIMIT = 300;
@@ -219,7 +220,14 @@ export default async function StockCardPage({
                     )}
                     {canCancel && (
                       <div className="mt-1.5">
-                        <CancelStockDocumentButton docNumber={m.doc_number!} returnTo={`/admin/inventory/stock/${id}`} />
+                        <CancelWithReasonButton
+                          action={cancelStockDocument.bind(null, m.doc_number!, `/admin/inventory/stock/${id}`)}
+                          title={`ยกเลิกเอกสาร ${m.doc_number}`}
+                          description="ยกเลิกทั้งใบ ระบบจะบันทึกรายการกลับสต๊อกให้ และใบเดิมยังเก็บไว้เป็นประวัติ"
+                          label={`ยกเลิกเอกสาร ${m.doc_number}`}
+                          submitLabel="ยืนยันยกเลิกทั้งใบ"
+                          reasonPlaceholder="เช่น บันทึกซ้ำ"
+                        />
                       </div>
                     )}
                   </td>

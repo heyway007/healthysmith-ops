@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { deleteSupplier } from "./actions";
 import { DeleteButton } from "@/components/ui/delete-button";
+import { IconLinkButton } from "@/components/ui/icon-link-button";
+import { RowActions } from "@/components/ui/row-actions";
 
 export default async function PurchasePage({
   searchParams,
@@ -48,7 +50,7 @@ export default async function PurchasePage({
               <th className="px-4 py-3">ผู้ติดต่อ</th>
               <th className="px-4 py-3">เบอร์โทร</th>
               <th className="px-4 py-3">เครดิตเทอม</th>
-              <th className="px-4 py-3"></th>
+              <th className="px-4 py-3 text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -67,11 +69,15 @@ export default async function PurchasePage({
                 <td className="px-4 py-3 text-teal-700">{s.contact_person ?? "-"}</td>
                 <td className="px-4 py-3 text-teal-700">{s.phone ?? "-"}</td>
                 <td className="px-4 py-3 text-teal-700">{s.payment_term_days} วัน</td>
-                <td className="px-4 py-3 text-right">
-                  <DeleteButton
-                    action={deleteSupplier.bind(null, s.id)}
-                    confirmMessage={`ลบร้านค้า / ผู้ขาย "${s.name}"?`}
-                  />
+                <td className="px-4 py-3">
+                  <RowActions>
+                    <IconLinkButton href={`/admin/purchase/suppliers/${s.id}`} icon={faEye} label={`ดูรายละเอียด ${s.name}`} />
+                    <IconLinkButton href={`/admin/purchase/suppliers/${s.id}`} icon={faPenToSquare} label={`แก้ไข ${s.name}`} />
+                    <DeleteButton
+                      action={deleteSupplier.bind(null, s.id)}
+                      confirmMessage={`ลบร้านค้า / ผู้ขาย "${s.name}"?`}
+                    />
+                  </RowActions>
                 </td>
               </tr>
             ))}

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faMagnifyingGlass, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import { IconLinkButton } from "@/components/ui/icon-link-button";
+import { RowActions } from "@/components/ui/row-actions";
 import { secondaryButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { bangkokToday } from "@/components/holidays/holiday-views";
@@ -116,6 +118,7 @@ export default async function LotsPage({
               <th className="px-4 py-3">สถานะ</th>
               <th className="px-4 py-3">รับเข้าเมื่อ</th>
               <th className="px-4 py-3 text-right">คงเหลือ</th>
+              <th className="px-4 py-3 text-right">จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -148,12 +151,18 @@ export default async function LotsPage({
                   <td data-label="คงเหลือ" className={`px-4 py-3 text-right font-semibold ${l.on_hand < 0 ? "text-rose-600" : "text-teal-950"}`}>
                     {formatQty(l.on_hand)} <span className="text-xs font-normal text-teal-500">{p.unit}</span>
                   </td>
+                  <td data-label="จัดการ" className="px-4 py-3">
+                    <RowActions>
+                      <IconLinkButton href={`/admin/inventory/stock/${p.id}`} icon={faEye} label={`ดูการ์ดสต๊อก ${p.name}`} />
+                      <IconLinkButton href={`/admin/inventory/products/${p.id}`} icon={faPenToSquare} label={`แก้ไข ${p.name}`} />
+                    </RowActions>
+                  </td>
                 </tr>
               );
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-teal-400">
+                <td colSpan={7} className="px-4 py-6 text-center text-teal-400">
                   {ids.length === 0 ? (
                     <>
                       ยังไม่มีสินค้าที่ติดตามเป็นล็อต —{" "}
