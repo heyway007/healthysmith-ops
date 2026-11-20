@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight, faEye, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { submitButtonClassName } from "@/lib/ui-classes";
@@ -24,9 +26,10 @@ function shiftMonth(month: string, delta: number) {
 export default async function PurchaseBillsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; month?: string }>;
+  searchParams: Promise<{ error?: string; month?: string; page?: string; size?: string }>;
 }) {
   const params = await searchParams;
+  const paging = await getPaging(params);
   const month = params.month && MONTH_RE.test(params.month) ? params.month : bangkokToday().slice(0, 7);
   const supabase = await createClient();
 
@@ -64,6 +67,8 @@ export default async function PurchaseBillsPage({
   const total = (bills ?? []).reduce((sum, b) => sum + b.total_amount, 0);
   const unpaid = (bills ?? []).reduce((sum, b) => sum + (b.outstanding_amount ?? 0), 0);
   const monthLabel = formatThaiDate(`${month}-01`, { month: "long", year: "numeric" });
+
+  const paged = paginate(bills ?? [], paging);
 
   return (
     <div>
@@ -124,7 +129,7 @@ export default async function PurchaseBillsPage({
             </tr>
           </thead>
           <tbody>
-            {bills?.map((b) => {
+            {paged.rows.map((b) => {
               const descriptions = itemsByBill.get(b.id) ?? [];
               return (
                 <tr key={b.id} className="border-t border-teal-100 hover:bg-teal-50">
@@ -183,6 +188,7 @@ export default async function PurchaseBillsPage({
           </tbody>
         </table>
       </div>
+      <Pagination total={paged.total} page={paged.page} size={paged.size} />
     </div>
   );
 }

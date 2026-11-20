@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPrint } from "@fortawesome/free-solid-svg-icons";
 import { createClient } from "@/lib/supabase/server";
@@ -17,8 +19,10 @@ import { DocListToolbar, StatusTag } from "@/components/documents/doc-list-toolb
 
 const BASE = "/admin/tax-documents/tax-invoices";
 
-export default async function TaxInvoicesPage({ searchParams }: { searchParams: Promise<DocListParams> }) {
-  const f = parseDocFilters(await searchParams);
+export default async function TaxInvoicesPage({ searchParams }: { searchParams: Promise<DocListParams & { page?: string; size?: string }> }) {
+  const sp = await searchParams;
+  const f = parseDocFilters(sp);
+  const paging = await getPaging(sp);
   const supabase = await createClient();
 
   let query = supabase
@@ -39,6 +43,8 @@ export default async function TaxInvoicesPage({ searchParams }: { searchParams: 
   const active = (invoices ?? []).filter((t) => !t.is_cancelled);
   const total = active.reduce((s, t) => s + t.total_amount, 0);
   const vat = active.reduce((s, t) => s + t.vat_amount, 0);
+
+  const paged = paginate(invoices ?? [], paging);
 
   return (
     <div>
@@ -93,7 +99,7 @@ export default async function TaxInvoicesPage({ searchParams }: { searchParams: 
               </tr>
             </thead>
             <tbody>
-              {invoices?.map((t) => (
+              {paged.rows.map((t) => (
                 <tr key={t.id} className={`border-t border-teal-100 hover:bg-teal-50 ${t.is_cancelled ? "text-gray-400" : ""}`}>
                   <td className="px-4 py-3">
                     <input type="checkbox" name="id" value={t.id} aria-label={`เลือก ${t.tax_invoice_number}`} className="size-4 accent-teal-600" />
@@ -170,6 +176,7 @@ export default async function TaxInvoicesPage({ searchParams }: { searchParams: 
             </tbody>
           </table>
         </div>
+      <Pagination total={paged.total} page={paged.page} size={paged.size} />
       </form>
     </div>
   );

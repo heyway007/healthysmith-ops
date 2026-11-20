@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown, faArrowUp, faClipboardCheck, faEye, faMagnifyingGlass, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { IconLinkButton } from "@/components/ui/icon-link-button";
@@ -17,9 +19,10 @@ const FILTERS: Record<string, string> = {
 export default async function StockPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string; show?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; show?: string; page?: string; size?: string }>;
 }) {
   const params = await searchParams;
+  const paging = await getPaging(params);
   const q = params.q?.trim() ?? "";
   const type = params.type && params.type in PRODUCT_TYPES ? params.type : "";
   const show = params.show && params.show in FILTERS ? params.show : "all";
@@ -51,6 +54,8 @@ export default async function StockPage({
     const str = sp.toString();
     return `/admin/inventory/stock${str ? `?${str}` : ""}`;
   };
+
+  const paged = paginate(rows, paging);
 
   return (
     <div>
@@ -141,7 +146,7 @@ export default async function StockPage({
             </tr>
           </thead>
           <tbody>
-            {rows.map((p) => (
+            {paged.rows.map((p) => (
               <tr key={p.id} className="border-t border-teal-100 hover:bg-teal-50">
                 <td data-label="รหัส" className="whitespace-nowrap px-3 py-3 sm:px-4">
                   <Link href={`/admin/inventory/stock/${p.id}`} className="font-medium text-teal-800 hover:text-orange-600">
@@ -197,6 +202,7 @@ export default async function StockPage({
           </tbody>
         </table>
       </div>
+      <Pagination total={paged.total} page={paged.page} size={paged.size} />
     </div>
   );
 }

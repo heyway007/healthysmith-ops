@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown, faArrowUp, faChevronLeft, faChevronRight, faEye, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
@@ -23,9 +25,10 @@ function shiftMonth(month: string, delta: number) {
 export default async function MovementsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; type?: string; saved?: string; cancelled?: string; error?: string }>;
+  searchParams: Promise<{ month?: string; type?: string; saved?: string; cancelled?: string; error?: string; page?: string; size?: string }>;
 }) {
   const params = await searchParams;
+  const paging = await getPaging(params);
   const month = params.month && MONTH_RE.test(params.month) ? params.month : bangkokToday().slice(0, 7);
   const type = params.type && params.type in MOVEMENT_TYPES ? params.type : "";
   const supabase = await createClient();
@@ -62,6 +65,8 @@ export default async function MovementsPage({
     if (t) sp.set("type", t);
     return `/admin/inventory/movements?${sp}`;
   };
+
+  const paged = paginate(movements ?? [], paging);
 
   return (
     <div>
@@ -153,7 +158,7 @@ export default async function MovementsPage({
             </tr>
           </thead>
           <tbody>
-            {movements?.map((m) => {
+            {paged.rows.map((m) => {
               const p = productById.get(m.product_id);
               const viewHref = movementViewHref(m, m.production_receipt_id ? orderByReceipt.get(m.production_receipt_id) : undefined);
               const cancelReason = m.doc_number ? cancelledDocs.get(m.doc_number) : undefined;
@@ -245,6 +250,7 @@ export default async function MovementsPage({
           </tbody>
         </table>
       </div>
+      <Pagination total={paged.total} page={paged.page} size={paged.size} />
     </div>
   );
 }

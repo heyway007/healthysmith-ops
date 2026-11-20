@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faMagnifyingGlass, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
@@ -13,9 +15,10 @@ import { PRODUCT_TYPES, formatQty, productSearchFilter } from "../labels";
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; q?: string; inactive?: string }>;
+  searchParams: Promise<{ error?: string; q?: string; inactive?: string; page?: string; size?: string }>;
 }) {
   const params = await searchParams;
+  const paging = await getPaging(params);
   const q = params.q?.trim() ?? "";
   const showInactive = params.inactive === "1";
   const supabase = await createClient();
@@ -41,6 +44,8 @@ export default async function ProductsPage({
     const next = lots.find((l) => l.expiry_date);
     return { next: next?.expiry_date ?? null, count: lots.length };
   };
+
+  const paged = paginate(products ?? [], paging);
 
   return (
     <div>
@@ -94,7 +99,7 @@ export default async function ProductsPage({
             </tr>
           </thead>
           <tbody>
-            {products?.map((p) => (
+            {paged.rows.map((p) => (
               <tr key={p.id} className={`border-t border-teal-100 hover:bg-teal-50 ${p.is_active ? "" : "opacity-50"}`}>
                 <td data-label="รหัส" className="whitespace-nowrap px-4 py-3">
                   <Link href={`/admin/inventory/products/${p.id}`} className="font-medium text-teal-800 hover:text-orange-600">
@@ -164,6 +169,7 @@ export default async function ProductsPage({
           </tbody>
         </table>
       </div>
+      <Pagination total={paged.total} page={paged.page} size={paged.size} />
     </div>
   );
 }

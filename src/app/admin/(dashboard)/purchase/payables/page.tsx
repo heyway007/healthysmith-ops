@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { getPaging, paginate } from "@/lib/pagination";
 import { faEye, faMoneyBillWave } from "@fortawesome/free-solid-svg-icons";
 import { IconLinkButton } from "@/components/ui/icon-link-button";
 import { RowActions } from "@/components/ui/row-actions";
@@ -25,9 +27,11 @@ function agingLabel(dueDate: string | null): { label: string; className: string 
 export default async function PayablesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; bill?: string }>;
+  searchParams: Promise<{ error?: string; bill?: string; page?: string; size?: string }>;
 }) {
-  const { error, bill: billId } = await searchParams;
+  const sp = await searchParams;
+  const { error, bill: billId } = sp;
+  const paging = await getPaging(sp);
   const supabase = await createClient();
 
   const [{ data: bills }, { data: suppliers }] = await Promise.all([
@@ -47,6 +51,8 @@ export default async function PayablesPage({
   if (billId) {
     payingBill = outstandingBills.find((b) => b.id === billId) ?? null;
   }
+
+  const paged = paginate(outstandingBills, paging);
 
   return (
     <div>
@@ -125,7 +131,7 @@ export default async function PayablesPage({
             </tr>
           </thead>
           <tbody>
-            {outstandingBills.map((b) => {
+            {paged.rows.map((b) => {
               const aging = agingLabel(b.due_date);
               return (
                 <tr key={b.id} className="border-t border-teal-100 hover:bg-teal-50">
@@ -167,6 +173,7 @@ export default async function PayablesPage({
           </tbody>
         </table>
       </div>
+      <Pagination total={paged.total} page={paged.page} size={paged.size} />
     </div>
   );
 }

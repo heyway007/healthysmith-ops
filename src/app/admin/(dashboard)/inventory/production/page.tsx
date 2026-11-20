@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { submitButtonClassName } from "@/lib/ui-classes";
@@ -19,8 +21,9 @@ const VIEWS: Record<string, { label: string; statuses: string[] | null }> = {
   all: { label: "ทั้งหมด", statuses: null },
 };
 
-export default async function ProductionOrdersPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+export default async function ProductionOrdersPage({ searchParams }: { searchParams: Promise<{ view?: string; page?: string; size?: string }> }) {
   const params = await searchParams;
+  const paging = await getPaging(params);
   const view = params.view && params.view in VIEWS ? params.view : "active";
   const supabase = await createClient();
 
@@ -47,6 +50,8 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
   for (const i of items ?? []) itemsByOrder.set(i.production_order_id, [...(itemsByOrder.get(i.production_order_id) ?? []), i]);
 
   const today = bangkokToday();
+
+  const paged = paginate(orders ?? [], paging);
 
   return (
     <div>
@@ -91,7 +96,7 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
             </tr>
           </thead>
           <tbody>
-            {orders?.map((o) => {
+            {paged.rows.map((o) => {
               const lines = itemsByOrder.get(o.id) ?? [];
               const ordered = lines.reduce((s, i) => s + i.quantity, 0);
               const received = lines.reduce((s, i) => s + i.received_quantity, 0);
@@ -170,6 +175,7 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
           </tbody>
         </table>
       </div>
+      <Pagination total={paged.total} page={paged.page} size={paged.size} />
     </div>
   );
 }

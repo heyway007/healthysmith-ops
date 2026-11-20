@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { submitButtonClassName } from "@/lib/ui-classes";
@@ -11,15 +13,19 @@ import { RowActions } from "@/components/ui/row-actions";
 export default async function PurchasePage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; page?: string; size?: string }>;
 }) {
-  const { error } = await searchParams;
+  const sp = await searchParams;
+  const { error } = sp;
+  const paging = await getPaging(sp);
   const supabase = await createClient();
   const { data: suppliers } = await supabase
     .from("suppliers")
     .select("*")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
+
+  const paged = paginate(suppliers ?? [], paging);
 
   return (
     <div>
@@ -54,7 +60,7 @@ export default async function PurchasePage({
             </tr>
           </thead>
           <tbody>
-            {suppliers?.map((s) => (
+            {paged.rows.map((s) => (
               <tr key={s.id} className="border-t border-teal-100 hover:bg-teal-50">
                 <td className="px-4 py-3">
                   <Link href={`/admin/purchase/suppliers/${s.id}`} className="text-teal-800 hover:text-orange-600">
@@ -91,6 +97,7 @@ export default async function PurchasePage({
           </tbody>
         </table>
       </div>
+      <Pagination total={paged.total} page={paged.page} size={paged.size} />
     </div>
   );
 }

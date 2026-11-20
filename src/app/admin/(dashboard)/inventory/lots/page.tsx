@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faMagnifyingGlass, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { IconLinkButton } from "@/components/ui/icon-link-button";
@@ -19,9 +21,10 @@ const FILTERS: Record<string, string> = {
 export default async function LotsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; show?: string }>;
+  searchParams: Promise<{ q?: string; show?: string; page?: string; size?: string }>;
 }) {
   const params = await searchParams;
+  const paging = await getPaging(params);
   const q = params.q?.trim() ?? "";
   const show = params.show && params.show in FILTERS ? params.show : "all";
   const today = bangkokToday();
@@ -60,6 +63,8 @@ export default async function LotsPage({
     const str = sp.toString();
     return `/admin/inventory/lots${str ? `?${str}` : ""}`;
   };
+
+  const paged = paginate(rows, paging);
 
   return (
     <div>
@@ -122,7 +127,7 @@ export default async function LotsPage({
             </tr>
           </thead>
           <tbody>
-            {rows.map((l) => {
+            {paged.rows.map((l) => {
               const p = productById.get(l.product_id)!;
               const st = status(l);
               return (
@@ -179,6 +184,7 @@ export default async function LotsPage({
           </tbody>
         </table>
       </div>
+      <Pagination total={paged.total} page={paged.page} size={paged.size} />
     </div>
   );
 }

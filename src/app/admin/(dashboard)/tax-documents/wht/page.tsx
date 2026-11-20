@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faPrint } from "@fortawesome/free-solid-svg-icons";
 import { createClient } from "@/lib/supabase/server";
@@ -19,8 +21,10 @@ import { WHT_FORM_TYPES } from "@/lib/wht";
 const BASE = "/admin/tax-documents/wht";
 const FORM_LABEL = Object.fromEntries(WHT_FORM_TYPES.map((f) => [f.value, f.label]));
 
-export default async function WhtCertificatesPage({ searchParams }: { searchParams: Promise<DocListParams> }) {
-  const f = parseDocFilters(await searchParams);
+export default async function WhtCertificatesPage({ searchParams }: { searchParams: Promise<DocListParams & { page?: string; size?: string }> }) {
+  const sp = await searchParams;
+  const f = parseDocFilters(sp);
+  const paging = await getPaging(sp);
   const supabase = await createClient();
 
   let query = supabase
@@ -40,6 +44,8 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
   const active = (certificates ?? []).filter((c) => !c.is_cancelled);
   const paid = active.reduce((s, c) => s + c.total_paid, 0);
   const tax = active.reduce((s, c) => s + c.total_tax, 0);
+
+  const paged = paginate(certificates ?? [], paging);
 
   return (
     <div>
@@ -94,7 +100,7 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
               </tr>
             </thead>
             <tbody>
-              {certificates?.map((c) => (
+              {paged.rows.map((c) => (
                 <tr key={c.id} className={`border-t border-teal-100 hover:bg-teal-50 ${c.is_cancelled ? "text-gray-400" : ""}`}>
                   <td className="px-4 py-3">
                     <input type="checkbox" name="id" value={c.id} aria-label={`เลือก ${c.certificate_number}`} className="size-4 accent-teal-600" />
@@ -168,6 +174,7 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
             </tbody>
           </table>
         </div>
+      <Pagination total={paged.total} page={paged.page} size={paged.size} />
       </form>
     </div>
   );
