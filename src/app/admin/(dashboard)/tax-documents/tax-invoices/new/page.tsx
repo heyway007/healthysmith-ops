@@ -2,6 +2,7 @@ import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney, splitVat, thaiDate } from "@/lib/thai-money";
 import { createTaxInvoice } from "../actions";
+import { branchText } from "@/lib/buyer-branch";
 import { BuyerForm } from "./buyer-form";
 
 export default async function NewTaxInvoicePage({
@@ -53,7 +54,7 @@ export default async function NewTaxInvoicePage({
   const fromOrders = {
     name: src.billing_name ?? src.buyer_name ?? src.buyer_username ?? "",
     taxId: src.billing_tax_id ?? "",
-    branch: src.billing_branch ? (/^0+$/.test(src.billing_branch) ? "สำนักงานใหญ่" : src.billing_branch) : "",
+    branch: branchText(src.billing_branch) ?? "",
     address: src.billing_address ?? src.shipping_address ?? "",
     phone: src.buyer_phone ?? "",
   };

@@ -4,16 +4,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { emptyToNull } from "@/lib/forms";
+import { branchText } from "@/lib/buyer-branch";
 
 function revalidateSales() {
   revalidatePath("/admin/sales/orders");
   revalidatePath("/admin/tax-documents/tax-invoices");
-}
-
-/** "สำนักงานใหญ่" for a VAT-registered buyer that didn't say otherwise. */
-function defaultBranch(taxId: string | null, branch: string | null) {
-  if (branch) return /^\d{1,5}$/.test(branch) ? (Number(branch) === 0 ? "สำนักงานใหญ่" : `สาขา ${branch.padStart(5, "0")}`) : branch;
-  return taxId ? "สำนักงานใหญ่" : null;
 }
 
 /**
@@ -44,7 +39,7 @@ export async function issueTaxInvoicesPerOrder(
       p_issue_date: o.order_date,
       p_buyer_name: o.billing_name ?? o.buyer_name ?? o.buyer_username ?? "ลูกค้าทั่วไป",
       p_buyer_tax_id: taxId,
-      p_buyer_branch: defaultBranch(taxId, o.billing_branch),
+      p_buyer_branch: branchText(o.billing_branch),
       p_buyer_address: o.billing_address ?? o.shipping_address,
       p_buyer_phone: o.buyer_phone,
     });
@@ -67,7 +62,7 @@ export async function createTaxInvoice(formData: FormData) {
     p_issue_date: String(formData.get("issue_date") ?? ""),
     p_buyer_name: String(formData.get("buyer_name") ?? "").trim(),
     p_buyer_tax_id: taxId,
-    p_buyer_branch: defaultBranch(taxId, emptyToNull(formData.get("buyer_branch"))),
+    p_buyer_branch: branchText(formData.get("buyer_branch")),
     p_buyer_address: emptyToNull(formData.get("buyer_address")),
     p_buyer_phone: emptyToNull(formData.get("buyer_phone")),
     p_customer_id: emptyToNull(formData.get("customer_id")),
@@ -112,7 +107,7 @@ export async function createManualTaxInvoice(_prev: ManualInvoiceState, formData
     p_issue_date: String(formData.get("issue_date") ?? ""),
     p_buyer_name: String(formData.get("buyer_name") ?? "").trim(),
     p_buyer_tax_id: taxId,
-    p_buyer_branch: defaultBranch(taxId, emptyToNull(formData.get("buyer_branch"))),
+    p_buyer_branch: branchText(formData.get("buyer_branch")),
     p_buyer_address: emptyToNull(formData.get("buyer_address")),
     p_buyer_phone: emptyToNull(formData.get("buyer_phone")),
     p_items: items,

@@ -61,7 +61,7 @@ export function BuyerForm({
     setBuyer({
       name: c.name,
       taxId: c.tax_id ?? "",
-      branch: c.tax_id ? "สำนักงานใหญ่" : "",
+      branch: "", // the customer record has no branch
       address: c.address ?? "",
       phone: c.phone ?? "",
       note: buyer.note,
@@ -158,7 +158,7 @@ export function BuyerForm({
             name="buyer_branch"
             value={buyer.branch}
             onChange={set("branch")}
-            placeholder={taxIdDigits ? "สำนักงานใหญ่" : "ไม่ต้องกรอกสำหรับบุคคลธรรมดา"}
+            placeholder={taxIdDigits ? "เช่น สำนักงานใหญ่ หรือ 00001" : "ไม่ต้องกรอกสำหรับบุคคลธรรมดา"}
             className={inputClassName}
           />
         </div>
