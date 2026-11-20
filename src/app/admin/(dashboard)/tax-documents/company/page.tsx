@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentRoles } from "@/lib/current-role";
 import { Field } from "@/components/ui/field";
 import { FormSection } from "@/components/ui/form-section";
+import { LogoUploadInput } from "@/components/ui/logo-upload-input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { formCardClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { saveCompany } from "./actions";
@@ -60,7 +61,9 @@ export default async function CompanySettingsPage({
                 className="mt-1 w-full rounded-lg border border-teal-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
               />
             </div>
-            <Field label="URL โลโก้ (ถ้ามี)" name="logo_url" defaultValue={company?.logo_url} className="sm:col-span-2 lg:col-span-3" />
+            <div className="sm:col-span-2 lg:col-span-3">
+              <LogoUploadInput currentUrl={company?.logo_url ?? null} />
+            </div>
           </FormSection>
           {isAdmin && (
             <div className="border-t border-teal-100 pt-5">

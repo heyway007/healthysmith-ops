@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { faCalendarDays, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faCalendarDays } from "@fortawesome/free-solid-svg-icons";
 import { VersionBadge } from "@/components/ui/version-badge";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { APP_VERSION } from "@/lib/version";
 import { login } from "./actions";
 
@@ -18,9 +19,7 @@ export default async function LoginPage({
       <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-mist-200 bg-white shadow-sm">
         <div className="h-1 bg-mist-800" />
         <div className="p-8">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-mist-800 text-white">
-            <FontAwesomeIcon icon={faUser} />
-          </div>
+          <BrandLogo variant="full" size={112} className="mx-auto" />
           <h1 className="mt-4 text-lg font-semibold text-mist-900">เข้าสู่ระบบพนักงาน</h1>
           <p className="mt-1 text-sm text-mist-700">ยื่นใบลา ดูวันหยุด และสิทธิ์การลาของคุณ</p>
 

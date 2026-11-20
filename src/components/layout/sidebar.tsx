@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faXmark } from "@fortawesome/free-solid-svg-icons";
 import type { Role } from "@/lib/role";
 import { VersionBadge } from "@/components/ui/version-badge";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { activeHref, visibleNav } from "./nav-config";
 
 export function Sidebar({
@@ -43,10 +44,15 @@ export function Sidebar({
   return (
     <aside className="fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 -translate-x-full transform flex-col bg-linear-to-b from-teal-700 via-teal-800 to-teal-950 shadow-xl transition-transform duration-200 peer-checked:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0">
       <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-5">
-        <div>
-          <p className="font-semibold text-white">ระบบบัญชีและหลังบ้าน</p>
-          <p className="mt-0.5 text-xs text-teal-200">Sales · Purchase · HR</p>
-          <VersionBadge version={version} tone="dark" className="mt-1.5" />
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md shadow-teal-950/30">
+            <BrandLogo size={36} />
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold leading-tight text-white">ระบบบัญชีและหลังบ้าน</p>
+            <p className="mt-0.5 text-xs text-teal-200">Sales · Purchase · HR</p>
+            <VersionBadge version={version} tone="dark" className="mt-1.5" />
+          </div>
         </div>
         <label htmlFor="mobile-nav" className="cursor-pointer text-teal-200 hover:text-white lg:hidden" aria-label="ปิดเมนู">
           <FontAwesomeIcon icon={faXmark} />

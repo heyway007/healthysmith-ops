@@ -48,7 +48,7 @@ export function DocHeader({
       <div className="flex items-start gap-4">
         {company?.logo_url && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={company.logo_url} alt="" className="h-16 w-16 shrink-0 object-contain" />
+          <img src={company.logo_url} alt="" className="h-16 w-auto max-w-32 shrink-0 object-contain" />
         )}
         <div>
           <p className="text-[16px] font-semibold">{company?.name ?? ""}</p>

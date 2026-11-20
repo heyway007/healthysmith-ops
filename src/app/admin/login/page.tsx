@@ -1,7 +1,6 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { faUserShield } from "@fortawesome/free-solid-svg-icons";
 import { VersionBadge } from "@/components/ui/version-badge";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { APP_VERSION } from "@/lib/version";
 import { adminLogin } from "./actions";
 
@@ -17,9 +16,7 @@ export default async function AdminLoginPage({
       <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-teal-100 bg-white shadow-xl shadow-teal-900/10">
         <div className="h-1.5 bg-linear-to-r from-teal-500 via-cyan-500 to-orange-400" />
         <div className="p-8">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br from-teal-600 to-teal-800 text-white shadow-md shadow-teal-900/20">
-            <FontAwesomeIcon icon={faUserShield} />
-          </div>
+          <BrandLogo variant="full" size={112} className="mx-auto" />
           <h1 className="mt-4 text-lg font-semibold text-teal-950">เข้าสู่ระบบหลังบ้าน</h1>
           <p className="mt-1 text-sm text-teal-700">สำหรับเจ้าหน้าที่ — ขาย · จัดซื้อ · บุคคล · ผู้ดูแลระบบ</p>
 

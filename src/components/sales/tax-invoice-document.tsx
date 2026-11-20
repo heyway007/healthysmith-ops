@@ -67,7 +67,7 @@ export function TaxInvoiceDocument({
           <div className="flex items-center gap-4">
             {company?.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={company.logo_url} alt="" className="h-20 w-20 shrink-0 object-contain" />
+              <img src={company.logo_url} alt="" className="h-20 w-auto max-w-40 shrink-0 object-contain" />
             ) : (
               <div className="flex h-20 w-20 shrink-0 items-center justify-center border border-dashed border-gray-400 text-[11px] text-gray-400 print:hidden">
                 LOGO
