@@ -6,6 +6,12 @@ import { createClient } from "@/lib/supabase/server";
 import { emptyToNull, numberOrDefault } from "@/lib/forms";
 import { PRODUCT_TYPES } from "../labels";
 
+/** อายุสินค้า in whole months (1-600), blank = not set. */
+function shelfLifeMonths(value: FormDataEntryValue | null) {
+  const n = Math.round(Number(String(value ?? "").trim()));
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, 600) : null;
+}
+
 function productFields(formData: FormData) {
   const type = String(formData.get("product_type") ?? "");
   return {
@@ -18,6 +24,7 @@ function productFields(formData: FormData) {
     sale_price: numberOrDefault(formData.get("sale_price"), 0),
     min_stock: numberOrDefault(formData.get("min_stock"), 0),
     track_lot: formData.get("track_lot") === "1",
+    shelf_life_months: shelfLifeMonths(formData.get("shelf_life_months")),
     note: emptyToNull(formData.get("note")),
   };
 }

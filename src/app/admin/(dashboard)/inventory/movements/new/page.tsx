@@ -16,7 +16,7 @@ export default async function NewMovementPage({
   const supabase = await createClient();
   const { data } = await supabase
     .from("product_stock")
-    .select("id, sku, name, unit, barcode, on_hand, track_lot")
+    .select("id, sku, name, unit, barcode, on_hand, track_lot, shelf_life_months")
     .eq("is_active", true)
     .neq("product_type", "service")
     .order("sku");

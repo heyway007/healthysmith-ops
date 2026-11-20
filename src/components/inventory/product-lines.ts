@@ -10,6 +10,8 @@ export type PickableProduct = {
   on_hand?: number;
   /** lot-tracked: Lot is required on รับเข้า, and เบิกออก must pick a lot */
   track_lot?: boolean;
+  /** อายุสินค้า: default expiry on receiving = date + this many months */
+  shelf_life_months?: number | null;
 };
 
 export type ProductLine = {
@@ -17,6 +19,8 @@ export type ProductLine = {
   quantity: string;
   lot: string;
   expiry: string;
+  /** the expiry was filled in from the product's shelf life (not typed, not from an existing lot) */
+  expiryAuto?: boolean;
 };
 
 export const emptyLine = (): ProductLine => ({ productId: "", quantity: "", lot: "", expiry: "" });

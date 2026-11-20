@@ -44,7 +44,7 @@ export default async function ProductionOrderPage({
       ? supabase.from("production_receipt_items").select("*").in("production_receipt_id", receiptIds)
       : Promise.resolve({ data: [] as never[] }),
     productIds.length
-      ? supabase.from("products").select("id, sku, name, unit, track_lot").in("id", productIds)
+      ? supabase.from("products").select("id, sku, name, unit, track_lot, shelf_life_months").in("id", productIds)
       : Promise.resolve({ data: [] as never[] }),
   ]);
   const productById = new Map((products ?? []).map((p) => [p.id, p]));
@@ -223,6 +223,7 @@ export default async function ProductionOrderPage({
 
             <ReceiveLines
               lotExample={bangkokToday().slice(2).replaceAll("-", "")}
+              today={bangkokToday()}
               items={(items ?? [])
                 .filter((i) => i.received_quantity < i.quantity)
                 .map((i) => {
@@ -234,6 +235,7 @@ export default async function ProductionOrderPage({
                     unit: p?.unit ?? "",
                     remaining: i.quantity - i.received_quantity,
                     trackLot: !!p?.track_lot,
+                    shelfLifeMonths: p?.shelf_life_months ?? null,
                     lots: (lotRows ?? [])
                       .filter((l) => l.product_id === i.product_id && l.lot_number)
                       .map((l) => ({ lot_number: l.lot_number as string, expiry_date: l.expiry_date, on_hand: l.on_hand })),

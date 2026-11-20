@@ -69,6 +69,16 @@ export function issuableLots(lots: LotOption[], productId: string) {
 
 export const lotValue = (l: { lot_number: string | null }) => l.lot_number ?? UNLOTTED;
 
+/** 2026-11-20 + 24 months -> 2028-11-20 (the day is clamped: 2026-08-31 + 6 months -> 2027-02-28). */
+export function addMonths(iso: string, months: number) {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  const total = m - 1 + months;
+  const year = y + Math.floor(total / 12);
+  const month = ((total % 12) + 12) % 12;
+  const last = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(Math.min(d, last)).padStart(2, "0")}`;
+}
+
 /** 2028-01-31 -> 31/01/2028 */
 export function shortDate(iso: string | null | undefined) {
   if (!iso) return "";

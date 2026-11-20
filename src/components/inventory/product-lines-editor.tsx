@@ -6,6 +6,7 @@ import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { emptyLine, labelOf, type PickableProduct, type ProductLine } from "./product-lines";
 import {
   UNLOTTED,
+  addMonths,
   UNLOTTED_LABEL,
   expiryStatus,
   issuableLots,
@@ -68,9 +69,19 @@ export function ProductLinesEditor({
     return first ? lotValue(first) : "";
   };
 
+  // รับเข้า: the expiry a product's shelf life suggests (receipt date + อายุสินค้า)
+  const shelfExpiry = (productId: string) => {
+    const months = products.find((p) => p.id === productId)?.shelf_life_months;
+    return withLot && months && today ? addMonths(today, months) : "";
+  };
+
   const [lines, setLines] = useState<ProductLine[]>(() => {
     const start = initialLines?.length ? initialLines : [emptyLine()];
-    return start.map((l) => (l.productId && !l.lot ? { ...l, lot: defaultLot(l.productId) } : l));
+    return start.map((l) => {
+      if (!l.productId) return l;
+      const auto = !l.expiry ? shelfExpiry(l.productId) : "";
+      return { ...l, lot: l.lot || defaultLot(l.productId), ...(auto ? { expiry: auto, expiryAuto: true } : {}) };
+    });
   });
 
   const update = (i: number, patch: Partial<ProductLine>) =>
@@ -123,7 +134,10 @@ export function ProductLinesEditor({
                   <td data-label="สินค้า" data-stack="block" className="px-2 py-1.5">
                     <select
                       value={l.productId}
-                      onChange={(e) => update(i, { productId: e.target.value, lot: defaultLot(e.target.value), expiry: "" })}
+                      onChange={(e) => {
+                        const auto = shelfExpiry(e.target.value);
+                        update(i, { productId: e.target.value, lot: defaultLot(e.target.value), expiry: auto, expiryAuto: !!auto });
+                      }}
                       disabled={min !== undefined}
                       required={!isBlank(l)}
                       aria-label={`สินค้ารายการที่ ${i + 1}`}
@@ -173,7 +187,10 @@ export function ProductLinesEditor({
                         list={tracked ? `lot-list-${i}` : undefined}
                         onChange={(e) => {
                           const match = lots.find((x) => x.product_id === l.productId && x.lot_number === lotKey(e.target.value));
-                          update(i, { lot: e.target.value, ...(match?.expiry_date && !l.expiry ? { expiry: match.expiry_date } : {}) });
+                          update(i, {
+                            lot: e.target.value,
+                            ...(match?.expiry_date && (!l.expiry || l.expiryAuto) ? { expiry: match.expiry_date, expiryAuto: false } : {}),
+                          });
                         }}
                         required={tracked && !isBlank(l)}
                         placeholder={tracked ? "ระบุเลข Lot *" : "(ไม่บังคับ)"}
@@ -202,10 +219,15 @@ export function ProductLinesEditor({
                     <td data-label="วันหมดอายุ" className="px-2 py-1.5">
                       <DateInput
                         value={l.expiry}
-                        onChange={(e) => update(i, { expiry: e.target.value })}
+                        onChange={(e) => update(i, { expiry: e.target.value, expiryAuto: false })}
                         aria-label="วันหมดอายุ"
                         className={cellClassName}
                       />
+                      {l.expiryAuto && l.expiry && (
+                        <p className="mt-0.5 text-xs text-teal-500">
+                          จากอายุสินค้า {product?.shelf_life_months} เดือน — แก้ได้
+                        </p>
+                      )}
                       {typedLot?.expiry_date && l.expiry && l.expiry !== typedLot.expiry_date && (
                         <p className="mt-0.5 text-xs text-orange-600">
                           ล็อตนี้มีวันหมดอายุ {shortDate(typedLot.expiry_date)} อยู่แล้ว

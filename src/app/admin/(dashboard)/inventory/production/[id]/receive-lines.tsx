@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { DateInput } from "@/components/ui/date-input";
-import { shortDate } from "@/components/inventory/lots";
+import { addMonths, shortDate } from "@/components/inventory/lots";
 import { formatQty } from "../../labels";
 
 export type ReceiveItem = {
@@ -14,11 +14,13 @@ export type ReceiveItem = {
   unit: string;
   remaining: number;
   trackLot: boolean;
+  /** อายุสินค้า (months): the expiry filled in for each new line = today + this */
+  shelfLifeMonths: number | null;
   /** lots that already exist for this product (offered as you type; fill in the expiry) */
   lots: { lot_number: string; expiry_date: string | null; on_hand: number }[];
 };
 
-type Row = { key: number; qty: string; lot: string; expiry: string };
+type Row = { key: number; qty: string; lot: string; expiry: string; expiryAuto: boolean };
 
 const cellInput =
   "w-full rounded-md border border-teal-200 px-2 py-1.5 text-sm focus:border-teal-600 focus:outline-none";
@@ -29,12 +31,12 @@ const cellInput =
  * (own Lot and expiry date). Every line posts item_id / quantity / lot_number /
  * expiry_date as parallel lists; lines with no quantity are skipped.
  */
-export function ReceiveLines({ items, lotExample }: { items: ReceiveItem[]; lotExample: string }) {
+export function ReceiveLines({ items, lotExample, today }: { items: ReceiveItem[]; lotExample: string; today: string }) {
   const nextKey = useRef(1);
-  const newRow = (): Row => ({ key: nextKey.current++, qty: "", lot: "", expiry: "" });
-  const [rows, setRows] = useState<Record<string, Row[]>>(() =>
-    Object.fromEntries(items.map((i) => [i.id, [{ key: 0, qty: "", lot: "", expiry: "" }]])),
-  );
+  const shelf = (item: ReceiveItem) => (item.shelfLifeMonths ? addMonths(today, item.shelfLifeMonths) : "");
+  const makeRow = (item: ReceiveItem, key: number): Row => ({ key, qty: "", lot: "", expiry: shelf(item), expiryAuto: !!shelf(item) });
+  const newRow = (item: ReceiveItem): Row => makeRow(item, nextKey.current++);
+  const [rows, setRows] = useState<Record<string, Row[]>>(() => Object.fromEntries(items.map((i) => [i.id, [makeRow(i, 0)]])));
 
   const patch = (itemId: string, key: number, p: Partial<Row>) =>
     setRows((r) => ({ ...r, [itemId]: r[itemId].map((x) => (x.key === key ? { ...x, ...p } : x)) }));
@@ -104,7 +106,10 @@ export function ReceiveLines({ items, lotExample }: { items: ReceiveItem[]; lotE
                         list={`recv-lots-${item.id}`}
                         onChange={(e) => {
                           const m = item.lots.find((l) => l.lot_number === e.target.value.trim().toUpperCase());
-                          patch(item.id, r.key, { lot: e.target.value, ...(m?.expiry_date && !r.expiry ? { expiry: m.expiry_date } : {}) });
+                          patch(item.id, r.key, {
+                            lot: e.target.value,
+                            ...(m?.expiry_date && (!r.expiry || r.expiryAuto) ? { expiry: m.expiry_date, expiryAuto: false } : {}),
+                          });
                         }}
                         required={item.trackLot && r.qty.trim() !== ""}
                         placeholder={item.trackLot ? `เช่น ${lotExample}-${String.fromCharCode(65 + idx)} *` : "(ไม่บังคับ)"}
@@ -118,10 +123,13 @@ export function ReceiveLines({ items, lotExample }: { items: ReceiveItem[]; lotE
                       <DateInput
                         name="expiry_date"
                         value={r.expiry}
-                        onChange={(e) => patch(item.id, r.key, { expiry: e.target.value })}
+                        onChange={(e) => patch(item.id, r.key, { expiry: e.target.value, expiryAuto: false })}
                         aria-label={`วันหมดอายุ ${item.sku} ล็อตที่ ${idx + 1}`}
                         className={cellInput}
                       />
+                      {r.expiryAuto && r.expiry && (
+                        <p className="mt-0.5 text-xs text-teal-500">จากอายุสินค้า {item.shelfLifeMonths} เดือน นับจากวันนี้ — แก้ได้</p>
+                      )}
                       {typed?.expiry_date && r.expiry && r.expiry !== typed.expiry_date && (
                         <p className="mt-0.5 text-xs text-orange-600">ล็อตนี้มีวันหมดอายุ {shortDate(typed.expiry_date)} อยู่แล้ว</p>
                       )}
@@ -146,7 +154,7 @@ export function ReceiveLines({ items, lotExample }: { items: ReceiveItem[]; lotE
                   <div className="flex flex-wrap items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => setRows((all) => ({ ...all, [item.id]: [...all[item.id], newRow()] }))}
+                      onClick={() => setRows((all) => ({ ...all, [item.id]: [...all[item.id], newRow(item)] }))}
                       className="flex items-center gap-1.5 rounded-md border border-teal-200 px-2.5 py-1 text-xs font-medium text-teal-700 hover:bg-teal-50"
                     >
                       <FontAwesomeIcon icon={faPlus} className="text-[10px]" />

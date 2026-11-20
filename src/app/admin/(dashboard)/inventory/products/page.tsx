@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faMagnifyingGlass, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faMagnifyingGlass, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/ui/delete-button";
@@ -146,6 +146,14 @@ export default async function ProductsPage({
                     >
                       <FontAwesomeIcon icon={faEye} />
                       ดูรายละเอียด
+                    </Link>
+                    <Link
+                      href={`/admin/inventory/products/${p.id}`}
+                      className="flex items-center gap-1.5 rounded-full border border-teal-200 px-3 py-1 text-xs font-medium text-teal-700 transition-colors hover:border-teal-400 hover:bg-teal-50"
+                      title="แก้ไขข้อมูลสินค้า"
+                    >
+                      <FontAwesomeIcon icon={faPenToSquare} />
+                      แก้ไข
                     </Link>
                     <DeleteButton
                       action={deleteProduct.bind(null, p.id)}

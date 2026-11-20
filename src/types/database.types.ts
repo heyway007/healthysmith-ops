@@ -103,6 +103,7 @@ export interface Database {
           sale_price: number;
           min_stock: number;
           track_lot: boolean;
+          shelf_life_months: number | null;
           note: string | null;
           is_active: boolean;
           created_at: string;
@@ -119,6 +120,7 @@ export interface Database {
           sale_price?: number;
           min_stock?: number;
           track_lot?: boolean;
+          shelf_life_months?: number | null;
           note?: string | null;
           is_active?: boolean;
           created_at?: string;
@@ -135,6 +137,7 @@ export interface Database {
           sale_price?: number;
           min_stock?: number;
           track_lot?: boolean;
+          shelf_life_months?: number | null;
           note?: string | null;
           is_active?: boolean;
           created_at?: string;

@@ -67,6 +67,26 @@ export function ProductForm({
             type="number"
             defaultValue={defaultValues?.min_stock}
           />
+          <div>
+            <label className="block text-sm font-medium text-teal-800" htmlFor="shelf_life_months">
+              อายุสินค้า (เดือน)
+            </label>
+            <input
+              id="shelf_life_months"
+              name="shelf_life_months"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="600"
+              step="1"
+              defaultValue={defaultValues?.shelf_life_months ?? ""}
+              placeholder="เช่น 24"
+              className="mt-1 w-full rounded-lg border border-teal-300 px-3 py-2 text-sm transition-shadow focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+            />
+            <p className="mt-1 text-xs text-teal-600">
+              ใช้เติมวันหมดอายุให้อัตโนมัติตอนรับเข้า (วันที่รับ + อายุสินค้า) แก้ได้ทุกครั้ง — วันหมดอายุจริงเก็บเป็นรายล็อต
+            </p>
+          </div>
           <label className="flex items-start gap-2 text-sm text-teal-800 sm:col-span-2 lg:col-span-3">
             <input
               type="checkbox"
