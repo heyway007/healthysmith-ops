@@ -31,12 +31,16 @@ export default async function PrintStockDocumentsPage({
     .slice(0, 100);
   const supabase = await createClient();
 
-  const [{ data: company }, { data: movements }] = await Promise.all([
+  const [{ data: company }, { data: movements }, { data: cancellations }] = await Promise.all([
     supabase.from("companies").select("*").order("created_at").limit(1).maybeSingle(),
     docs.length
-      ? supabase.from("stock_movements").select("*").in("doc_number", docs).in("movement_type", ["in", "out", "adjust"])
+      ? supabase.from("stock_movements").select("*").in("doc_number", docs).in("movement_type", ["in", "out", "adjust"]).eq("is_reversal", false)
+      : { data: [] },
+    docs.length
+      ? supabase.from("stock_document_cancellations").select("doc_number, reason, cancelled_at").in("doc_number", docs)
       : { data: [] },
   ]);
+  const cancelledDocs = new Map((cancellations ?? []).map((c) => [c.doc_number, c]));
   const productIds = [...new Set((movements ?? []).map((m) => m.product_id))];
   const { data: products } = productIds.length
     ? await supabase.from("products").select("id, sku, name, unit").in("id", productIds)
@@ -51,7 +55,7 @@ export default async function PrintStockDocumentsPage({
     const first = rows[0];
     // note typed for the whole document is on every row; per-line notes differ
     const sharedNote = rows.every((r) => r.note === first.note) ? first.note : null;
-    return { number, rows, first, sharedNote, kind: KINDS[first.movement_type as keyof typeof KINDS] };
+    return { number, rows, first, sharedNote, cancelled: cancelledDocs.get(number), kind: KINDS[first.movement_type as keyof typeof KINDS] };
   });
 
   await logDocumentEvents(
@@ -65,13 +69,18 @@ export default async function PrintStockDocumentsPage({
       <PrintBar summary={`เอกสาร ${documents.length} ใบ`} canPrint={documents.length > 0} />
       <main className="py-6 print:py-0">
         {documents.length === 0 && <p className="text-center text-gray-500">ไม่พบเอกสารที่จะพิมพ์</p>}
-        {documents.map(({ number, rows, first, sharedNote, kind }) => {
+        {documents.map(({ number, rows, first, sharedNote, cancelled, kind }) => {
           const isAdjust = first.movement_type === "adjust";
           const hasLot = rows.some((r) => r.lot_number || r.expiry_date);
           const showNotes = isAdjust || (!sharedNote && rows.some((r) => r.note));
           return (
             <DocSheet key={number} label={number}>
               <DocHeader company={company} title={kind.title} titleEn={kind.titleEn} number={number} date={first.movement_date} />
+              {cancelled && (
+                <p className="mb-2 border-2 border-black px-2 py-1 text-center text-sm font-bold">
+                  ยกเลิกแล้ว ({docDate(cancelled.cancelled_at)}) — {cancelled.reason}
+                </p>
+              )}
               <DocInfo
                 rows={[
                   ["เลขที่อ้างอิง", first.ref_no],

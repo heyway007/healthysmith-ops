@@ -2357,6 +2357,7 @@ export interface Database {
           ref_no: string | null;
           note: string | null;
           production_receipt_id: string | null;
+          is_reversal: boolean;
           created_by_email: string | null;
           created_at: string;
         };
@@ -2372,6 +2373,7 @@ export interface Database {
           ref_no?: string | null;
           note?: string | null;
           production_receipt_id?: string | null;
+          is_reversal?: boolean;
           created_by_email?: string | null;
           created_at?: string;
         };
@@ -2387,8 +2389,30 @@ export interface Database {
           ref_no?: string | null;
           note?: string | null;
           production_receipt_id?: string | null;
+          is_reversal?: boolean;
           created_by_email?: string | null;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      stock_document_cancellations: {
+        Row: {
+          doc_number: string;
+          reason: string;
+          cancelled_at: string;
+          cancelled_by_email: string | null;
+        };
+        Insert: {
+          doc_number: string;
+          reason: string;
+          cancelled_at?: string;
+          cancelled_by_email?: string | null;
+        };
+        Update: {
+          doc_number?: string;
+          reason?: string;
+          cancelled_at?: string;
+          cancelled_by_email?: string | null;
         };
         Relationships: [];
       };
@@ -2645,6 +2669,10 @@ export interface Database {
       post_stock_movements: {
         Args: { p_type: string; p_date: string | null; p_ref_no: string | null; p_note: string | null; p_lines: Json };
         Returns: string;
+      };
+      cancel_stock_document: {
+        Args: { p_doc_number: string; p_reason: string };
+        Returns: undefined;
       };
       post_stock_count: {
         Args: { p_date: string | null; p_note: string | null; p_lines: Json };

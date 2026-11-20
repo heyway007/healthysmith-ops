@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown, faArrowUp, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
+import { dangerButtonClassName, secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { thaiDate } from "@/lib/thai-money";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { bangkokToday, formatThaiDate } from "@/components/holidays/holiday-views";
 import { MOVEMENT_TYPES, formatSignedQty, movementPrintHref } from "../labels";
+import { cancelStockDocument } from "./actions";
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
 
@@ -19,7 +21,7 @@ function shiftMonth(month: string, delta: number) {
 export default async function MovementsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; type?: string; saved?: string }>;
+  searchParams: Promise<{ month?: string; type?: string; saved?: string; cancelled?: string; error?: string }>;
 }) {
   const params = await searchParams;
   const month = params.month && MONTH_RE.test(params.month) ? params.month : bangkokToday().slice(0, 7);
@@ -42,6 +44,14 @@ export default async function MovementsPage({
     : { data: [] };
   const productById = new Map((products ?? []).map((p) => [p.id, p]));
 
+  const docNumbers = [...new Set((movements ?? []).map((m) => m.doc_number).filter((d): d is string => !!d))];
+  const { data: cancellations } = docNumbers.length
+    ? await supabase.from("stock_document_cancellations").select("doc_number, reason").in("doc_number", docNumbers)
+    : { data: [] };
+  const cancelledDocs = new Map((cancellations ?? []).map((c) => [c.doc_number, c.reason]));
+  // the cancel form goes on the first row of each IN / OUT document
+  const formShown = new Set<string>();
+
   const href = (m: string, t: string) => {
     const sp = new URLSearchParams({ month: m });
     if (t) sp.set("type", t);
@@ -53,7 +63,7 @@ export default async function MovementsPage({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-teal-950">รับเข้า / เบิกออก</h2>
-          <p className="mt-1 text-sm text-teal-700">ทุกรายการที่ทำให้สต๊อกเปลี่ยน — แก้ไข/ลบไม่ได้ ถ้าบันทึกผิดให้บันทึกรายการกลับ หรือปรับยอดด้วยการนับสต๊อก</p>
+          <p className="mt-1 text-sm text-teal-700">ทุกรายการที่ทำให้สต๊อกเปลี่ยน — แก้ไข/ลบไม่ได้ ถ้าบันทึกผิดให้ยกเลิกเอกสารรับเข้า/เบิกออก (ระบบบันทึกรายการกลับให้) หรือปรับยอดด้วยการนับสต๊อก</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/inventory/movements/new?type=in" className={`flex items-center gap-2 ${submitButtonClassName}`}>
@@ -67,6 +77,12 @@ export default async function MovementsPage({
         </div>
       </div>
 
+      {params.error && <p className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{params.error}</p>}
+      {params.cancelled && (
+        <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          ยกเลิกเอกสาร {params.cancelled} แล้ว — ระบบบันทึกรายการกลับสต๊อกให้เรียบร้อย
+        </p>
+      )}
       {params.saved && (
         <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           บันทึกเอกสาร {params.saved} แล้ว ·{" "}
@@ -119,7 +135,7 @@ export default async function MovementsPage({
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="stack-table w-full text-sm md:min-w-[860px]">
+        <table className="stack-table w-full text-sm md:min-w-[980px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">วันที่</th>
@@ -130,12 +146,21 @@ export default async function MovementsPage({
               <th className="px-4 py-3">Lot</th>
               <th className="px-4 py-3">อ้างอิง / หมายเหตุ</th>
               <th className="px-4 py-3">ผู้บันทึก</th>
+              <th className="px-4 py-3">ยกเลิกเอกสาร</th>
             </tr>
           </thead>
           <tbody>
             {movements?.map((m) => {
               const p = productById.get(m.product_id);
               const printHref = movementPrintHref(m);
+              const cancelReason = m.doc_number ? cancelledDocs.get(m.doc_number) : undefined;
+              const canCancel =
+                !!m.doc_number &&
+                !m.is_reversal &&
+                (m.movement_type === "in" || m.movement_type === "out") &&
+                cancelReason === undefined &&
+                !formShown.has(m.doc_number);
+              if (canCancel) formShown.add(m.doc_number!);
               return (
                 <tr key={m.id} className="border-t border-teal-100 hover:bg-teal-50">
                   <td data-label="วันที่" className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(m.movement_date, true)}</td>
@@ -150,6 +175,12 @@ export default async function MovementsPage({
                   </td>
                   <td data-label="ประเภท" className="px-4 py-3">
                     <StatusBadge status={m.movement_type} config={MOVEMENT_TYPES} />
+                    {m.is_reversal && (
+                      <span className="ml-1 rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">รายการกลับ</span>
+                    )}
+                    {cancelReason !== undefined && !m.is_reversal && (
+                      <span className="ml-1 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700">ยกเลิกแล้ว</span>
+                    )}
                   </td>
                   <td data-label="สินค้า" className="px-4 py-3">
                     <Link href={`/admin/inventory/stock/${m.product_id}`} className="text-teal-900 hover:text-orange-600">
@@ -170,12 +201,32 @@ export default async function MovementsPage({
                     {m.note && <span className="block text-xs text-teal-500">{m.note}</span>}
                   </td>
                   <td data-label="ผู้บันทึก" className="px-4 py-3 text-xs text-teal-500">{m.created_by_email ?? "-"}</td>
+                  <td data-label="ยกเลิกเอกสาร" className="px-4 py-3">
+                    {canCancel && (
+                      <details>
+                        <summary className="cursor-pointer whitespace-nowrap text-xs font-medium text-rose-600">
+                          ยกเลิก {m.doc_number}
+                        </summary>
+                        <form action={cancelStockDocument.bind(null, m.doc_number!)} className="mt-2 flex flex-col gap-2">
+                          <input
+                            name="reason"
+                            required
+                            placeholder="เหตุผล เช่น บันทึกซ้ำ"
+                            className="w-56 max-w-full rounded-lg border border-teal-300 px-3 py-1.5 text-sm focus:border-teal-600 focus:outline-none"
+                          />
+                          <SubmitButton className={dangerButtonClassName} pendingLabel="กำลังยกเลิก...">
+                            ยืนยันยกเลิกทั้งใบ
+                          </SubmitButton>
+                        </form>
+                      </details>
+                    )}
+                  </td>
                 </tr>
               );
             })}
             {(!movements || movements.length === 0) && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-teal-400">
+                <td colSpan={9} className="px-4 py-6 text-center text-teal-400">
                   เดือนนี้ยังไม่มีรายการ
                 </td>
               </tr>
