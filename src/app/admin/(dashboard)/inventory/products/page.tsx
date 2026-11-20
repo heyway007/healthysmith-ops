@@ -4,6 +4,7 @@ import { faEye, faMagnifyingGlass, faPenToSquare, faPlus } from "@fortawesome/fr
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/ui/delete-button";
+import { IconLinkButton } from "@/components/ui/icon-link-button";
 import { bangkokToday } from "@/components/holidays/holiday-views";
 import { expiryStatus, fefoSort, shortDate } from "@/components/inventory/lots";
 import { deleteProduct } from "./actions";
@@ -139,22 +140,12 @@ export default async function ProductsPage({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
-                    <Link
+                    <IconLinkButton
                       href={`/admin/inventory/stock/${p.id}`}
-                      className="flex items-center gap-1.5 rounded-full border border-teal-200 px-3 py-1 text-xs font-medium text-teal-700 transition-colors hover:border-teal-400 hover:bg-teal-50"
-                      title="ดูรายละเอียด: ยอดคงเหลือแยกตามล็อต วันหมดอายุ และความเคลื่อนไหว"
-                    >
-                      <FontAwesomeIcon icon={faEye} />
-                      ดูรายละเอียด
-                    </Link>
-                    <Link
-                      href={`/admin/inventory/products/${p.id}`}
-                      className="flex items-center gap-1.5 rounded-full border border-teal-200 px-3 py-1 text-xs font-medium text-teal-700 transition-colors hover:border-teal-400 hover:bg-teal-50"
-                      title="แก้ไขข้อมูลสินค้า"
-                    >
-                      <FontAwesomeIcon icon={faPenToSquare} />
-                      แก้ไข
-                    </Link>
+                      icon={faEye}
+                      label={`ดูรายละเอียด ${p.name}`}
+                    />
+                    <IconLinkButton href={`/admin/inventory/products/${p.id}`} icon={faPenToSquare} label={`แก้ไข ${p.name}`} />
                     <DeleteButton
                       action={deleteProduct.bind(null, p.id)}
                       confirmMessage={`ลบสินค้า "${p.name}"? (ถ้ามีประวัติแล้วจะปิดใช้งานแทน)`}

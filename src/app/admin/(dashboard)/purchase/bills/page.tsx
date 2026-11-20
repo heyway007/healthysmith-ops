@@ -4,6 +4,7 @@ import { faChevronLeft, faChevronRight, faEye, faPlus } from "@fortawesome/free-
 import { submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/ui/delete-button";
+import { IconLinkButton } from "@/components/ui/icon-link-button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { bangkokToday, formatThaiDate } from "@/components/holidays/holiday-views";
 import { ImageGallery } from "@/components/ui/image-gallery";
@@ -160,13 +161,7 @@ export default async function PurchaseBillsPage({
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/admin/purchase/bills/${b.id}`}
-                        className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-teal-200 px-3 py-1 text-xs font-medium text-teal-700 transition-colors hover:border-teal-400 hover:bg-teal-50 hover:text-teal-900"
-                      >
-                        <FontAwesomeIcon icon={faEye} />
-                        ดูรายละเอียด
-                      </Link>
+                      <IconLinkButton href={`/admin/purchase/bills/${b.id}`} icon={faEye} label={`ดูรายละเอียด ${b.bill_number}`} />
                       <DeleteButton
                         action={deleteBill.bind(null, b.id)}
                         confirmMessage={`ลบรายการซื้อ ${b.bill_number}${descriptions[0] ? ` "${descriptions[0]}"` : ""}?`}
