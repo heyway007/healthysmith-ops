@@ -67,6 +67,22 @@ export function ProductForm({
             type="number"
             defaultValue={defaultValues?.min_stock}
           />
+          <label className="flex items-start gap-2 text-sm text-teal-800 sm:col-span-2 lg:col-span-3">
+            <input
+              type="checkbox"
+              name="track_lot"
+              value="1"
+              defaultChecked={defaultValues?.track_lot ?? false}
+              className="mt-0.5 accent-teal-600"
+            />
+            <span>
+              <span className="font-medium">ติดตามเป็นล็อต (Lot)</span>
+              <span className="block text-xs text-teal-600">
+                ต้องระบุเลข Lot ทุกครั้งที่รับเข้า · เบิกออกต้องเลือกล็อต (แนะนำล็อตที่หมดอายุก่อน) และเบิกเกินยอดของล็อตนั้นไม่ได้ ·
+                นับสต๊อกแยกตามล็อต — สต๊อกที่มีอยู่ก่อนเปิดใช้จะอยู่ในกลุ่ม &quot;ไม่ระบุล็อต&quot;
+              </span>
+            </span>
+          </label>
           <Field label="หมายเหตุ" name="note" rows={3} defaultValue={defaultValues?.note} className="sm:col-span-2 lg:col-span-3" />
           {defaultValues && (
             <label className="flex items-center gap-2 text-sm text-teal-800">

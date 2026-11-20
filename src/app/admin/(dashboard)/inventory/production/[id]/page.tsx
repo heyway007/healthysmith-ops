@@ -12,9 +12,7 @@ import { dangerButtonClassName, formCardClassName, secondaryButtonClassName, sub
 import { PRODUCTION_STATUS, formatQty } from "../../labels";
 import { cancelProductionReceipt, receiveProduction, setProductionOrderStatus } from "../actions";
 import { DateInput } from "@/components/ui/date-input";
-
-const cellInput =
-  "w-full rounded-md border border-teal-200 px-2 py-1.5 text-sm focus:border-teal-600 focus:outline-none";
+import { ReceiveLines } from "./receive-lines";
 
 export default async function ProductionOrderPage({
   params,
@@ -46,10 +44,19 @@ export default async function ProductionOrderPage({
       ? supabase.from("production_receipt_items").select("*").in("production_receipt_id", receiptIds)
       : Promise.resolve({ data: [] as never[] }),
     productIds.length
-      ? supabase.from("products").select("id, sku, name, unit").in("id", productIds)
+      ? supabase.from("products").select("id, sku, name, unit, track_lot").in("id", productIds)
       : Promise.resolve({ data: [] as never[] }),
   ]);
   const productById = new Map((products ?? []).map((p) => [p.id, p]));
+  // lots that already exist for the lot-tracked products (so a lot can be received again)
+  const trackedIds = (products ?? []).filter((p) => p.track_lot).map((p) => p.id);
+  const { data: lotRows } = trackedIds.length
+    ? await supabase
+        .from("product_lot_stock")
+        .select("product_id, lot_number, expiry_date, on_hand")
+        .in("product_id", trackedIds)
+        .not("lot_number", "is", null)
+    : { data: [] };
   const linesByReceipt = new Map<string, NonNullable<typeof receiptItems>>();
   for (const line of receiptItems ?? []) {
     linesByReceipt.set(line.production_receipt_id, [...(linesByReceipt.get(line.production_receipt_id) ?? []), line]);
@@ -185,7 +192,7 @@ export default async function ProductionOrderPage({
             รับสินค้าเข้าคลัง
           </h3>
           <p className="mt-1 text-sm text-teal-700">
-            ใส่เฉพาะจำนวนที่ได้รับรอบนี้ — รับแยกได้หลายครั้งจนครบ ช่องที่เว้นว่างจะไม่รับ
+            ใส่เฉพาะจำนวนที่ได้รับรอบนี้ — รับแยกได้หลายครั้งจนครบ ช่องที่เว้นว่างจะไม่รับ · ผลิตสินค้าเดียวกันหลายล็อตในรอบเดียว กด &quot;เพิ่มล็อตของสินค้านี้&quot; แล้วใส่เลข Lot และวันหมดอายุแยกบรรทัด
           </p>
           <form action={receiveProduction.bind(null, id)} className="mt-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -214,57 +221,25 @@ export default async function ProductionOrderPage({
               </div>
             </div>
 
-            <div className="mt-4 overflow-x-auto rounded-lg border border-teal-100 bg-white">
-              <table className="stack-table w-full text-sm md:min-w-[720px]">
-                <thead>
-                  <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
-                    <th className="px-3 py-2">สินค้า</th>
-                    <th className="px-3 py-2 text-right">ค้างรับ</th>
-                    <th className="w-36 px-3 py-2 text-right">รับรอบนี้</th>
-                    <th className="w-36 px-3 py-2">Lot</th>
-                    <th className="w-40 px-3 py-2">วันหมดอายุ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items
-                    ?.filter((i) => i.received_quantity < i.quantity)
-                    .map((i) => {
-                      const p = productById.get(i.product_id);
-                      const remaining = i.quantity - i.received_quantity;
-                      return (
-                        <tr key={i.id} className="border-t border-teal-100">
-                          <td data-label="สินค้า" className="px-3 py-2 text-teal-900">
-                            <span className="font-medium">{p?.sku}</span> {p?.name}
-                          </td>
-                          <td data-label="ค้างรับ" className="px-3 py-2 text-right text-amber-700">
-                            {formatQty(remaining)} <span className="text-xs text-teal-500">{p?.unit}</span>
-                          </td>
-                          <td data-label="รับรอบนี้" className="px-2 py-1.5">
-                            <input type="hidden" name="item_id" value={i.id} />
-                            <input
-                              name="quantity"
-                              type="number"
-                              inputMode="decimal"
-                              min="0"
-                              max={remaining}
-                              step="any"
-                              placeholder={formatQty(remaining)}
-                              aria-label={`จำนวนรับ ${p?.sku ?? ""}`}
-                              className={`${cellInput} text-right`}
-                            />
-                          </td>
-                          <td data-label="Lot" className="px-2 py-1.5">
-                            <input name="lot_number" aria-label="Lot" className={cellInput} />
-                          </td>
-                          <td data-label="วันหมดอายุ" className="px-2 py-1.5">
-                            <DateInput name="expiry_date" aria-label="วันหมดอายุ" className={cellInput} />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </div>
+            <ReceiveLines
+              lotExample={bangkokToday().slice(2).replaceAll("-", "")}
+              items={(items ?? [])
+                .filter((i) => i.received_quantity < i.quantity)
+                .map((i) => {
+                  const p = productById.get(i.product_id);
+                  return {
+                    id: i.id,
+                    sku: p?.sku ?? "",
+                    name: p?.name ?? "",
+                    unit: p?.unit ?? "",
+                    remaining: i.quantity - i.received_quantity,
+                    trackLot: !!p?.track_lot,
+                    lots: (lotRows ?? [])
+                      .filter((l) => l.product_id === i.product_id && l.lot_number)
+                      .map((l) => ({ lot_number: l.lot_number as string, expiry_date: l.expiry_date, on_hand: l.on_hand })),
+                  };
+                })}
+            />
             <div className="mt-4">
               <SubmitButton className={submitButtonClassName}>รับเข้าคลัง</SubmitButton>
             </div>

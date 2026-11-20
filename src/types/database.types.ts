@@ -102,6 +102,7 @@ export interface Database {
           cost_price: number;
           sale_price: number;
           min_stock: number;
+          track_lot: boolean;
           note: string | null;
           is_active: boolean;
           created_at: string;
@@ -117,6 +118,7 @@ export interface Database {
           cost_price?: number;
           sale_price?: number;
           min_stock?: number;
+          track_lot?: boolean;
           note?: string | null;
           is_active?: boolean;
           created_at?: string;
@@ -132,6 +134,7 @@ export interface Database {
           cost_price?: number;
           sale_price?: number;
           min_stock?: number;
+          track_lot?: boolean;
           note?: string | null;
           is_active?: boolean;
           created_at?: string;
@@ -2494,6 +2497,18 @@ export interface Database {
         Row: Database["public"]["Tables"]["products"]["Row"] & {
           on_hand: number;
           in_production: number;
+          last_movement_date: string | null;
+        };
+        Relationships: [];
+      };
+      product_lot_stock: {
+        Row: {
+          product_id: string;
+          /** null = ไม่ระบุล็อต */
+          lot_number: string | null;
+          expiry_date: string | null;
+          on_hand: number;
+          received_date: string | null;
           last_movement_date: string | null;
         };
         Relationships: [];

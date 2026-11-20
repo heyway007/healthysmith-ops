@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faMagnifyingGlass, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/ui/delete-button";
+import { bangkokToday } from "@/components/holidays/holiday-views";
+import { expiryStatus, fefoSort, shortDate } from "@/components/inventory/lots";
 import { deleteProduct } from "./actions";
 import { PRODUCT_TYPES, formatQty, productSearchFilter } from "../labels";
 
@@ -22,6 +24,22 @@ export default async function ProductsPage({
   const filter = productSearchFilter(q);
   if (filter) query = query.or(filter);
   const { data: products } = await query;
+
+  // soonest expiry among the lots that still have stock (lot-tracked products only)
+  const trackedIds = (products ?? []).filter((p) => p.track_lot).map((p) => p.id);
+  const { data: lotData } = trackedIds.length
+    ? await supabase
+        .from("product_lot_stock")
+        .select("product_id, lot_number, expiry_date, on_hand, received_date")
+        .in("product_id", trackedIds)
+        .gt("on_hand", 0)
+    : { data: [] };
+  const today = bangkokToday();
+  const expiryOf = (productId: string) => {
+    const lots = fefoSort((lotData ?? []).filter((l) => l.product_id === productId));
+    const next = lots.find((l) => l.expiry_date);
+    return { next: next?.expiry_date ?? null, count: lots.length };
+  };
 
   return (
     <div>
@@ -70,6 +88,7 @@ export default async function ProductsPage({
               <th className="px-4 py-3">หน่วย</th>
               <th className="px-4 py-3 text-right">ราคาขาย</th>
               <th className="px-4 py-3 text-right">คงเหลือ</th>
+              <th className="px-4 py-3">วันหมดอายุ</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -99,17 +118,46 @@ export default async function ProductsPage({
                     </Link>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <DeleteButton
-                    action={deleteProduct.bind(null, p.id)}
-                    confirmMessage={`ลบสินค้า "${p.name}"? (ถ้ามีประวัติแล้วจะปิดใช้งานแทน)`}
-                  />
+                <td data-label="วันหมดอายุ" className="px-4 py-3 text-teal-700">
+                  {p.track_lot ? (
+                    (() => {
+                      const { next, count } = expiryOf(p.id);
+                      if (count === 0) return <span className="text-teal-300">ไม่มีสต๊อก</span>;
+                      if (!next) return <span className="text-teal-400">ไม่ระบุวันหมดอายุ · {count} ล็อต</span>;
+                      const st = expiryStatus(next, today);
+                      return (
+                        <>
+                          <span className="whitespace-nowrap">{shortDate(next)}</span>{" "}
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.className}`}>{st.label}</span>
+                          <span className="block text-xs text-teal-500">ล็อตที่หมดอายุก่อน · มี {count} ล็อต</span>
+                        </>
+                      );
+                    })()
+                  ) : (
+                    <span className="text-teal-300">-</span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/admin/inventory/stock/${p.id}`}
+                      className="flex items-center gap-1.5 rounded-full border border-teal-200 px-3 py-1 text-xs font-medium text-teal-700 transition-colors hover:border-teal-400 hover:bg-teal-50"
+                      title="ดูรายละเอียด: ยอดคงเหลือแยกตามล็อต วันหมดอายุ และความเคลื่อนไหว"
+                    >
+                      <FontAwesomeIcon icon={faEye} />
+                      ดูรายละเอียด
+                    </Link>
+                    <DeleteButton
+                      action={deleteProduct.bind(null, p.id)}
+                      confirmMessage={`ลบสินค้า "${p.name}"? (ถ้ามีประวัติแล้วจะปิดใช้งานแทน)`}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
             {(!products || products.length === 0) && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-teal-400">
+                <td colSpan={8} className="px-4 py-6 text-center text-teal-400">
                   {q ? "ไม่พบสินค้าที่ค้นหา" : "ยังไม่มีสินค้า — กด \"เพิ่มสินค้า\" เพื่อเริ่ม"}
                 </td>
               </tr>

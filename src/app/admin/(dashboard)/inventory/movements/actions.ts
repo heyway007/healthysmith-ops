@@ -36,13 +36,19 @@ export async function postMovements(_prev: MovementFormState, formData: FormData
   redirect(`/admin/inventory/movements?type=${type}&saved=${encodeURIComponent(docNumber ?? "")}`);
 }
 
-/** นับสต๊อก: blank = not counted; every counted product is adjusted to the count. */
+/** นับสต๊อก: blank = not counted; every counted product (or lot, for lot-tracked ones) is adjusted to the count. */
 export async function postStockCount(formData: FormData) {
-  const lines = formData
-    .getAll("product_id")
-    .map((id, i) => ({ product_id: String(id), counted: String(formData.getAll("counted")[i] ?? "").trim() }))
+  const ids = formData.getAll("product_id");
+  const lotNumbers = formData.getAll("lot_number");
+  const counted = formData.getAll("counted");
+  const lines = ids
+    .map((id, i) => ({
+      product_id: String(id),
+      lot_number: String(lotNumbers[i] ?? "").trim() || null,
+      counted: String(counted[i] ?? "").trim(),
+    }))
     .filter((l) => l.counted !== "")
-    .map((l) => ({ product_id: l.product_id, counted: Number(l.counted) }));
+    .map((l) => ({ product_id: l.product_id, lot_number: l.lot_number, counted: Number(l.counted) }));
 
   const supabase = await createClient();
   const { data, error } = lines.length

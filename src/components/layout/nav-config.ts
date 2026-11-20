@@ -3,6 +3,7 @@
 // Client-safe.
 
 import {
+  faBarcode,
   faBoxesStacked,
   faBuilding,
   faCalendarDays,
@@ -95,6 +96,7 @@ export const NAV: NavGroup[] = [
     children: [
       { href: "/admin/inventory/production", label: "ใบผลิตสินค้า", icon: faIndustry, allowed: ["warehouse"] },
       { href: "/admin/inventory/stock", label: "สต๊อกคงเหลือ", icon: faBoxesStacked, allowed: ["warehouse"] },
+      { href: "/admin/inventory/lots", label: "ล็อต / วันหมดอายุ", icon: faBarcode, allowed: ["warehouse"] },
       { href: "/admin/inventory/movements", label: "รับเข้า / เบิกออก", icon: faRightLeft, allowed: ["warehouse"] },
       { href: "/admin/inventory/count", label: "นับสต๊อก", icon: faClipboardCheck, allowed: ["warehouse"] },
       { href: "/admin/inventory/products", label: "สินค้า", icon: faTag, allowed: ["warehouse"] },

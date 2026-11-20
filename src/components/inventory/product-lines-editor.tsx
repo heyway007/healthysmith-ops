@@ -4,6 +4,16 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { emptyLine, labelOf, type PickableProduct, type ProductLine } from "./product-lines";
+import {
+  UNLOTTED,
+  UNLOTTED_LABEL,
+  expiryStatus,
+  issuableLots,
+  lotValue,
+  recommendedLot,
+  shortDate,
+  type LotOption,
+} from "./lots";
 import { DateInput } from "@/components/ui/date-input";
 
 export type { PickableProduct, ProductLine };
@@ -12,19 +22,29 @@ const cellClassName =
   "w-full rounded-md border border-teal-200 px-2 py-1.5 text-sm focus:border-teal-600 focus:outline-none";
 
 const isBlank = (l: ProductLine) => !l.productId && !l.quantity.trim() && !l.lot.trim() && !l.expiry;
+const lotKey = (s: string) => s.trim().toUpperCase();
+const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 3 });
 
 /**
- * Product + quantity rows (optionally lot / expiry) for production orders and
- * stock in/out. Products are picked from a dropdown (without lot columns a
- * product can only be picked once); the rows are submitted as JSON in one
- * hidden input (`name`):
+ * Product + quantity rows for production orders and stock in/out. Products are
+ * picked from a dropdown (without lot columns a product can only be picked
+ * once); the rows are submitted as JSON in one hidden input (`name`):
  * [{ product_id, quantity, lot_number, expiry_date }].
+ *
+ *  - `withLot`   (รับเข้า): Lot + expiry are typed. A lot-tracked product needs
+ *    a Lot; an existing lot is offered as you type and fills in its expiry.
+ *  - `pickLot`   (เบิกออก): a lot-tracked product picks one of its lots (the
+ *    one expiring first is preselected) and can't exceed that lot's balance.
+ *    `lots` is the product_lot_stock data both modes read.
  */
 export function ProductLinesEditor({
   products,
   initialLines,
   name = "lines",
   withLot = false,
+  pickLot = false,
+  lots = [],
+  today = "",
   showOnHand = false,
   minQuantity = {},
 }: {
@@ -32,11 +52,26 @@ export function ProductLinesEditor({
   initialLines?: ProductLine[];
   name?: string;
   withLot?: boolean;
+  pickLot?: boolean;
+  lots?: LotOption[];
+  /** YYYY-MM-DD, for the expiry badges */
+  today?: string;
   showOnHand?: boolean;
   /** per product id: the lowest quantity allowed, and the row can't be removed (already received) */
   minQuantity?: Record<string, number>;
 }) {
-  const [lines, setLines] = useState<ProductLine[]>(initialLines?.length ? initialLines : [emptyLine()]);
+  const showLot = withLot || pickLot;
+
+  const defaultLot = (productId: string) => {
+    if (!pickLot || !products.find((p) => p.id === productId)?.track_lot) return "";
+    const first = recommendedLot(issuableLots(lots, productId), today);
+    return first ? lotValue(first) : "";
+  };
+
+  const [lines, setLines] = useState<ProductLine[]>(() => {
+    const start = initialLines?.length ? initialLines : [emptyLine()];
+    return start.map((l) => (l.productId && !l.lot ? { ...l, lot: defaultLot(l.productId) } : l));
+  });
 
   const update = (i: number, patch: Partial<ProductLine>) =>
     setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
@@ -46,8 +81,8 @@ export function ProductLinesEditor({
     .map((l) => ({
       product_id: l.productId,
       quantity: Number(l.quantity) || 0,
-      lot_number: l.lot.trim() || null,
-      expiry_date: l.expiry || null,
+      lot_number: pickLot ? (l.lot && l.lot !== UNLOTTED ? l.lot : null) : l.lot.trim() || null,
+      expiry_date: withLot ? l.expiry || null : null,
     }));
 
   return (
@@ -55,14 +90,14 @@ export function ProductLinesEditor({
       <input type="hidden" name={name} value={JSON.stringify(payload)} />
 
       <div className="overflow-x-auto rounded-lg border border-teal-100 bg-white">
-        <table className={`stack-table w-full text-sm ${withLot ? "md:min-w-[760px]" : "md:min-w-[520px]"}`}>
+        <table className={`stack-table w-full text-sm ${showLot ? "md:min-w-[820px]" : "md:min-w-[520px]"}`}>
           <thead>
             <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="w-10 px-3 py-2 text-center">#</th>
               <th className="px-3 py-2">สินค้า</th>
               <th className="w-32 px-3 py-2 text-right">จำนวน</th>
-              {withLot && <th className="w-36 px-3 py-2">Lot</th>}
-              {withLot && <th className="w-40 px-3 py-2">วันหมดอายุ</th>}
+              {showLot && <th className={pickLot ? "w-[26rem] px-3 py-2" : "w-40 px-3 py-2"}>Lot</th>}
+              {showLot && <th className={pickLot ? "w-44 px-3 py-2" : "w-40 px-3 py-2"}>วันหมดอายุ</th>}
               <th className="w-10 px-3 py-2" />
             </tr>
           </thead>
@@ -70,13 +105,25 @@ export function ProductLinesEditor({
             {lines.map((l, i) => {
               const product = products.find((p) => p.id === l.productId);
               const min = minQuantity[l.productId];
+              const tracked = !!product?.track_lot;
+
+              // รับเข้า: the lot being typed, if it already exists
+              const typedLot = withLot && tracked && l.lot.trim()
+                ? lots.find((x) => x.product_id === l.productId && x.lot_number === lotKey(l.lot))
+                : undefined;
+              // เบิกออก: the lot picked
+              const options = pickLot && tracked ? issuableLots(lots, l.productId) : [];
+              const recommended = recommendedLot(options, today);
+              const picked = options.find((o) => lotValue(o) === l.lot);
+              const maxQty = pickLot ? (tracked ? picked?.on_hand : undefined) : undefined;
+
               return (
                 <tr key={i} className="border-t border-teal-100 align-top">
                   <td className="px-3 py-2.5 text-center text-teal-500 max-md:hidden">{i + 1}</td>
                   <td data-label="สินค้า" data-stack="block" className="px-2 py-1.5">
                     <select
                       value={l.productId}
-                      onChange={(e) => update(i, { productId: e.target.value })}
+                      onChange={(e) => update(i, { productId: e.target.value, lot: defaultLot(e.target.value), expiry: "" })}
                       disabled={min !== undefined}
                       required={!isBlank(l)}
                       aria-label={`สินค้ารายการที่ ${i + 1}`}
@@ -88,17 +135,19 @@ export function ProductLinesEditor({
                         <option
                           key={p.id}
                           value={p.id}
-                          disabled={!withLot && p.id !== l.productId && lines.some((x) => x.productId === p.id)}
+                          disabled={!showLot && p.id !== l.productId && lines.some((x) => x.productId === p.id)}
                         >
                           {labelOf(p)}
+                          {p.track_lot ? " (ล็อต)" : ""}
                         </option>
                       ))}
                     </select>
                     {product && (
                       <p className="mt-0.5 text-xs text-teal-500">
                         หน่วย: {product.unit}
-                        {showOnHand && product.on_hand !== undefined && ` · คงเหลือ ${product.on_hand.toLocaleString("en-US")}`}
-                        {min !== undefined && ` · รับแล้ว ${min.toLocaleString("en-US")}`}
+                        {showOnHand && product.on_hand !== undefined && ` · คงเหลือรวม ${fmt(product.on_hand)}`}
+                        {min !== undefined && ` · รับแล้ว ${fmt(min)}`}
+                        {tracked && " · ติดตามเป็นล็อต"}
                       </p>
                     )}
                   </td>
@@ -107,6 +156,7 @@ export function ProductLinesEditor({
                       type="number"
                       inputMode="decimal"
                       min={min || "0.001"}
+                      max={maxQty}
                       step="any"
                       value={l.quantity}
                       onChange={(e) => update(i, { quantity: e.target.value })}
@@ -115,14 +165,37 @@ export function ProductLinesEditor({
                       className={`${cellClassName} text-right`}
                     />
                   </td>
+
                   {withLot && (
                     <td data-label="Lot" className="px-2 py-1.5">
                       <input
                         value={l.lot}
-                        onChange={(e) => update(i, { lot: e.target.value })}
+                        list={tracked ? `lot-list-${i}` : undefined}
+                        onChange={(e) => {
+                          const match = lots.find((x) => x.product_id === l.productId && x.lot_number === lotKey(e.target.value));
+                          update(i, { lot: e.target.value, ...(match?.expiry_date && !l.expiry ? { expiry: match.expiry_date } : {}) });
+                        }}
+                        required={tracked && !isBlank(l)}
+                        placeholder={tracked ? "ระบุเลข Lot *" : "(ไม่บังคับ)"}
                         aria-label="Lot"
+                        autoComplete="off"
                         className={cellClassName}
                       />
+                      {tracked && (
+                        <datalist id={`lot-list-${i}`}>
+                          {lots
+                            .filter((x) => x.product_id === l.productId && x.lot_number)
+                            .map((x) => (
+                              <option key={x.lot_number} value={x.lot_number!}>
+                                คงเหลือ {fmt(x.on_hand)}
+                                {x.expiry_date ? ` · หมด ${shortDate(x.expiry_date)}` : ""}
+                              </option>
+                            ))}
+                        </datalist>
+                      )}
+                      {typedLot && (
+                        <p className="mt-0.5 text-xs text-teal-500">ล็อตเดิม · คงเหลือ {fmt(typedLot.on_hand)}</p>
+                      )}
                     </td>
                   )}
                   {withLot && (
@@ -133,8 +206,66 @@ export function ProductLinesEditor({
                         aria-label="วันหมดอายุ"
                         className={cellClassName}
                       />
+                      {typedLot?.expiry_date && l.expiry && l.expiry !== typedLot.expiry_date && (
+                        <p className="mt-0.5 text-xs text-orange-600">
+                          ล็อตนี้มีวันหมดอายุ {shortDate(typedLot.expiry_date)} อยู่แล้ว
+                        </p>
+                      )}
                     </td>
                   )}
+
+                  {pickLot && (
+                    <td data-label="Lot" className="px-2 py-1.5">
+                      {tracked ? (
+                        <>
+                          <select
+                            value={l.lot}
+                            onChange={(e) => update(i, { lot: e.target.value })}
+                            required={!isBlank(l)}
+                            disabled={options.length === 0}
+                            aria-label="Lot"
+                            className={`${cellClassName} bg-white disabled:bg-teal-50`}
+                          >
+                            <option value="">— เลือกล็อต —</option>
+                            {options.map((o) => (
+                              <option key={lotValue(o)} value={lotValue(o)}>
+                                {options.length > 1 && o === recommended ? "★ " : ""}
+                                {o.lot_number ?? UNLOTTED_LABEL}
+                                {o.expiry_date ? ` · หมด ${shortDate(o.expiry_date)}` : ""} · เหลือ {fmt(o.on_hand)}
+                              </option>
+                            ))}
+                          </select>
+                          {l.productId && options.length === 0 && (
+                            <p className="mt-0.5 text-xs text-orange-600">ไม่มีสต๊อกของสินค้านี้ให้เบิก</p>
+                          )}
+                          {options.length > 1 && (
+                            <p className="mt-0.5 text-xs text-teal-500">★ = แนะนำ (หมดอายุก่อน และยังไม่หมดอายุ)</p>
+                          )}
+                        </>
+                      ) : (
+                        <span className="block py-1.5 text-teal-300">—</span>
+                      )}
+                    </td>
+                  )}
+                  {pickLot && (
+                    <td data-label="วันหมดอายุ" className="px-2 py-1.5">
+                      {picked?.expiry_date ? (
+                        <div className="py-1">
+                          <span className="text-teal-800">{shortDate(picked.expiry_date)}</span>
+                          {today && (
+                            <span
+                              className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${expiryStatus(picked.expiry_date, today).className}`}
+                            >
+                              {expiryStatus(picked.expiry_date, today).label}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="block py-1.5 text-teal-300">—</span>
+                      )}
+                    </td>
+                  )}
+
                   <td className="px-2 py-1.5 text-right">
                     {min === undefined && (
                       <button

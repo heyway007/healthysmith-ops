@@ -6,17 +6,20 @@ import { Field } from "@/components/ui/field";
 import { FormSection } from "@/components/ui/form-section";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { ProductLinesEditor, type PickableProduct, type ProductLine } from "@/components/inventory/product-lines-editor";
+import type { LotOption } from "@/components/inventory/lots";
 import { formCardClassName, secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { postMovements } from "../actions";
 
 export function MovementForm({
   type,
   products,
+  lots,
   initialLines,
   today,
 }: {
   type: "in" | "out";
   products: PickableProduct[];
+  lots: LotOption[];
   initialLines?: ProductLine[];
   today: string;
 }) {
@@ -36,9 +39,25 @@ export function MovementForm({
           />
           <Field label="หมายเหตุ" name="note" rows={3} />
           <div className="sm:col-span-2 lg:col-span-3">
-            <ProductLinesEditor products={products} initialLines={initialLines} withLot={type === "in"} showOnHand />
+            <ProductLinesEditor
+              products={products}
+              initialLines={initialLines}
+              withLot={type === "in"}
+              pickLot={type === "out"}
+              lots={lots}
+              today={today}
+              showOnHand
+            />
+            {type === "in" && (
+              <p className="mt-2 text-xs text-teal-600">
+                สินค้าที่ติดตามเป็นล็อต (มีเครื่องหมาย &quot;ล็อต&quot;) ต้องระบุเลข Lot · ล็อตเดียวกันมีวันหมดอายุได้วันเดียว · สินค้าเดียวกันหลายล็อตให้เพิ่มเป็นหลายบรรทัด
+              </p>
+            )}
             {type === "out" && (
-              <p className="mt-2 text-xs text-teal-600">เบิกได้ไม่เกินยอดคงเหลือ — ถ้าของจริงไม่ตรงกับระบบ ให้ใช้ &quot;นับสต๊อก&quot; ปรับยอดก่อน</p>
+              <p className="mt-2 text-xs text-teal-600">
+                สินค้าที่ติดตามเป็นล็อตต้องเลือกล็อตที่เบิก (ระบบเลือกล็อตที่หมดอายุก่อนให้) และเบิกเกินยอดของล็อตนั้นไม่ได้ — ต้องการเบิกหลายล็อตให้เพิ่มเป็นหลายบรรทัด ·
+                ถ้าของจริงไม่ตรงกับระบบ ให้ใช้ &quot;นับสต๊อก&quot; ปรับยอดก่อน
+              </p>
             )}
           </div>
         </FormSection>

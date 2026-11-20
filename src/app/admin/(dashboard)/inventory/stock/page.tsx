@@ -149,6 +149,9 @@ export default async function StockPage({
                   <Link href={`/admin/inventory/stock/${p.id}`} className="hover:text-orange-600">
                     {p.name}
                   </Link>
+                  {p.track_lot && (
+                    <span className="ml-2 rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-700">ล็อต</span>
+                  )}
                 </td>
                 <td
                   data-label="คงเหลือ"

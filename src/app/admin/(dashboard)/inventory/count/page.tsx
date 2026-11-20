@@ -8,6 +8,8 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { bangkokToday } from "@/components/holidays/holiday-views";
 import { postStockCount } from "../movements/actions";
 import { PRODUCT_TYPES, formatQty, productSearchFilter } from "../labels";
+import { expiryStatus, shortDate, UNLOTTED_LABEL, type LotOption } from "@/components/inventory/lots";
+import { expandForCount } from "../count-rows";
 
 export default async function StockCountPage({
   searchParams,
@@ -21,7 +23,7 @@ export default async function StockCountPage({
 
   let query = supabase
     .from("product_stock")
-    .select("id, sku, name, unit, on_hand")
+    .select("id, sku, name, unit, on_hand, track_lot")
     .eq("is_active", true)
     .neq("product_type", "service")
     .order("sku");
@@ -30,11 +32,22 @@ export default async function StockCountPage({
   if (filter) query = query.or(filter);
   const { data: products } = await query;
 
+  // lot-tracked products are counted lot by lot
+  const trackedIds = (products ?? []).filter((p) => p.track_lot).map((p) => p.id);
+  const { data: lotData } = trackedIds.length
+    ? await supabase
+        .from("product_lot_stock")
+        .select("product_id, lot_number, expiry_date, on_hand, received_date")
+        .in("product_id", trackedIds)
+    : { data: [] as LotOption[] };
+  const rows = expandForCount(products ?? [], lotData ?? []);
+  const today = bangkokToday();
+
   return (
     <div>
       <h2 className="text-lg font-semibold text-teal-950">นับสต๊อก</h2>
       <p className="mt-1 text-sm text-teal-700">
-        กรอกจำนวนที่นับได้จริง ระบบจะปรับยอดคงเหลือให้ตรง (บันทึกเป็นรายการ &quot;ปรับยอด&quot;) · ช่องที่เว้นว่าง = ไม่ได้นับ ไม่ปรับ
+        กรอกจำนวนที่นับได้จริง ระบบจะปรับยอดคงเหลือให้ตรง (บันทึกเป็นรายการ &quot;ปรับยอด&quot;) · ช่องที่เว้นว่าง = ไม่ได้นับ ไม่ปรับ · สินค้าที่ติดตามเป็นล็อตนับแยกทีละล็อต
       </p>
 
       {params.error && <p className="mt-4 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{params.error}</p>}
@@ -106,35 +119,54 @@ export default async function StockCountPage({
               <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
                 <th className="px-4 py-2">รหัส</th>
                 <th className="px-4 py-2">ชื่อสินค้า</th>
+                <th className="px-4 py-2">Lot / หมดอายุ</th>
                 <th className="px-4 py-2 text-right">ในระบบ</th>
                 <th className="w-40 px-4 py-2 text-right">นับได้จริง</th>
                 <th className="px-4 py-2">หน่วย</th>
               </tr>
             </thead>
             <tbody>
-              {products?.map((p) => (
-                <tr key={p.id} className="border-t border-teal-100">
-                  <td data-label="รหัส" className="whitespace-nowrap px-4 py-2 font-medium text-teal-800">{p.sku}</td>
-                  <td data-label="ชื่อสินค้า" className="px-4 py-2 text-teal-950">{p.name}</td>
-                  <td data-label="ในระบบ" className="px-4 py-2 text-right text-teal-700">{formatQty(p.on_hand)}</td>
+              {rows.map((r) => (
+                <tr key={r.key} className={`border-t border-teal-100 ${r.first ? "" : "border-dashed"}`}>
+                  <td data-label="รหัส" className="whitespace-nowrap px-4 py-2 font-medium text-teal-800">{r.first ? r.sku : ""}</td>
+                  <td data-label="ชื่อสินค้า" className="px-4 py-2 text-teal-950">{r.first ? r.name : ""}</td>
+                  <td data-label="Lot / หมดอายุ" className="px-4 py-2 text-teal-700">
+                    {r.tracked ? (
+                      <>
+                        {r.lot ?? <span className="text-teal-400">{UNLOTTED_LABEL}</span>}
+                        {r.expiry && (
+                          <span className="block text-xs text-teal-500">
+                            หมดอายุ {shortDate(r.expiry)}{" "}
+                            <span className={`rounded-full px-1.5 py-0.5 font-medium ${expiryStatus(r.expiry, today).className}`}>
+                              {expiryStatus(r.expiry, today).label}
+                            </span>
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-teal-300">-</span>
+                    )}
+                  </td>
+                  <td data-label="ในระบบ" className="px-4 py-2 text-right text-teal-700">{formatQty(r.onHand)}</td>
                   <td data-label="นับได้จริง" className="px-4 py-1.5">
-                    <input type="hidden" name="product_id" value={p.id} />
+                    <input type="hidden" name="product_id" value={r.productId} />
+                    <input type="hidden" name="lot_number" value={r.lot ?? ""} />
                     <input
                       name="counted"
                       type="number"
                       inputMode="decimal"
                       min="0"
                       step="any"
-                      aria-label={`นับได้จริง ${p.sku}`}
+                      aria-label={`นับได้จริง ${r.sku}${r.lot ? ` ล็อต ${r.lot}` : ""}`}
                       className="w-full rounded-md border border-teal-200 px-2 py-1.5 text-right text-sm focus:border-teal-600 focus:outline-none"
                     />
                   </td>
-                  <td data-label="หน่วย" className="px-4 py-2 text-teal-600">{p.unit}</td>
+                  <td data-label="หน่วย" className="px-4 py-2 text-teal-600">{r.unit}</td>
                 </tr>
               ))}
-              {(!products || products.length === 0) && (
+              {rows.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-teal-400">
+                  <td colSpan={6} className="px-4 py-6 text-center text-teal-400">
                     ไม่มีสินค้าให้นับ
                   </td>
                 </tr>

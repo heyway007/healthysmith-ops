@@ -5,6 +5,8 @@ import { thaiDate } from "@/lib/thai-money";
 import { BackLink } from "@/components/ui/back-link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { MOVEMENT_TYPES, formatQty, formatSignedQty, movementPrintHref } from "../../labels";
+import { bangkokToday } from "@/components/holidays/holiday-views";
+import { UNLOTTED_LABEL, expiryStatus, fefoSort, shortDate } from "@/components/inventory/lots";
 
 const LIMIT = 300;
 
@@ -13,7 +15,7 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: product }, { data: movements }] = await Promise.all([
+  const [{ data: product }, { data: movements }, { data: lotData }] = await Promise.all([
     supabase.from("product_stock").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("stock_movements")
@@ -22,8 +24,19 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
       .order("movement_date", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(LIMIT),
+    supabase
+      .from("product_lot_stock")
+      .select("product_id, lot_number, expiry_date, on_hand, received_date")
+      .eq("product_id", id)
+      .neq("on_hand", 0),
   ]);
   if (!product) notFound();
+
+  // balance per lot (soonest expiry first); shown for lot-tracked products or anything that has a lot
+  const lots = fefoSort(lotData ?? []);
+  const showLots = product.track_lot || lots.some((l) => l.lot_number);
+  const today = bangkokToday();
+  const unlotted = lots.find((l) => l.lot_number === null);
 
   const receiptIds = [...new Set((movements ?? []).map((m) => m.production_receipt_id).filter((x): x is string => !!x))];
   const { data: receipts } = receiptIds.length
@@ -79,6 +92,71 @@ export default async function StockCardPage({ params }: { params: Promise<{ id: 
           − เบิกออก
         </Link>
       </div>
+
+      {showLots && (
+        <section className="mt-4">
+          <h3 className="text-sm font-semibold text-teal-950">
+            ยอดคงเหลือแยกตามล็อต
+            {product.track_lot && (
+              <span className="ml-2 rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-700">ติดตามเป็นล็อต</span>
+            )}
+          </h3>
+          <div className="mt-2 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
+            <table className="stack-table w-full text-sm md:min-w-[620px]">
+              <thead>
+                <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
+                  <th className="px-4 py-2.5">Lot</th>
+                  <th className="px-4 py-2.5">วันหมดอายุ</th>
+                  <th className="px-4 py-2.5">สถานะ</th>
+                  <th className="px-4 py-2.5">รับเข้าเมื่อ</th>
+                  <th className="px-4 py-2.5 text-right">คงเหลือ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lots.map((l) => {
+                  const st = expiryStatus(l.expiry_date, today);
+                  return (
+                    <tr key={l.lot_number ?? ""} className="border-t border-teal-100">
+                      <td data-label="Lot" className="px-4 py-2.5 font-medium text-teal-800">
+                        {l.lot_number ?? <span className="font-normal text-teal-400">{UNLOTTED_LABEL}</span>}
+                      </td>
+                      <td data-label="วันหมดอายุ" className="whitespace-nowrap px-4 py-2.5 text-teal-700">
+                        {l.expiry_date ? shortDate(l.expiry_date) : "-"}
+                      </td>
+                      <td data-label="สถานะ" className="px-4 py-2.5">
+                        {l.expiry_date ? (
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${st.className}`}>{st.label}</span>
+                        ) : (
+                          <span className="text-teal-300">-</span>
+                        )}
+                      </td>
+                      <td data-label="รับเข้าเมื่อ" className="whitespace-nowrap px-4 py-2.5 text-teal-600">
+                        {l.received_date ? shortDate(l.received_date) : "-"}
+                      </td>
+                      <td data-label="คงเหลือ" className={`px-4 py-2.5 text-right font-semibold ${l.on_hand < 0 ? "text-rose-600" : "text-teal-950"}`}>
+                        {formatQty(l.on_hand)} <span className="text-xs font-normal text-teal-500">{product.unit}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {lots.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-4 text-center text-teal-400">
+                      ไม่มีสต๊อกคงเหลือ
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          {product.track_lot && unlotted && (
+            <p className="mt-2 text-xs text-amber-700">
+              มีสต๊อก {formatQty(unlotted.on_hand)} {product.unit} ที่ยังไม่ระบุล็อต (รับเข้าก่อนเปิดใช้ล็อต) — ใช้ &quot;นับสต๊อก&quot; ปรับกลุ่มนี้เป็น 0
+              แล้วรับเข้าใหม่พร้อมเลข Lot เพื่อให้ยอดอยู่ในล็อตที่ถูกต้อง
+            </p>
+          )}
+        </section>
+      )}
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
         <table className="stack-table w-full text-sm md:min-w-[860px]">

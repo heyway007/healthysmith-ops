@@ -17,6 +17,7 @@ function productFields(formData: FormData) {
     cost_price: numberOrDefault(formData.get("cost_price"), 0),
     sale_price: numberOrDefault(formData.get("sale_price"), 0),
     min_stock: numberOrDefault(formData.get("min_stock"), 0),
+    track_lot: formData.get("track_lot") === "1",
     note: emptyToNull(formData.get("note")),
   };
 }

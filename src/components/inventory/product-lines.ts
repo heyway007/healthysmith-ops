@@ -8,6 +8,8 @@ export type PickableProduct = {
   unit: string;
   barcode: string | null;
   on_hand?: number;
+  /** lot-tracked: Lot is required on รับเข้า, and เบิกออก must pick a lot */
+  track_lot?: boolean;
 };
 
 export type ProductLine = {
