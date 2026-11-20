@@ -18,20 +18,16 @@ function shiftMonth(ym: string, delta: number) {
 
 /**
  * Period navigation + search (number / name / tax id, date range, status) +
- * Excel export and "print everything shown" for a tax-document list.
+ * for a tax-document list (the export / print-all buttons are <DocListActions>).
  */
 export function DocListToolbar({
   basePath,
-  printPath,
   filters: f,
-  count,
   stats,
   searchPlaceholder,
 }: {
   basePath: string;
-  printPath: string;
   filters: Filters;
-  count: number;
   stats: { label: string; value: string }[];
   searchPlaceholder: string;
 }) {
@@ -68,13 +64,13 @@ export function DocListToolbar({
         </div>
       </div>
 
-      <form method="get" action={basePath} className="mt-4 flex flex-wrap items-end gap-3">
+      <form method="get" action={basePath} className="mt-4 flex flex-wrap items-end justify-end gap-3">
         {!f.isRange && <input type="hidden" name="month" value={f.month} />}
-        <div>
+        <div className="min-w-64 flex-1">
           <label className="block text-xs font-medium text-teal-700" htmlFor="q">
             ค้นหา
           </label>
-          <input id="q" name="q" defaultValue={f.q} placeholder={searchPlaceholder} className={`${inputClassName} w-64`} />
+          <input id="q" name="q" defaultValue={f.q} placeholder={searchPlaceholder} className={`${inputClassName} w-full`} />
         </div>
         <div>
           <label className="block text-xs font-medium text-teal-700" htmlFor="from">
@@ -103,18 +99,37 @@ export function DocListToolbar({
         <button type="submit" className={secondaryButtonClassName}>
           ค้นหา
         </button>
-        <div className="ml-auto flex flex-wrap gap-2">
-          <a href={`${basePath}/export?${docFilterQuery(f)}`} className={`${secondaryButtonClassName} inline-flex items-center gap-2`}>
-            <FontAwesomeIcon icon={faFileExcel} className="text-emerald-600" />
-            ส่งออก Excel
-          </a>
-          <Link href={`${printPath}?${docFilterQuery(f)}`} target="_blank" className={`${secondaryButtonClassName} inline-flex items-center gap-2`}>
-            <FontAwesomeIcon icon={faPrint} />
-            พิมพ์ทั้งหมดที่แสดง ({count})
-          </Link>
-        </div>
       </form>
     </>
+  );
+}
+
+/**
+ * "ส่งออก Excel" + "พิมพ์ทั้งหมดที่แสดง" for the current filters. Meant for the
+ * row above the table, next to "พิมพ์ใบที่ติ๊กเลือก" and the result count.
+ */
+export function DocListActions({
+  basePath,
+  printPath,
+  filters: f,
+  count,
+}: {
+  basePath: string;
+  printPath: string;
+  filters: Filters;
+  count: number;
+}) {
+  return (
+    <div className="ml-auto flex flex-wrap gap-2">
+      <a href={`${basePath}/export?${docFilterQuery(f)}`} className={`${secondaryButtonClassName} inline-flex items-center gap-2`}>
+        <FontAwesomeIcon icon={faFileExcel} className="text-emerald-600" />
+        ส่งออก Excel
+      </a>
+      <Link href={`${printPath}?${docFilterQuery(f)}`} target="_blank" className={`${secondaryButtonClassName} inline-flex items-center gap-2`}>
+        <FontAwesomeIcon icon={faPrint} />
+        พิมพ์ทั้งหมดที่แสดง ({count})
+      </Link>
+    </div>
   );
 }
 

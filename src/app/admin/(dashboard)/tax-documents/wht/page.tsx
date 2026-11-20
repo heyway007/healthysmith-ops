@@ -13,7 +13,7 @@ import { IconLinkButton } from "@/components/ui/icon-link-button";
 import { DisabledIconButton, RowActions } from "@/components/ui/row-actions";
 import { requestCancel } from "../doc-actions";
 import { SelectAllCheckbox } from "@/components/ui/select-all-checkbox";
-import { DocListToolbar, StatusTag } from "@/components/documents/doc-list-toolbar";
+import { DocListActions, DocListToolbar, StatusTag } from "@/components/documents/doc-list-toolbar";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { formatMoney, thaiDate } from "@/lib/thai-money";
 import { WHT_FORM_TYPES } from "@/lib/wht";
@@ -64,9 +64,7 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
 
       <DocListToolbar
         basePath={BASE}
-        printPath="/admin/print/wht-certificates"
         filters={f}
-        count={(certificates ?? []).length}
         searchPlaceholder="เลขที่ / ชื่อผู้รับเงิน / เลขภาษี"
         stats={[
           { label: "จำนวนใบ (ใช้งาน)", value: active.length.toLocaleString() },
@@ -76,12 +74,13 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
       />
 
       <form method="get" action="/admin/print/wht-certificates" target="_blank" className="mt-4">
-        <div className="mb-3 flex items-center gap-3">
+        <div className="mb-3 flex flex-wrap items-center gap-3">
           <button type="submit" className={`${secondaryButtonClassName} inline-flex items-center gap-2`}>
             <FontAwesomeIcon icon={faPrint} />
             พิมพ์ใบที่ติ๊กเลือก
           </button>
           <span className="text-sm text-teal-600">พบ {(certificates ?? []).length.toLocaleString()} รายการ</span>
+          <DocListActions basePath={BASE} printPath="/admin/print/wht-certificates" filters={f} count={(certificates ?? []).length} />
         </div>
         <div className="overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
           <table className="w-full text-sm">
