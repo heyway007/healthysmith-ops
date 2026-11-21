@@ -75,6 +75,10 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
 
       <form method="get" action="/admin/print/wht-certificates" target="_blank" className="mt-4">
         <div className="mb-3 flex flex-wrap items-center gap-3">
+          <label className="flex w-full items-center gap-2 text-sm text-teal-700 md:hidden">
+            <SelectAllCheckbox name="id" />
+            เลือกทั้งหมด
+          </label>
           <button type="submit" className={`${secondaryButtonClassName} inline-flex items-center gap-2`}>
             <FontAwesomeIcon icon={faPrint} />
             พิมพ์ใบที่ติ๊กเลือก
@@ -83,7 +87,7 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
           <DocListActions basePath={BASE} printPath="/admin/print/wht-certificates" filters={f} count={(certificates ?? []).length} />
         </div>
         <div className="overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-          <table className="w-full text-sm">
+          <table className="stack-table w-full text-sm md:min-w-[800px]">
             <thead>
               <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
                 <th className="w-10 px-4 py-3">
@@ -101,10 +105,10 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
             <tbody>
               {paged.rows.map((c) => (
                 <tr key={c.id} className={`border-t border-teal-100 hover:bg-teal-50 ${c.is_cancelled ? "text-gray-400" : ""}`}>
-                  <td className="px-4 py-3">
+                  <td data-label="เลือก" className="px-4 py-3">
                     <input type="checkbox" name="id" value={c.id} aria-label={`เลือก ${c.certificate_number}`} className="size-4 accent-teal-600" />
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3">
+                  <td data-label="เลขที่" className="whitespace-nowrap px-4 py-3">
                     <Link
                       href={`${BASE}/${c.id}`}
                       className={`font-mono text-xs font-medium hover:text-orange-600 ${c.is_cancelled ? "line-through" : "text-teal-800"}`}
@@ -113,15 +117,15 @@ export default async function WhtCertificatesPage({ searchParams }: { searchPara
                     </Link>
                     <StatusTag cancelled={c.is_cancelled} pending={!!c.cancel_requested_at} replaced={!!c.replaced_by_id} correction={!!c.replaces_id} />
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3">{thaiDate(c.issue_date, true)}</td>
-                  <td className="px-4 py-3">
+                  <td data-label="วันที่" className="whitespace-nowrap px-4 py-3">{thaiDate(c.issue_date, true)}</td>
+                  <td data-label="ผู้ถูกหักภาษี" className="px-4 py-3">
                     <span className={c.is_cancelled ? "" : "text-teal-900"}>{c.payee_name}</span>
                     {c.payee_tax_id && <span className="block font-mono text-xs text-teal-500">{c.payee_tax_id}</span>}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3">{FORM_LABEL[c.form_type]}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right">{formatMoney(c.total_paid)}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right font-medium">{formatMoney(c.total_tax)}</td>
-                  <td className="px-4 py-3">
+                  <td data-label="แบบ" className="whitespace-nowrap px-4 py-3">{FORM_LABEL[c.form_type]}</td>
+                  <td data-label="ยอดจ่าย" className="whitespace-nowrap px-4 py-3 text-right">{formatMoney(c.total_paid)}</td>
+                  <td data-label="ภาษีที่หัก" className="whitespace-nowrap px-4 py-3 text-right font-medium">{formatMoney(c.total_tax)}</td>
+                  <td data-label="จัดการ" className="px-4 py-3">
                     <RowActions>
                       <IconLinkButton href={`${BASE}/${c.id}`} icon={faEye} label={`ดูเอกสาร ${c.certificate_number}`} />
                       {canDoc(perms, "edit") && !c.replaced_by_id ? (

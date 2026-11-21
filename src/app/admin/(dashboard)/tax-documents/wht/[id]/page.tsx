@@ -53,7 +53,7 @@ export default async function WhtCertificateDetailPage({
         <h2 className="text-lg font-semibold text-teal-950">
           <span className="font-mono">{certificate.certificate_number}</span>
           {certificate.is_cancelled ? (
-            <span className="ml-3 rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">ยกเลิกแล้ว</span>
+            <span className="ml-3 inline-block rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600">ยกเลิกแล้ว</span>
           ) : certificate.cancel_requested_at ? (
             <span className="ml-3 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">รออนุมัติยกเลิก</span>
           ) : null}
@@ -75,8 +75,8 @@ export default async function WhtCertificateDetailPage({
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[1fr_20rem]">
-        <div className="space-y-6">
-          <div className="overflow-x-auto rounded-2xl border border-teal-100 bg-white p-6 shadow-sm">
+        <div className="min-w-0 space-y-6">
+          <div className="overflow-x-auto rounded-2xl border border-teal-100 bg-white p-3 shadow-sm sm:p-6">
             <div className="min-w-[186mm]">
               <WhtCertificateDocument certificate={certificate} lines={lines ?? []} copy={1} />
             </div>

@@ -133,7 +133,7 @@ export function ManualTaxInvoiceForm({
         </datalist>
 
         <div className="mt-3 overflow-x-auto rounded-lg border border-teal-100 bg-white">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="stack-table w-full text-sm md:min-w-[640px]">
             <thead>
               <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
                 <th className="w-10 px-3 py-2 text-center">#</th>
@@ -151,8 +151,8 @@ export function ManualTaxInvoiceForm({
                 const unit = products.find((p) => p.id === r.productId)?.unit;
                 return (
                   <tr key={i} className="border-t border-teal-100 align-top">
-                    <td className="px-3 py-2.5 text-center text-teal-500">{i + 1}</td>
-                    <td className="px-2 py-1.5">
+                    <td className="px-3 py-2.5 text-center text-teal-500 max-md:hidden!">{i + 1}</td>
+                    <td data-label="รายการ" data-stack="block" className="px-2 py-1.5">
                       <input
                         list="manual-products"
                         value={r.description}
@@ -164,7 +164,7 @@ export function ManualTaxInvoiceForm({
                       />
                       {r.productId && <p className="mt-0.5 text-xs text-teal-500">✓ สินค้าในระบบ{unit ? ` · หน่วย: ${unit}` : ""}</p>}
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td data-label="จำนวน" className="px-2 py-1.5">
                       <input
                         type="number"
                         inputMode="decimal"
@@ -177,7 +177,7 @@ export function ManualTaxInvoiceForm({
                         className={`${cellClassName} text-right`}
                       />
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td data-label="ราคา/หน่วย" className="px-2 py-1.5">
                       <input
                         type="number"
                         inputMode="decimal"
@@ -191,7 +191,7 @@ export function ManualTaxInvoiceForm({
                         className={`${cellClassName} text-right`}
                       />
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td data-label="ส่วนลด" className="px-2 py-1.5">
                       <input
                         type="number"
                         inputMode="decimal"
@@ -204,10 +204,10 @@ export function ManualTaxInvoiceForm({
                         className={`${cellClassName} text-right`}
                       />
                     </td>
-                    <td className={`px-3 py-2.5 text-right font-medium ${amount < 0 ? "text-orange-600" : "text-teal-950"}`}>
+                    <td data-label="จำนวนเงิน" className={`px-3 py-2.5 text-right font-medium ${amount < 0 ? "text-orange-600" : "text-teal-950"}`}>
                       {isBlank(r) ? "-" : formatMoney(amount)}
                     </td>
-                    <td className="px-2 py-1.5 text-right">
+                    <td data-label="ลบรายการ" className="px-2 py-1.5 text-right">
                       <button
                         type="button"
                         onClick={() => setRows((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : [emptyRow()]))}
@@ -234,7 +234,7 @@ export function ManualTaxInvoiceForm({
             เพิ่มรายการ
           </button>
 
-          <dl className="grid w-full max-w-sm grid-cols-[1fr_auto] items-center gap-x-6 gap-y-1.5 text-sm">
+          <dl className="grid w-full max-w-sm grid-cols-[1fr_auto] sm:ml-auto items-center gap-x-6 gap-y-1.5 text-sm">
             <dt className="text-teal-700">รวมเป็นเงิน</dt>
             <dd className="text-right text-teal-900">{formatMoney(subtotal)}</dd>
             <dt>

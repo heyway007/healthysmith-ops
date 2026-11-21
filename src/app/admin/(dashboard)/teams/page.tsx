@@ -44,7 +44,7 @@ export default async function TeamsPage({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-teal-950">ทีม</h1>
+          <h1 className="text-xl font-semibold text-teal-950 sm:text-2xl">ทีม</h1>
           <p className="mt-1 text-teal-700">
             ใช้กำหนดวัน WFH แยกตามทีม — กำหนดทีมให้พนักงานได้ที่หน้าแก้ไขพนักงาน
           </p>
@@ -59,7 +59,7 @@ export default async function TeamsPage({
       {error && <p className="mt-4 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{error}</p>}
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[720px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">ชื่อทีม</th>
@@ -72,12 +72,12 @@ export default async function TeamsPage({
           <tbody>
             {rows.map((t) => (
               <tr key={t.id} className="border-t border-teal-100 hover:bg-teal-50">
-                <td className="px-4 py-3">
+                <td data-label="ชื่อทีม" className="px-4 py-3">
                   <Link href={`/admin/teams/${t.id}`} className="font-medium text-teal-950 hover:text-orange-600">
                     {t.name}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-teal-900">
+                <td data-label="สมาชิก" className="px-4 py-3 text-teal-900">
                   {t.people.length === 0 ? (
                     <span className="text-teal-400">ยังไม่มีสมาชิก</span>
                   ) : (
@@ -93,7 +93,7 @@ export default async function TeamsPage({
                     </>
                   )}
                 </td>
-                <td className="px-4 py-3 tabular-nums">
+                <td data-label={`WFH ปี ${year + 543}`} className="px-4 py-3 tabular-nums">
                   {t.wfhDays > 0 ? (
                     <Link href={`/admin/holidays?team=${t.id}&type=wfh`} className="text-sky-700 hover:underline">
                       {t.wfhDays} วัน
@@ -102,7 +102,7 @@ export default async function TeamsPage({
                     <span className="text-teal-400">-</span>
                   )}
                 </td>
-                <td className="px-4 py-3">
+                <td data-label="WFH ประจำวัน" className="px-4 py-3">
                   {t.weekdays.length > 0 ? (
                     <span className="flex flex-wrap gap-1">
                       {t.weekdays.map((d) => (

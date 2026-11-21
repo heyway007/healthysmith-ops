@@ -32,7 +32,7 @@ type Params = {
 type AuditLog = Database["public"]["Tables"]["audit_logs"]["Row"];
 
 const inputClassName =
-  "mt-1 rounded-lg border border-teal-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100";
+  "mt-1 w-full rounded-lg border border-teal-300 px-3 py-2 text-sm sm:w-auto focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100";
 
 function shiftDate(iso: string, days: number) {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -99,7 +99,7 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Pr
 
   return (
     <div>
-      <h1 className="flex items-center gap-2 text-2xl font-semibold text-teal-950">
+      <h1 className="flex items-center gap-2 text-xl sm:text-2xl font-semibold text-teal-950">
         <FontAwesomeIcon icon={faClockRotateLeft} className="text-xl text-teal-600" />
         ประวัติการใช้งาน (Audit log)
       </h1>
@@ -107,7 +107,7 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Pr
         ใครเพิ่ม / แก้ไข / ลบข้อมูลอะไร เมื่อไหร่ รวมถึงการเข้า-ออกระบบ — บันทึกอัตโนมัติ แก้ไขหรือลบไม่ได้
       </p>
 
-      <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
+      <form method="get" className="mt-6 grid grid-cols-1 items-end gap-3 sm:flex sm:flex-wrap">
         {record && <input type="hidden" name="record" value={record} />}
         <Filter label="ตั้งแต่วันที่">
           <DateInput name="from" defaultValue={from} className={inputClassName} />
@@ -141,19 +141,19 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Pr
           </select>
         </Filter>
         <Filter label="ผู้ใช้">
-          <input name="actor" defaultValue={actor} placeholder="อีเมล" className={`${inputClassName} w-44`} />
+          <input name="actor" defaultValue={actor} placeholder="อีเมล" className={`${inputClassName} sm:w-44`} />
         </Filter>
         <Filter label="ค้นหา">
           <input
             name="q"
             defaultValue={q}
             placeholder="เลขเอกสาร / ชื่อ"
-            className={`${inputClassName} w-44`}
+            className={`${inputClassName} sm:w-44`}
           />
         </Filter>
         <button
           type="submit"
-          className="rounded-lg border border-teal-300 bg-white px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50"
+          className="w-full rounded-lg border border-teal-300 bg-white px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50 sm:w-auto"
         >
           กรอง
         </button>
@@ -177,7 +177,7 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Pr
       )}
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3 whitespace-nowrap">เวลา</th>

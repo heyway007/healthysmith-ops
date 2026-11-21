@@ -108,14 +108,14 @@ export default async function PurchaseBillsPage({
             <FontAwesomeIcon icon={faChevronRight} className="w-3" />
           </Link>
         </div>
-        <div className="flex gap-3">
+        <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
           <Stat label="ซื้อทั้งเดือน" value={total} />
           <Stat label="ยังค้างจ่าย" value={unpaid} className={unpaid > 0 ? "text-rose-600" : undefined} />
         </div>
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[860px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">เลขที่</th>
@@ -133,7 +133,7 @@ export default async function PurchaseBillsPage({
               const descriptions = itemsByBill.get(b.id) ?? [];
               return (
                 <tr key={b.id} className="border-t border-teal-100 hover:bg-teal-50">
-                  <td className="whitespace-nowrap px-4 py-3">
+                  <td data-label="เลขที่" className="whitespace-nowrap px-4 py-3">
                     <Link
                       href={`/admin/purchase/bills/${b.id}`}
                       className="font-mono text-xs font-medium text-teal-700 hover:text-orange-600"
@@ -141,11 +141,11 @@ export default async function PurchaseBillsPage({
                       {b.bill_number}
                     </Link>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-teal-700">
+                  <td data-label="วันที่" className="whitespace-nowrap px-4 py-3 text-teal-700">
                     {formatThaiDate(b.bill_date, { day: "numeric", month: "short" })}
                   </td>
-                  <td className="px-4 py-3 text-teal-900">{supplierNameById.get(b.supplier_id) ?? "-"}</td>
-                  <td className="px-4 py-3">
+                  <td data-label="ร้าน / ผู้ขาย" className="px-4 py-3 text-teal-900">{supplierNameById.get(b.supplier_id) ?? "-"}</td>
+                  <td data-label="รายการ" className="px-4 py-3">
                     <Link
                       href={`/admin/purchase/bills/${b.id}`}
                       className="font-medium text-teal-800 hover:text-orange-600"
@@ -156,13 +156,13 @@ export default async function PurchaseBillsPage({
                       <span className="text-teal-500"> และอีก {descriptions.length - 1} รายการ</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-teal-900">
+                  <td data-label="ยอดรวม" className="px-4 py-3 text-right font-medium text-teal-900">
                     {b.total_amount.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="จ่ายเงิน" className="px-4 py-3">
                     <StatusBadge status={b.status} config={BILL_STATUS} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="ไฟล์แนบ" className="px-4 py-3">
                     <ImageGallery images={attachmentsByBill.get(b.id) ?? []} compact />
                   </td>
                   <td className="px-4 py-3">

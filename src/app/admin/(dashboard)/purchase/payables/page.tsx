@@ -61,7 +61,7 @@ export default async function PayablesPage({
           <h2 className="text-lg font-semibold text-teal-950">ค้างจ่าย</h2>
           <p className="mt-1 text-sm text-teal-700">ของที่ซื้อมาแล้วแต่ยังจ่ายไม่ครบ</p>
         </div>
-        <div className="rounded-xl border border-teal-100 bg-white px-5 py-3 shadow-sm">
+        <div className="w-full rounded-xl border border-teal-100 bg-white px-5 py-3 shadow-sm sm:w-auto">
           <p className="text-xs font-medium uppercase tracking-wide text-teal-500">ยอดค้างจ่ายรวม</p>
           <p className="mt-1 text-xl font-semibold text-rose-600">{totalOutstanding.toLocaleString()}</p>
         </div>
@@ -118,7 +118,7 @@ export default async function PayablesPage({
       )}
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[760px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">เลขที่</th>
@@ -135,7 +135,7 @@ export default async function PayablesPage({
               const aging = agingLabel(b.due_date);
               return (
                 <tr key={b.id} className="border-t border-teal-100 hover:bg-teal-50">
-                  <td className="px-4 py-3">
+                  <td data-label="เลขที่" className="px-4 py-3">
                     <Link
                       href={`/admin/purchase/bills/${b.id}`}
                       className="font-medium text-teal-800 hover:text-orange-600"
@@ -143,11 +143,11 @@ export default async function PayablesPage({
                       {b.bill_number}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-teal-700">{supplierNameById.get(b.supplier_id) ?? "-"}</td>
-                  <td className="px-4 py-3 text-teal-700">{b.due_date ?? "-"}</td>
-                  <td className={`px-4 py-3 ${aging.className}`}>{aging.label}</td>
-                  <td className="px-4 py-3 text-teal-700">{b.total_amount.toLocaleString()}</td>
-                  <td className="px-4 py-3 font-medium text-rose-600">
+                  <td data-label="ร้าน / ผู้ขาย" className="px-4 py-3 text-teal-700">{supplierNameById.get(b.supplier_id) ?? "-"}</td>
+                  <td data-label="ครบกำหนด" className="px-4 py-3 text-teal-700">{b.due_date ?? "-"}</td>
+                  <td data-label="อายุหนี้" className={`px-4 py-3 ${aging.className}`}>{aging.label}</td>
+                  <td data-label="ยอดรวม" className="px-4 py-3 text-teal-700">{b.total_amount.toLocaleString()}</td>
+                  <td data-label="ค้างจ่าย" className="px-4 py-3 font-medium text-rose-600">
                     {(b.outstanding_amount ?? 0).toLocaleString()}
                   </td>
                   <td className="px-4 py-3">

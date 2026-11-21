@@ -15,7 +15,7 @@ export function PortalNav({ signedIn }: { signedIn: boolean }) {
   const items = ITEMS.filter((item) => signedIn || item.public);
 
   return (
-    <nav className="flex items-center gap-1 overflow-x-auto text-sm">
+    <nav className="order-last flex w-full min-w-0 items-center gap-1 overflow-x-auto text-sm sm:order-none sm:w-auto">
       {items.map((item) => {
         const active = item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href);
         return (

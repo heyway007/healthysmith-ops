@@ -18,7 +18,7 @@ const buttonClassName =
 export function PortalHeader({ signedIn, employee }: { signedIn: boolean; employee: CurrentEmployee | null }) {
   return (
     <header className="sticky top-0 z-30 border-b border-mist-200 bg-white/85 px-4 py-3 shadow-sm backdrop-blur sm:px-8">
-      <div className="flex items-center gap-3 sm:gap-5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:flex-nowrap sm:gap-5">
         <Link href={signedIn ? "/" : "/holidays"} className="shrink-0" aria-label="หน้าแรก">
           <BrandLogo size={36} />
         </Link>

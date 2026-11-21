@@ -87,7 +87,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[720px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">สินค้า</th>
@@ -101,8 +101,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <tbody>
             {items?.map((i) => (
               <tr key={i.id} className="border-t border-teal-100">
-                <td className="px-4 py-3 text-teal-900">{i.description}</td>
-                <td className="px-4 py-3 font-mono text-xs text-teal-600">
+                <td data-stack="title" className="px-4 py-3 text-teal-900">{i.description}</td>
+                <td data-label="SKU" className="px-4 py-3 font-mono text-xs text-teal-600">
                   {i.external_sku ?? "-"}
                   {i.external_sku && !i.product_id && (
                     <span className="ml-1 font-sans text-[10px] text-orange-500" title="ยังไม่มีสินค้า SKU นี้ในระบบ — ใบกำกับจะใช้ชื่อจากแพลตฟอร์ม">
@@ -110,10 +110,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right text-teal-900">{i.quantity.toLocaleString()}</td>
-                <td className="px-4 py-3 text-right text-teal-700">{formatMoney(i.unit_price)}</td>
-                <td className="px-4 py-3 text-right text-teal-700">{i.discount_amount ? formatMoney(i.discount_amount) : "-"}</td>
-                <td className="px-4 py-3 text-right font-medium text-teal-900">{formatMoney(i.amount)}</td>
+                <td data-label="จำนวน" className="px-4 py-3 text-right text-teal-900">{i.quantity.toLocaleString()}</td>
+                <td data-label="ราคา/หน่วย" className="px-4 py-3 text-right text-teal-700">{formatMoney(i.unit_price)}</td>
+                <td data-label="ส่วนลดร้าน" className="px-4 py-3 text-right text-teal-700">{i.discount_amount ? formatMoney(i.discount_amount) : "-"}</td>
+                <td data-label="จำนวนเงิน" className="px-4 py-3 text-right font-medium text-teal-900">{formatMoney(i.amount)}</td>
               </tr>
             ))}
           </tbody>
@@ -165,8 +165,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 function Row({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="flex gap-3">
-      <dt className="w-28 shrink-0 text-teal-500">{label}</dt>
-      <dd className="text-teal-900">{value ?? "-"}</dd>
+      <dt className="w-24 shrink-0 text-teal-500 sm:w-28">{label}</dt>
+      <dd className="min-w-0 break-words text-teal-900">{value ?? "-"}</dd>
     </div>
   );
 }
@@ -174,10 +174,10 @@ function Row({ label, value }: { label: string; value: string | null }) {
 function Total({ label, value, strong, muted }: { label: string; value: number; strong?: boolean; muted?: boolean }) {
   return (
     <tr>
-      <td colSpan={5} className={`px-4 py-1.5 text-right ${muted ? "text-teal-500" : "text-teal-700"}`}>
+      <td colSpan={5} className={`px-4 py-1.5 text-right max-md:hidden! ${muted ? "text-teal-500" : "text-teal-700"}`}>
         {label}
       </td>
-      <td className={`px-4 py-1.5 text-right ${strong ? "font-semibold text-teal-950" : muted ? "text-teal-500" : "text-teal-900"}`}>
+      <td data-label={label} className={`px-4 py-1.5 text-right ${strong ? "font-semibold text-teal-950" : muted ? "text-teal-500" : "text-teal-900"}`}>
         {formatMoney(value)}
       </td>
     </tr>

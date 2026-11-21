@@ -101,7 +101,7 @@ select:not([multiple]):not([size]) {
     flex-shrink: 0;
     font-size: 0.75rem;
     font-weight: 500;
-    color: var(--color-teal-600);
+    color: var(--stack-label, var(--color-teal-600));
     text-align: left;
   }
   .stack-table td[data-stack="block"] {

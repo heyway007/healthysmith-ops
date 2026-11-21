@@ -176,7 +176,7 @@ export async function BillForm({
           </FormSection>
         )}
 
-        <div className="flex items-center gap-4 border-t border-teal-100 pt-5">
+        <div className="flex flex-wrap items-center gap-4 border-t border-teal-100 pt-5">
           <SubmitButton className={submitButtonClassName}>{submitLabel}</SubmitButton>
           <Link href="/admin/purchase/bills" className={secondaryButtonClassName}>
             ยกเลิก

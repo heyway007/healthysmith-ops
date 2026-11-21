@@ -52,12 +52,12 @@ export default async function LeaveRequestDetailPage({
       )}
 
       <div className={`mt-6 max-w-lg ${cardClassName}`}>
-        <dl className="grid grid-cols-2 gap-4">
+        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Info label="วันที่เริ่มลา" value={request.start_date} />
           <Info label="วันที่สิ้นสุด" value={request.end_date} />
           <Info label="จำนวนวัน" value={String(request.days_count)} />
           <Info label="ยื่นคำขอเมื่อ" value={new Date(request.created_at).toLocaleDateString("th-TH")} />
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <Info label="เหตุผล" value={request.reason ?? "-"} />
           </div>
         </dl>

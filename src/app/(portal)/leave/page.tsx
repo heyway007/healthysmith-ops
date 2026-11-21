@@ -42,7 +42,7 @@ export default async function LeaveListPage({
       )}
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-mist-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[560px]">
           <thead>
             <tr className="border-b border-mist-200 bg-mist-150 text-left text-xs font-medium uppercase text-mist-700">
               <th className="px-4 py-3">ประเภทการลา</th>
@@ -54,16 +54,16 @@ export default async function LeaveListPage({
           <tbody>
             {requests?.map((r) => (
               <tr key={r.id} className="border-t border-mist-200 hover:bg-mist-100">
-                <td className="px-4 py-3">
+                <td data-label="ประเภทการลา" className="px-4 py-3">
                   <Link href={`/leave/${r.id}`} className="font-medium text-mist-800 hover:text-mist-500">
                     {leaveTypeNameById.get(r.leave_type_id) ?? "-"}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-mist-700">
+                <td data-label="วันที่ลา" className="px-4 py-3 text-mist-700">
                   {r.start_date === r.end_date ? r.start_date : `${r.start_date} — ${r.end_date}`}
                 </td>
-                <td className="px-4 py-3 text-mist-700">{r.days_count}</td>
-                <td className="px-4 py-3">
+                <td data-label="จำนวนวัน" className="px-4 py-3 text-mist-700">{r.days_count}</td>
+                <td data-label="สถานะ" className="px-4 py-3">
                   <StatusBadge status={r.status} config={LEAVE_STATUS} />
                 </td>
               </tr>

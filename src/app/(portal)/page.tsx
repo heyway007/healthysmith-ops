@@ -49,7 +49,7 @@ export default async function PortalHomePage() {
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
             <FontAwesomeIcon icon={faCalendarPlus} className="text-lg" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="font-medium text-mist-900">ยื่นใบลาใหม่</p>
             <p className="text-sm text-mist-600">แจ้งลาป่วย ลากิจ หรือลาพักร้อน</p>
           </div>
@@ -61,7 +61,7 @@ export default async function PortalHomePage() {
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mist-100 text-mist-700">
             <FontAwesomeIcon icon={faClipboardList} className="text-lg" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="font-medium text-mist-900">ใบลาของฉัน</p>
             <p className="text-sm text-mist-600">ดูประวัติและสถานะคำขอลา</p>
           </div>
@@ -73,7 +73,7 @@ export default async function PortalHomePage() {
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
             <FontAwesomeIcon icon={faCalendarDays} className="text-lg" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="font-medium text-mist-900">วันหยุดบริษัท</p>
             <p className="text-sm text-mist-600">ดูวันหยุดและวัน WFH ทั้งปี</p>
           </div>
@@ -87,7 +87,7 @@ export default async function PortalHomePage() {
       )}
 
       <div className="overflow-x-auto rounded-2xl border border-mist-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[480px]">
           <thead>
             <tr className="border-b border-mist-200 bg-mist-150 text-left text-xs font-medium uppercase text-mist-700">
               <th className="px-4 py-3">ประเภทการลา</th>
@@ -102,10 +102,10 @@ export default async function PortalHomePage() {
               const remaining = lt.max_days_per_year != null ? lt.max_days_per_year - used : null;
               return (
                 <tr key={lt.id} className="border-t border-mist-200">
-                  <td className="px-4 py-3 text-mist-900">{lt.name}</td>
-                  <td className="px-4 py-3 text-mist-700">{lt.max_days_per_year ?? "ไม่จำกัด"}</td>
-                  <td className="px-4 py-3 text-mist-700">{used}</td>
-                  <td className="px-4 py-3 font-medium text-mist-900">{remaining ?? "-"}</td>
+                  <td data-label="ประเภทการลา" className="px-4 py-3 text-mist-900">{lt.name}</td>
+                  <td data-label="สิทธิ์ต่อปี" className="px-4 py-3 text-mist-700">{lt.max_days_per_year ?? "ไม่จำกัด"}</td>
+                  <td data-label="ใช้ไปแล้ว" className="px-4 py-3 text-mist-700">{used}</td>
+                  <td data-label="คงเหลือ" className="px-4 py-3 font-medium text-mist-900">{remaining ?? "-"}</td>
                 </tr>
               );
             })}

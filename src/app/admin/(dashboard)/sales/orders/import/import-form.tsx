@@ -167,7 +167,7 @@ export function ImportForm({
       {preview && (
         <div className={formCardClassName}>
           <h3 className="text-xs font-semibold uppercase tracking-wide text-teal-500">3. ตรวจสอบก่อนนำเข้า</h3>
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mt-3 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-4">
             <Stat label="ออเดอร์" value={preview.orderCount.toLocaleString()} />
             <Stat
               label="ช่วงวันที่"
@@ -194,7 +194,7 @@ export function ImportForm({
           )}
 
           <div className="mt-4 overflow-x-auto rounded-xl border border-teal-100">
-            <table className="w-full text-sm">
+            <table className="stack-table w-full text-sm md:min-w-[680px]">
               <thead>
                 <tr className="bg-teal-50 text-left text-xs font-medium text-teal-700">
                   <th className="px-3 py-2">เลขที่ออเดอร์</th>
@@ -208,14 +208,14 @@ export function ImportForm({
               <tbody>
                 {preview.sample.map((o) => (
                   <tr key={o.id} className="border-t border-teal-100">
-                    <td className="px-3 py-2 font-mono text-xs text-teal-900">{o.id}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-teal-700">{thaiDate(o.date, true)}</td>
-                    <td className="px-3 py-2 text-teal-900">{o.buyer ?? "-"}</td>
-                    <td className="max-w-80 truncate px-3 py-2 text-teal-700" title={o.items}>
+                    <td data-label="เลขที่ออเดอร์" className="px-3 py-2 font-mono text-xs text-teal-900">{o.id}</td>
+                    <td data-label="วันที่" className="whitespace-nowrap px-3 py-2 text-teal-700">{thaiDate(o.date, true)}</td>
+                    <td data-label="ผู้ซื้อ" className="px-3 py-2 text-teal-900">{o.buyer ?? "-"}</td>
+                    <td data-label="สินค้า" data-stack="block" className="max-w-80 truncate px-3 py-2 text-teal-700" title={o.items}>
                       {o.items}
                     </td>
-                    <td className="px-3 py-2 text-right text-teal-900">{formatMoney(o.total)}</td>
-                    <td className="px-3 py-2">
+                    <td data-label="ยอด" className="px-3 py-2 text-right text-teal-900">{formatMoney(o.total)}</td>
+                    <td data-label="สถานะ" className="px-3 py-2">
                       <StatusBadge status={o.status} config={ORDER_STATUS} />
                     </td>
                   </tr>
@@ -267,7 +267,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-teal-100 bg-white px-4 py-3">
       <p className="text-xs text-teal-500">{label}</p>
-      <p className="mt-1 font-semibold text-teal-950">{value}</p>
+      <p className="mt-1 break-words font-semibold text-teal-950">{value}</p>
     </div>
   );
 }

@@ -42,7 +42,7 @@ export function Sidebar({
   }, [pathname]);
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 -translate-x-full transform flex-col bg-linear-to-b from-teal-700 via-teal-800 to-teal-950 shadow-xl transition-transform duration-200 peer-checked:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0">
+    <aside className="fixed inset-y-0 left-0 z-50 flex w-64 max-w-[85vw] shrink-0 -translate-x-full transform flex-col bg-linear-to-b from-teal-700 via-teal-800 to-teal-950 shadow-xl transition-transform duration-200 peer-checked:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0">
       <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-5">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md shadow-teal-950/30">
@@ -54,12 +54,12 @@ export function Sidebar({
             <VersionBadge version={version} tone="dark" className="mt-1.5" />
           </div>
         </div>
-        <label htmlFor="mobile-nav" className="cursor-pointer text-teal-200 hover:text-white lg:hidden" aria-label="ปิดเมนู">
+        <label htmlFor="mobile-nav" className="-m-2 cursor-pointer p-2 text-teal-200 hover:text-white lg:hidden" aria-label="ปิดเมนู">
           <FontAwesomeIcon icon={faXmark} />
         </label>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3">
         {groups.map((g) => {
           if (!g.children) {
             const active = current === g.href;
@@ -68,7 +68,7 @@ export function Sidebar({
                 key={g.key}
                 href={g.href!}
                 aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all lg:py-2 ${
                   active
                     ? "bg-linear-to-r from-orange-500 to-orange-600 text-white shadow-md shadow-orange-900/30"
                     : "text-teal-100 hover:bg-white/10 hover:text-white"
@@ -90,7 +90,7 @@ export function Sidebar({
                 onClick={() => toggle(g.key)}
                 aria-expanded={expanded}
                 aria-controls={panelId}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-all ${
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all lg:py-2 ${
                   holdsCurrent ? "bg-white/10 text-white" : "text-teal-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
@@ -111,7 +111,7 @@ export function Sidebar({
                         <Link
                           href={c.href}
                           aria-current={active ? "page" : undefined}
-                          className={`flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] transition-all ${
+                          className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-all lg:py-1.5 ${
                             active
                               ? "bg-linear-to-r from-orange-500 to-orange-600 font-medium text-white shadow-md shadow-orange-900/30"
                               : "text-teal-200 hover:bg-white/10 hover:text-white"

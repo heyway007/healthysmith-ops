@@ -7,7 +7,7 @@ import { PAGE_SIZES, PAGE_SIZE_COOKIE } from "@/lib/page-sizes";
 // One-off messages that shouldn't follow the user to the next page.
 const TRANSIENT = ["saved", "cancelled", "error", "notice", "received"];
 
-const pill = "rounded-full px-3 py-1 text-xs font-medium";
+const pill = "rounded-full px-3 py-1.5 text-xs font-medium sm:py-1";
 const pillOn = "bg-teal-700 text-white";
 const pillOff = "bg-white text-teal-700 ring-1 ring-teal-200 hover:bg-teal-50";
 
@@ -54,7 +54,7 @@ export function Pagination({ total, page, size }: { total: number; page: number;
         แสดง {from.toLocaleString()}–{to.toLocaleString()} จาก {total.toLocaleString()} รายการ
       </p>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs">แสดง</span>
         {PAGE_SIZES.map((n) => (
           <Link

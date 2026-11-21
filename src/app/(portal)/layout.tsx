@@ -6,7 +6,7 @@ export default async function PortalLayout({ children }: { children: React.React
   const employee = await getCurrentEmployee();
 
   return (
-    <div className="flex min-h-screen flex-col bg-mist-100 text-mist-900">
+    <div className="flex min-h-screen flex-col bg-mist-100 text-mist-900 [--stack-label:var(--color-mist-500)]">
       {/* Every portal page requires sign-in (see src/lib/supabase/middleware.ts). */}
       <PortalHeader signedIn employee={employee} />
 

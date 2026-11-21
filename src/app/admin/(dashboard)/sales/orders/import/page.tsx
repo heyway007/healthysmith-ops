@@ -34,7 +34,7 @@ export default async function ImportOrdersPage() {
 
       <h3 className="mt-10 text-sm font-semibold uppercase tracking-wide text-teal-500">ประวัติการนำเข้าล่าสุด</h3>
       <div className="mt-3 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[720px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">เวลา</th>
@@ -49,19 +49,19 @@ export default async function ImportOrdersPage() {
           <tbody>
             {imports?.map((i) => (
               <tr key={i.id} className="border-t border-teal-100">
-                <td className="whitespace-nowrap px-4 py-3 text-teal-700">
+                <td data-label="เวลา" className="whitespace-nowrap px-4 py-3 text-teal-700">
                   {new Date(i.created_at).toLocaleString("th-TH", {
                     timeZone: "Asia/Bangkok",
                     dateStyle: "medium",
                     timeStyle: "short",
                   })}
                 </td>
-                <td className="px-4 py-3 text-teal-900">{channelName.get(i.sales_channel_id) ?? "-"}</td>
-                <td className="max-w-64 truncate px-4 py-3 text-teal-700">{i.file_name ?? "-"}</td>
-                <td className="px-4 py-3 text-right text-teal-900">{i.order_count.toLocaleString()}</td>
-                <td className="px-4 py-3 text-right text-emerald-700">{i.inserted_count.toLocaleString()}</td>
-                <td className="px-4 py-3 text-right text-teal-700">{i.updated_count.toLocaleString()}</td>
-                <td className="px-4 py-3 text-right text-teal-500">{i.locked_count.toLocaleString()}</td>
+                <td data-label="ช่องทาง" className="px-4 py-3 text-teal-900">{channelName.get(i.sales_channel_id) ?? "-"}</td>
+                <td data-label="ไฟล์" className="max-w-64 truncate px-4 py-3 text-teal-700 max-md:max-w-none max-md:break-all">{i.file_name ?? "-"}</td>
+                <td data-label="ออเดอร์" className="px-4 py-3 text-right text-teal-900">{i.order_count.toLocaleString()}</td>
+                <td data-label="ใหม่" className="px-4 py-3 text-right text-emerald-700">{i.inserted_count.toLocaleString()}</td>
+                <td data-label="อัปเดต" className="px-4 py-3 text-right text-teal-700">{i.updated_count.toLocaleString()}</td>
+                <td data-label="ออกใบกำกับแล้ว (อัปเดตแค่สถานะ)" className="px-4 py-3 text-right text-teal-500">{i.locked_count.toLocaleString()}</td>
               </tr>
             ))}
             {(!imports || imports.length === 0) && (

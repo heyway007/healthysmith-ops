@@ -28,7 +28,7 @@ export function ResetPanel({
         คืนค่าเริ่มต้น
       </summary>
 
-      <div className="absolute right-0 z-20 mt-2 w-80 rounded-xl border border-rose-200 bg-white p-4 shadow-lg">
+      <div className="absolute right-0 z-20 mt-2 w-80 rounded-xl max-sm:fixed max-sm:inset-x-4 max-sm:w-auto border border-rose-200 bg-white p-4 shadow-lg">
         <p className="font-semibold text-rose-700">คืนค่าเริ่มต้น</p>
         <p className="mt-1 text-sm text-gray-600">
           ลบวัน WFH ทั้งหมด (ทั้งบริษัทและทุกทีม) ให้เหลือเฉพาะวันหยุด — ข้อมูลทีมและพนักงานไม่ถูกลบ

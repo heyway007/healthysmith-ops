@@ -24,10 +24,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <Sidebar roles={roles} docPermissions={docPermissions} version={APP_VERSION} />
 
       <div className="min-w-0 flex-1">
-        <header className="flex items-center gap-4 border-b border-teal-100 bg-white/80 backdrop-blur px-4 sm:px-8 py-3 shadow-sm">
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-teal-100 bg-white/80 px-4 py-3 shadow-sm backdrop-blur sm:gap-4 sm:px-8">
           <label
             htmlFor="mobile-nav"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-teal-200 text-teal-700 lg:hidden"
+            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-teal-200 text-teal-700 lg:hidden"
             aria-label="เปิดเมนู"
           >
             <FontAwesomeIcon icon={faBars} />
@@ -49,7 +49,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <form action={adminLogout}>
               <button
                 type="submit"
-                className="flex items-center gap-2 rounded-lg border border-teal-200 bg-white px-3 py-1.5 text-sm text-teal-700 transition-colors hover:border-orange-300 hover:text-orange-600"
+                className="flex items-center gap-2 whitespace-nowrap rounded-lg border border-teal-200 bg-white px-3 py-2 text-sm text-teal-700 transition-colors hover:border-orange-300 hover:text-orange-600 sm:py-1.5"
               >
                 <FontAwesomeIcon icon={faRightFromBracket} />
                 ออกจากระบบ

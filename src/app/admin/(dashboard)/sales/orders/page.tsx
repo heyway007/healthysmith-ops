@@ -104,7 +104,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           >
             <FontAwesomeIcon icon={faChevronLeft} className="w-3" />
           </Link>
-          <span className="min-w-36 text-center font-medium text-teal-900">{thaiMonth(month)}</span>
+          <span className="min-w-32 text-center sm:min-w-36 font-medium text-teal-900">{thaiMonth(month)}</span>
           <Link
             href={link({ month: shiftMonth(month, 1) })}
             className="rounded-lg border border-teal-200 bg-white p-2 text-teal-700 hover:bg-teal-50"
@@ -113,7 +113,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             <FontAwesomeIcon icon={faChevronRight} className="w-3" />
           </Link>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid w-full grid-cols-1 gap-3 min-[480px]:grid-cols-3 sm:flex sm:w-auto sm:flex-wrap">
           <Stat label="ออเดอร์" value={active.length.toLocaleString()} />
           <Stat label="ยอดขาย (รวม VAT)" value={`฿${formatMoney(salesTotal)}`} />
           <Stat
@@ -124,7 +124,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         </div>
       </div>
 
-      <form method="get" className="mt-4 flex flex-wrap items-end gap-3">
+      <form method="get" className="mt-4 grid grid-cols-1 items-end gap-3 min-[480px]:grid-cols-2 sm:flex sm:flex-wrap">
         <input type="hidden" name="month" value={month} />
         <Filter label="ช่องทาง">
           <select name="channel" defaultValue={channel} className={selectClassName}>
@@ -156,10 +156,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             name="q"
             defaultValue={q}
             placeholder="เลขออเดอร์ / ชื่อผู้ซื้อ"
-            className="mt-1 w-56 rounded-lg border border-teal-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+            className="mt-1 w-full rounded-lg sm:w-56 border border-teal-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
           />
         </Filter>
-        <button type="submit" className="rounded-lg border border-teal-300 bg-white px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50">
+        <button type="submit" className="rounded-lg border border-teal-300 bg-white px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50 max-sm:w-full">
           กรอง
         </button>
       </form>
@@ -178,7 +178,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
 function Filter({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div className="min-w-0">
       <label className="block text-xs font-medium text-teal-700">{label}</label>
       {children}
     </div>
@@ -187,7 +187,7 @@ function Filter({ label, children }: { label: string; children: React.ReactNode 
 
 function Stat({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
-    <div className="rounded-xl border border-teal-100 bg-white px-4 py-2 text-right shadow-sm">
+    <div className="rounded-xl border border-teal-100 bg-white px-4 py-2 text-left shadow-sm sm:text-right">
       <p className="text-xs text-teal-500">{label}</p>
       <p className={`font-semibold text-teal-950 ${className ?? ""}`}>{value}</p>
     </div>

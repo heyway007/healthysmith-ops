@@ -98,7 +98,7 @@ export default async function NewTaxInvoicePage({
       )}
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[720px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">ออเดอร์</th>
@@ -115,25 +115,25 @@ export default async function NewTaxInvoicePage({
                 .filter((i) => i.sales_order_id === o.id)
                 .map((i, idx) => (
                   <tr key={i.id} className="border-t border-teal-100">
-                    <td className="whitespace-nowrap px-4 py-2 font-mono text-xs text-teal-600">
+                    <td data-label="ออเดอร์" className="whitespace-nowrap px-4 py-2 font-mono text-xs text-teal-600">
                       {idx === 0 ? `${o.external_order_id ?? o.order_number} · ${thaiDate(o.order_date, true)}` : ""}
                     </td>
-                    <td className="px-4 py-2 text-teal-900">{i.description}</td>
-                    <td className="px-4 py-2 text-right">{i.quantity.toLocaleString()}</td>
-                    <td className="px-4 py-2 text-right">{formatMoney(i.unit_price)}</td>
-                    <td className="px-4 py-2 text-right">{i.discount_amount ? formatMoney(i.discount_amount) : "-"}</td>
-                    <td className="px-4 py-2 text-right font-medium">{formatMoney(i.amount)}</td>
+                    <td data-stack="title" className="px-4 py-2 text-teal-900">{i.description}</td>
+                    <td data-label="จำนวน" className="px-4 py-2 text-right">{i.quantity.toLocaleString()}</td>
+                    <td data-label="ราคา/หน่วย" className="px-4 py-2 text-right">{formatMoney(i.unit_price)}</td>
+                    <td data-label="ส่วนลด" className="px-4 py-2 text-right">{i.discount_amount ? formatMoney(i.discount_amount) : "-"}</td>
+                    <td data-label="จำนวนเงิน" className="px-4 py-2 text-right font-medium">{formatMoney(i.amount)}</td>
                   </tr>
                 )),
             )}
             {directShipping > 0 && (
               <tr className="border-t border-teal-100">
                 <td />
-                <td className="px-4 py-2 text-teal-900">ค่าจัดส่ง</td>
-                <td className="px-4 py-2 text-right">1</td>
-                <td className="px-4 py-2 text-right">{formatMoney(directShipping)}</td>
-                <td className="px-4 py-2 text-right">-</td>
-                <td className="px-4 py-2 text-right font-medium">{formatMoney(directShipping)}</td>
+                <td data-stack="title" className="px-4 py-2 text-teal-900">ค่าจัดส่ง</td>
+                <td data-label="จำนวน" className="px-4 py-2 text-right">1</td>
+                <td data-label="ราคา/หน่วย" className="px-4 py-2 text-right">{formatMoney(directShipping)}</td>
+                <td data-label="ส่วนลด" className="px-4 py-2 text-right">-</td>
+                <td data-label="จำนวนเงิน" className="px-4 py-2 text-right font-medium">{formatMoney(directShipping)}</td>
               </tr>
             )}
           </tbody>
@@ -167,10 +167,10 @@ export default async function NewTaxInvoicePage({
 function SumRow({ label, value, strong }: { label: string; value: number; strong?: boolean }) {
   return (
     <tr>
-      <td colSpan={5} className="px-4 py-1.5 text-right text-teal-600">
+      <td colSpan={5} className="px-4 py-1.5 text-right text-teal-600 max-md:hidden!">
         {label}
       </td>
-      <td className={`px-4 py-1.5 text-right ${strong ? "font-semibold text-teal-950" : "text-teal-800"}`}>{formatMoney(value)}</td>
+      <td data-label={label} className={`px-4 py-1.5 text-right ${strong ? "font-semibold text-teal-950" : "text-teal-800"}`}>{formatMoney(value)}</td>
     </tr>
   );
 }

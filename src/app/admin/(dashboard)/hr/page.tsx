@@ -46,7 +46,7 @@ export default async function HrPage({
       )}
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[720px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">รหัส</th>
@@ -60,25 +60,25 @@ export default async function HrPage({
           <tbody>
             {employees?.map((e) => (
               <tr key={e.id} className="border-t border-teal-100 hover:bg-teal-50">
-                <td className="px-4 py-3">
+                <td data-label="รหัส" className="px-4 py-3">
                   <Link href={`/admin/hr/${e.id}`} className="text-teal-800 hover:text-orange-600">
                     {e.employee_code}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-teal-950">
+                <td data-label="ชื่อ-นามสกุล" className="px-4 py-3 text-teal-950">
                   <Link href={`/admin/hr/${e.id}`} className="hover:text-orange-600">
                     {e.prefix_name ?? ""}
                     {e.first_name} {e.last_name}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-teal-700">
+                <td data-label="แผนก / ตำแหน่ง" className="px-4 py-3 text-teal-700">
                   {(e.department_id && departmentNameById.get(e.department_id)) ?? "-"} /{" "}
                   {(e.position_id && positionNameById.get(e.position_id)) ?? "-"}
                 </td>
-                <td className="px-4 py-3 text-teal-700">
+                <td data-label="ประเภท" className="px-4 py-3 text-teal-700">
                   {EMPLOYMENT_TYPES[e.employment_type] ?? e.employment_type}
                 </td>
-                <td className="px-4 py-3 text-teal-700">
+                <td data-label="เงินเดือน" className="px-4 py-3 text-teal-700">
                   <MaskedValue value={e.base_salary.toLocaleString()} />
                 </td>
                 <td className="px-4 py-3">

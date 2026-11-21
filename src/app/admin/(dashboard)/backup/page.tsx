@@ -21,7 +21,7 @@ export default async function BackupPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-teal-950">💾 สำรองข้อมูล</h1>
+      <h1 className="text-xl font-semibold text-teal-950 sm:text-2xl">💾 สำรองข้อมูล</h1>
       <p className="mt-1 text-teal-700">ดาวน์โหลดสำเนาข้อมูลเอกสารภาษีทั้งหมดเก็บไว้นอกระบบ — ป้องกันข้อมูลสูญหาย</p>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">

@@ -85,7 +85,7 @@ export default async function NewLeaveRequestPage({
             />
           </div>
 
-          <div className="flex items-center gap-4 pt-2">
+          <div className="flex flex-wrap items-center gap-4 pt-2">
             <button type="submit" className={primaryButtonClassName}>
               ยื่นใบลา
             </button>

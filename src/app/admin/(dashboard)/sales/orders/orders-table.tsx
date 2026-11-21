@@ -68,10 +68,20 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
   return (
     <div>
       <div className="sticky top-0 z-10 mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-teal-100 bg-white/95 px-4 py-3 shadow-sm backdrop-blur">
-        <span className="text-sm text-teal-700">
+        <span className="w-full text-sm text-teal-700 sm:w-auto">
           เลือก <b className="text-teal-950">{chosen.length}</b> ออเดอร์
           {chosen.length > 0 && ` · ฿${formatMoney(chosen.reduce((s, r) => s + r.total, 0))}`}
         </span>
+        <label className="flex w-full items-center gap-2 text-sm text-teal-700 md:hidden">
+          <input
+            type="checkbox"
+            checked={allChecked}
+            disabled={issuable.length === 0}
+            onChange={() => setSelected(allChecked ? new Set() : new Set(issuable.map((r) => r.id)))}
+            className="size-4 accent-teal-600"
+          />
+          เลือกทั้งหมดที่ออกใบกำกับได้
+        </label>
         <button
           type="button"
           disabled={pending || chosen.length === 0}
@@ -117,7 +127,7 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
       )}
 
       <div className="overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[960px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="w-10 px-4 py-3">
@@ -147,7 +157,7 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
                   r.status === "cancelled" ? "text-gray-400" : ""
                 }`}
               >
-                <td className="px-4 py-3">
+                <td data-label="เลือก" className="px-4 py-3">
                   <input
                     type="checkbox"
                     aria-label={`เลือก ${r.externalId ?? r.orderNumber}`}
@@ -157,8 +167,8 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
                     className="size-4 accent-teal-600 disabled:opacity-30"
                   />
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(r.date, true)}</td>
-                <td className="px-4 py-3">
+                <td data-label="วันที่" className="whitespace-nowrap px-4 py-3 text-teal-700">{thaiDate(r.date, true)}</td>
+                <td data-label="ออเดอร์" className="px-4 py-3">
                   <Link href={`/admin/sales/orders/${r.id}`} className="font-mono text-xs font-medium text-teal-800 hover:text-orange-600">
                     {r.externalId ?? r.orderNumber}
                   </Link>
@@ -166,7 +176,7 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
                     <ChannelBadge code={r.channelCode} name={r.channelName} />
                   </div>
                 </td>
-                <td className="px-4 py-3 text-teal-900">
+                <td data-label="ผู้ซื้อ" className="px-4 py-3 text-teal-900">
                   {r.buyer ?? "-"}
                   {r.requested && (
                     <span className="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-medium text-orange-700">
@@ -174,14 +184,14 @@ export function OrdersTable({ rows }: { rows: OrderRow[] }) {
                     </span>
                   )}
                 </td>
-                <td className="max-w-72 truncate px-4 py-3 text-teal-700" title={r.items ?? undefined}>
+                <td data-label="สินค้า" data-stack="block" className="max-w-72 truncate px-4 py-3 text-teal-700 max-md:max-w-none max-md:whitespace-normal" title={r.items ?? undefined}>
                   {r.items ?? "-"}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-teal-900">{formatMoney(r.total)}</td>
-                <td className="px-4 py-3">
+                <td data-label="ยอด (รวม VAT)" className="whitespace-nowrap px-4 py-3 text-right font-medium text-teal-900">{formatMoney(r.total)}</td>
+                <td data-label="สถานะ" className="px-4 py-3">
                   <StatusBadge status={r.status} config={ORDER_STATUS} />
                 </td>
-                <td className="whitespace-nowrap px-4 py-3">
+                <td data-label="ใบกำกับภาษี" className="whitespace-nowrap px-4 py-3">
                   {r.taxInvoiceId ? (
                     <Link
                       href={`/admin/tax-documents/tax-invoices/${r.taxInvoiceId}`}

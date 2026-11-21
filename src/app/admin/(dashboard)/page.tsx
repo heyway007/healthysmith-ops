@@ -132,7 +132,7 @@ export default async function DashboardHome() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-teal-950">ภาพรวมระบบ</h1>
+      <h1 className="text-xl font-semibold text-teal-950 sm:text-2xl">ภาพรวมระบบ</h1>
       <p className="mt-1 text-teal-700">เลือกโมดูลเพื่อเริ่มใช้งาน — แสดงเฉพาะโมดูลที่บัญชีของคุณมีสิทธิ์</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

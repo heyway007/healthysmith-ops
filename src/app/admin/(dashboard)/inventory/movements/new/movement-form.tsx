@@ -62,7 +62,7 @@ export function MovementForm({
           </div>
         </FormSection>
 
-        <div className="flex items-center gap-4 border-t border-teal-100 pt-5">
+        <div className="flex flex-wrap items-center gap-4 border-t border-teal-100 pt-5">
           <SubmitButton className={submitButtonClassName}>{type === "in" ? "บันทึกรับเข้า" : "บันทึกเบิกออก"}</SubmitButton>
           <Link href="/admin/inventory/movements" className={secondaryButtonClassName}>
             ยกเลิก

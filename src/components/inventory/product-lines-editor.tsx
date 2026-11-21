@@ -130,7 +130,7 @@ export function ProductLinesEditor({
 
               return (
                 <tr key={i} className="border-t border-teal-100 align-top">
-                  <td className="px-3 py-2.5 text-center text-teal-500 max-md:hidden">{i + 1}</td>
+                  <td className="px-3 py-2.5 text-center text-teal-500 max-md:hidden!">{i + 1}</td>
                   <td data-label="สินค้า" data-stack="block" className="px-2 py-1.5">
                     <select
                       value={l.productId}

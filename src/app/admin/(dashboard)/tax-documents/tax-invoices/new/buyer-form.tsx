@@ -192,7 +192,7 @@ export function BuyerForm({
 
       {children}
 
-      <div className="mt-6 flex items-center gap-4 border-t border-teal-100 pt-5">
+      <div className="mt-6 flex flex-wrap items-center gap-3 sm:gap-4 border-t border-teal-100 pt-5">
         <SubmitButton className={submitButtonClassName} pendingLabel="กำลังออกใบกำกับ...">
           <FontAwesomeIcon icon={faFileInvoice} />
           {replace ? "ออกฉบับแก้ไข" : "ออกใบกำกับภาษี"}

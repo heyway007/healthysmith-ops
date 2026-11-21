@@ -294,7 +294,7 @@ export async function ReplacementDiff({ kind, originalId, currentId }: { kind: D
           {keys.map((k) => (
             <li key={k}>
               <p className="text-xs text-teal-500">{labelPath(k)}</p>
-              <p>
+              <p className="break-words">
                 <span className="text-rose-600 line-through">{a.get(k) ?? "—"}</span>
                 <span className="mx-1.5 text-teal-400">→</span>
                 <span className="font-medium text-emerald-700">{b.get(k) ?? "—"}</span>

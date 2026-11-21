@@ -46,7 +46,7 @@ export function LineItemsEditor({
   return (
     <div>
       <div className="overflow-x-auto rounded-lg border border-teal-100">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[520px]">
           <thead>
             <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
               {columns.map((c) => (
@@ -59,9 +59,9 @@ export function LineItemsEditor({
           </thead>
           <tbody>
             {rows.map((row, i) => (
-              <tr key={i} className="border-t border-teal-100">
+              <tr key={i} className="border-t border-teal-100 max-md:py-2">
                 {columns.map((c) => (
-                  <td key={c.key} className="px-2 py-1.5">
+                  <td key={c.key} data-label={c.label} data-stack={c.type === "number" ? undefined : "block"} className="px-2 py-1.5">
                     <input
                       name={`item_${c.key}`}
                       type={c.type ?? "text"}
@@ -76,7 +76,7 @@ export function LineItemsEditor({
                   <button
                     type="button"
                     onClick={() => removeRow(i)}
-                    className="rounded border border-orange-200 p-1.5 text-orange-500 hover:border-orange-400 hover:bg-orange-50"
+                    className="ml-auto rounded border border-orange-200 p-2 text-orange-500 hover:border-orange-400 hover:bg-orange-50 md:p-1.5"
                     title="ลบรายการ"
                   >
                     <FontAwesomeIcon icon={faTrash} className="text-xs" />
@@ -91,7 +91,7 @@ export function LineItemsEditor({
         <button
           type="button"
           onClick={addRow}
-          className="flex items-center gap-2 rounded-lg border border-teal-200 px-3 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50"
+          className="flex items-center gap-2 rounded-lg border border-teal-200 px-3 py-2 text-sm font-medium text-teal-700 hover:bg-teal-50 md:py-1.5"
         >
           <FontAwesomeIcon icon={faPlus} className="text-xs" />
           เพิ่มรายการ

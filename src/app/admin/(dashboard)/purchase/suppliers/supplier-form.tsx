@@ -67,7 +67,7 @@ export function SupplierForm({
           />
         </FormSection>
 
-        <div className="flex items-center gap-4 border-t border-teal-100 pt-5">
+        <div className="flex flex-wrap items-center gap-4 border-t border-teal-100 pt-5">
           <button type="submit" className={submitButtonClassName}>
             {submitLabel}
           </button>

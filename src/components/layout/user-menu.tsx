@@ -58,7 +58,7 @@ export function UserMenu({ employee }: { employee: CurrentEmployee | null }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-60 overflow-hidden rounded-xl border border-mist-200 bg-white py-1 shadow-lg"
+          className="absolute right-0 z-40 mt-2 w-60 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-mist-200 bg-white py-1 shadow-lg"
         >
           <div className="border-b border-mist-100 px-4 py-3">
             <p className="truncate text-sm font-medium text-mist-900">{fullName}</p>

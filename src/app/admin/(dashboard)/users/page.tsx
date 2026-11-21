@@ -29,7 +29,7 @@ export default async function UsersPage({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-teal-950">ผู้ใช้งานและสิทธิ์</h1>
+          <h1 className="text-xl font-semibold text-teal-950 sm:text-2xl">ผู้ใช้งานและสิทธิ์</h1>
           <p className="mt-1 text-teal-700">จัดการบัญชีเข้าสู่ระบบและบทบาทการเข้าถึงแต่ละโมดูล</p>
         </div>
         <Link href="/admin/users/new" className={`flex shrink-0 items-center gap-2 ${submitButtonClassName}`}>
@@ -43,7 +43,7 @@ export default async function UsersPage({
       )}
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[720px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">อีเมล</th>
@@ -56,7 +56,7 @@ export default async function UsersPage({
           <tbody>
             {userRoles?.map((u) => (
               <tr key={u.id} className="border-t border-teal-100 hover:bg-teal-50">
-                <td className="px-4 py-3">
+                <td data-stack="title" className="px-4 py-3">
                   <Link
                     href={`/admin/users/${u.user_id}`}
                     className="font-medium text-teal-950 hover:text-orange-600"
@@ -64,10 +64,10 @@ export default async function UsersPage({
                     {emailByUserId.get(u.user_id) ?? "-"}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-teal-700">
+                <td data-label="ผูกกับพนักงาน" className="px-4 py-3 text-teal-700">
                   {(u.employee_id && employeeNameById.get(u.employee_id)) ?? "-"}
                 </td>
-                <td className="px-4 py-3">
+                <td data-label="บทบาท" data-stack="block" className="px-4 py-3">
                   <div className="flex flex-wrap gap-1">
                     {(u.roles as Role[]).length === 0 ? (
                       <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700">
@@ -95,7 +95,7 @@ export default async function UsersPage({
                     </p>
                   )}
                 </td>
-                <td className="px-4 py-3">
+                <td data-label="สถานะ" className="px-4 py-3">
                   <span
                     className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
                       u.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-200 text-gray-600"

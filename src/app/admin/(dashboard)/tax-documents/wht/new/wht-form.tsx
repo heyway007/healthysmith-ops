@@ -287,7 +287,7 @@ export function WhtForm({
           จำนวนเงินที่จ่ายใช้ยอดก่อน VAT · เลือกอัตราแล้วระบบคำนวณภาษีให้ หรือพิมพ์ยอดภาษีเองได้
         </p>
         <div className="mt-3 overflow-x-auto rounded-lg border border-teal-100 bg-white">
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="stack-table w-full text-sm md:min-w-[760px]">
             <thead>
               <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
                 <th className="px-3 py-2">ประเภทเงินได้</th>
@@ -303,7 +303,7 @@ export function WhtForm({
                 const spec = WHT_INCOME_TYPES.find((t) => t.key === r.type);
                 return (
                   <tr key={i} className="border-t border-teal-100 align-top">
-                    <td className="px-2 py-1.5">
+                    <td data-label="ประเภทเงินได้" data-stack="block" className="px-2 py-1.5">
                       <select value={r.type} onChange={(e) => update(i, { type: e.target.value })} aria-label="ประเภทเงินได้" className={cellClassName}>
                         {WHT_INCOME_TYPES.map((t) => (
                           <option key={t.key} value={t.key}>
@@ -322,7 +322,7 @@ export function WhtForm({
                         />
                       )}
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td data-label="วันที่จ่าย" className="px-2 py-1.5">
                       <DateInput
                         value={r.payDate}
                         onChange={(e) => update(i, { payDate: e.target.value })}
@@ -331,7 +331,7 @@ export function WhtForm({
                         className={cellClassName}
                       />
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td data-label="จำนวนเงินที่จ่าย" className="px-2 py-1.5">
                       <input
                         type="number"
                         inputMode="decimal"
@@ -345,7 +345,7 @@ export function WhtForm({
                         className={`${cellClassName} text-right`}
                       />
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td data-label="อัตรา" className="px-2 py-1.5">
                       <select
                         value={r.rate}
                         onChange={(e) => update(i, { rate: e.target.value, taxEdited: false })}
@@ -360,7 +360,7 @@ export function WhtForm({
                         <option value="">กำหนดเอง</option>
                       </select>
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td data-label="ภาษีที่หัก" className="px-2 py-1.5">
                       <input
                         type="number"
                         inputMode="decimal"
@@ -373,7 +373,7 @@ export function WhtForm({
                         className={`${cellClassName} text-right`}
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-right">
+                    <td data-label="ลบรายการ" className="px-2 py-1.5 text-right">
                       <button
                         type="button"
                         onClick={() => setRows((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs))}
@@ -400,7 +400,7 @@ export function WhtForm({
             <FontAwesomeIcon icon={faPlus} className="text-xs" />
             เพิ่มรายการ
           </button>
-          <dl className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 text-sm">
+          <dl className="grid w-full grid-cols-[1fr_auto] gap-x-6 gap-y-1 text-sm sm:w-auto">
             <dt className="text-teal-700">รวมเงินที่จ่าย</dt>
             <dd className="text-right font-medium text-teal-950">{formatMoney(totalPaid)}</dd>
             <dt className="text-teal-700">รวมภาษีที่หักและนำส่ง</dt>
@@ -464,7 +464,7 @@ export function WhtForm({
         </details>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <SubmitButton className={submitButtonClassName} pendingLabel="กำลังออกหนังสือ...">
           <FontAwesomeIcon icon={faFileSignature} />
           {defaults.replace ? "ออกฉบับแก้ไข" : "ออกหนังสือรับรอง"}

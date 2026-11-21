@@ -41,7 +41,7 @@ export default async function SalesPage({
       )}
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <table className="stack-table w-full text-sm md:min-w-[640px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
               <th className="px-4 py-3">รหัส</th>
@@ -55,21 +55,21 @@ export default async function SalesPage({
           <tbody>
             {customers?.map((c) => (
               <tr key={c.id} className="border-t border-teal-100 hover:bg-teal-50">
-                <td className="px-4 py-3">
+                <td data-label="รหัส" className="px-4 py-3">
                   <Link href={`/admin/sales/customers/${c.id}`} className="text-teal-800 hover:text-orange-600">
                     {c.customer_code}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-teal-950">
+                <td data-label="ชื่อ" className="px-4 py-3 text-teal-950">
                   <Link href={`/admin/sales/customers/${c.id}`} className="hover:text-orange-600">
                     {c.name}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-teal-700">
+                <td data-label="ประเภท" className="px-4 py-3 text-teal-700">
                   {c.customer_type === "company" ? "นิติบุคคล" : "บุคคลธรรมดา"}
                 </td>
-                <td className="px-4 py-3 text-teal-700">{c.phone ?? "-"}</td>
-                <td className="px-4 py-3 text-teal-700">
+                <td data-label="เบอร์โทร" className="px-4 py-3 text-teal-700">{c.phone ?? "-"}</td>
+                <td data-label="เครดิต" className="px-4 py-3 text-teal-700">
                   {c.credit_limit.toLocaleString()} / {c.credit_term_days} วัน
                 </td>
                 <td className="px-4 py-3 text-right">
