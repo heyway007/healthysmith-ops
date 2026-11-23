@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Pagination } from "@/components/ui/pagination";
 import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowDown, faArrowUp, faChevronLeft, faChevronRight, faEye, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faArrowUp, faChevronLeft, faChevronRight, faEye, faPenToSquare, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { DateInput } from "@/components/ui/date-input";
+import { FilterField, ListFilterForm, filterInputClassName } from "@/components/ui/list-filter";
 import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { thaiDate } from "@/lib/thai-money";
@@ -15,6 +17,7 @@ import { cancelStockDocument } from "./actions";
 import { IconLinkButton } from "@/components/ui/icon-link-button";
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function shiftMonth(month: string, delta: number) {
   const [y, m] = month.split("-").map(Number);
@@ -25,48 +28,79 @@ function shiftMonth(month: string, delta: number) {
 export default async function MovementsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; type?: string; saved?: string; cancelled?: string; error?: string; page?: string; size?: string }>;
+  searchParams: Promise<{
+    month?: string;
+    type?: string;
+    saved?: string;
+    cancelled?: string;
+    error?: string;
+    page?: string;
+    size?: string;
+    q?: string;
+    from?: string;
+    to?: string;
+  }>;
 }) {
   const params = await searchParams;
   const paging = await getPaging(params);
   const month = params.month && MONTH_RE.test(params.month) ? params.month : bangkokToday().slice(0, 7);
   const type = params.type && params.type in MOVEMENT_TYPES ? params.type : "";
+  const q = (params.q ?? "").trim();
+  const rawFrom = DATE_RE.test(params.from ?? "") ? params.from! : "";
+  const rawTo = DATE_RE.test(params.to ?? "") ? params.to! : "";
+  const isRange = !!(rawFrom || rawTo);
   const supabase = await createClient();
 
   let query = supabase
     .from("stock_movements")
     .select("*")
-    .gte("movement_date", `${month}-01`)
-    .lt("movement_date", `${shiftMonth(month, 1)}-01`)
+    .gte("movement_date", isRange ? rawFrom || "2000-01-01" : `${month}-01`)
     .order("movement_date", { ascending: false })
     .order("created_at", { ascending: false });
+  query = isRange ? query.lte("movement_date", rawTo || "2999-12-31") : query.lt("movement_date", `${shiftMonth(month, 1)}-01`);
   if (type) query = query.eq("movement_type", type);
-  const { data: movements } = await query;
+  const { data: periodMovements } = await query;
 
-  const productIds = [...new Set((movements ?? []).map((m) => m.product_id))];
+  const productIds = [...new Set((periodMovements ?? []).map((m) => m.product_id))];
   const { data: products } = productIds.length
     ? await supabase.from("products").select("id, sku, name, unit").in("id", productIds)
     : { data: [] };
   const productById = new Map((products ?? []).map((p) => [p.id, p]));
 
-  const docNumbers = [...new Set((movements ?? []).map((m) => m.doc_number).filter((d): d is string => !!d))];
+  // text search: document number, product code / name, or lot number
+  const needle = q.toLowerCase();
+  const movements = needle
+    ? (periodMovements ?? []).filter((m) => {
+        const p = productById.get(m.product_id);
+        return [m.doc_number, p?.sku, p?.name, m.lot_number].join(" ").toLowerCase().includes(needle);
+      })
+    : (periodMovements ?? []);
+  const hasFilter = !!(q || isRange);
+
+  const docNumbers = [...new Set(movements.map((m) => m.doc_number).filter((d): d is string => !!d))];
   const { data: cancellations } = docNumbers.length
     ? await supabase.from("stock_document_cancellations").select("doc_number, reason").in("doc_number", docNumbers)
     : { data: [] };
   const cancelledDocs = new Map((cancellations ?? []).map((c) => [c.doc_number, c.reason]));
-  const receiptIds = [...new Set((movements ?? []).map((m) => m.production_receipt_id).filter((x): x is string => !!x))];
+  const receiptIds = [...new Set(movements.map((m) => m.production_receipt_id).filter((x): x is string => !!x))];
   const { data: receipts } = receiptIds.length
     ? await supabase.from("production_receipts").select("id, production_order_id").in("id", receiptIds)
     : { data: [] };
   const orderByReceipt = new Map((receipts ?? []).map((r) => [r.id, r.production_order_id]));
 
+  // month arrows and type pills keep the search text
   const href = (m: string, t: string) => {
     const sp = new URLSearchParams({ month: m });
     if (t) sp.set("type", t);
+    if (q) sp.set("q", q);
     return `/admin/inventory/movements?${sp}`;
   };
+  const fullDate = { day: "numeric", month: "short", year: "numeric" } as const;
+  const periodLabel = isRange
+    ? `${rawFrom ? formatThaiDate(rawFrom, fullDate) : "ตั้งแต่ต้น"} – ${rawTo ? formatThaiDate(rawTo, fullDate) : "ล่าสุด"}`
+    : formatThaiDate(`${month}-01`, { month: "long", year: "numeric" });
 
-  const paged = paginate(movements ?? [], paging);
+  const paged = paginate(movements, paging);
 
   return (
     <div>
@@ -107,25 +141,32 @@ export default async function MovementsPage({
       )}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Link
-            href={href(shiftMonth(month, -1), type)}
-            className="rounded-lg border border-teal-200 bg-white p-2 text-teal-700 hover:bg-teal-50"
-            aria-label="เดือนก่อน"
-          >
-            <FontAwesomeIcon icon={faChevronLeft} className="w-3" />
-          </Link>
-          <span className="min-w-36 text-center font-medium text-teal-900">
-            {formatThaiDate(`${month}-01`, { month: "long", year: "numeric" })}
-          </span>
-          <Link
-            href={href(shiftMonth(month, 1), type)}
-            className="rounded-lg border border-teal-200 bg-white p-2 text-teal-700 hover:bg-teal-50"
-            aria-label="เดือนถัดไป"
-          >
-            <FontAwesomeIcon icon={faChevronRight} className="w-3" />
-          </Link>
-        </div>
+        {isRange ? (
+          <div className="flex items-center gap-2">
+            <span className="rounded-lg bg-teal-100 px-3 py-1.5 text-sm font-medium text-teal-900">{periodLabel}</span>
+            <Link href={href(month, type)} className="text-teal-500 hover:text-orange-600" aria-label="ล้างช่วงวันที่">
+              <FontAwesomeIcon icon={faXmark} />
+            </Link>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Link
+              href={href(shiftMonth(month, -1), type)}
+              className="rounded-lg border border-teal-200 bg-white p-2 text-teal-700 hover:bg-teal-50"
+              aria-label="เดือนก่อน"
+            >
+              <FontAwesomeIcon icon={faChevronLeft} className="w-3" />
+            </Link>
+            <span className="min-w-36 text-center font-medium text-teal-900">{periodLabel}</span>
+            <Link
+              href={href(shiftMonth(month, 1), type)}
+              className="rounded-lg border border-teal-200 bg-white p-2 text-teal-700 hover:bg-teal-50"
+              aria-label="เดือนถัดไป"
+            >
+              <FontAwesomeIcon icon={faChevronRight} className="w-3" />
+            </Link>
+          </div>
+        )}
         <div className="flex flex-wrap gap-1">
           {[["", "ทั้งหมด"] as const, ...Object.entries(MOVEMENT_TYPES).map(([k, v]) => [k, v.label] as const)].map(
             ([key, label]) => (
@@ -143,6 +184,23 @@ export default async function MovementsPage({
           )}
         </div>
       </div>
+
+      <ListFilterForm
+        action="/admin/inventory/movements"
+        q={q}
+        placeholder="เลขที่เอกสาร / รหัส-ชื่อสินค้า / เลข Lot"
+        hidden={{ month: isRange ? "" : month, type }}
+        active={hasFilter}
+        clearHref={href(month, type).replace(/&?q=[^&]*/, "")}
+      >
+        <FilterField label="ตั้งแต่วันที่" htmlFor="from">
+          <DateInput id="from" name="from" defaultValue={rawFrom} className={filterInputClassName} />
+        </FilterField>
+        <FilterField label="ถึงวันที่" htmlFor="to">
+          <DateInput id="to" name="to" defaultValue={rawTo} className={filterInputClassName} />
+        </FilterField>
+      </ListFilterForm>
+      {hasFilter && <p className="mt-3 text-sm text-teal-600">พบ {movements.length.toLocaleString()} รายการ</p>}
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
         <table className="stack-table w-full text-sm md:min-w-[760px]">
@@ -240,10 +298,10 @@ export default async function MovementsPage({
                 </tr>
               );
             })}
-            {(!movements || movements.length === 0) && (
+            {movements.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-teal-400">
-                  เดือนนี้ยังไม่มีรายการ
+                  {hasFilter ? "ไม่พบรายการตามเงื่อนไขนี้" : "เดือนนี้ยังไม่มีรายการ"}
                 </td>
               </tr>
             )}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faPrint } from "@fortawesome/free-solid-svg-icons";
+import { faPrint } from "@fortawesome/free-solid-svg-icons";
+import { FilterField, ListFilterForm } from "@/components/ui/list-filter";
 import { formCardClassName, secondaryButtonClassName, selectClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { Field } from "@/components/ui/field";
@@ -71,41 +72,36 @@ export default async function StockCountPage({
         </p>
       )}
 
-      <form className="mt-6 flex flex-wrap items-end gap-3">
-        <div className="relative w-full sm:w-72">
-          <FontAwesomeIcon
-            icon={faMagnifyingGlass}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-teal-400"
-          />
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="นับเฉพาะ: รหัส / ชื่อ / บาร์โค้ด"
-            className="w-full rounded-lg border border-teal-300 py-2 pl-8 pr-3 text-sm focus:border-teal-600 focus:outline-none"
-          />
-        </div>
-        <select name="type" defaultValue={type} aria-label="ประเภทสินค้า" className={`${selectClassName} mt-0 w-auto`}>
-          <option value="">ทุกประเภท</option>
-          {Object.entries(PRODUCT_TYPES)
-            .filter(([v]) => v !== "service")
-            .map(([v, label]) => (
-              <option key={v} value={v}>
-                {label}
-              </option>
-            ))}
-        </select>
-        <button type="submit" className={secondaryButtonClassName}>
-          กรอง
-        </button>
-        <Link
-          href={`/admin/print/inventory/stock-count?${new URLSearchParams({ ...(q && { q }), ...(type && { type }) })}`}
-          target="_blank"
-          className={`ml-auto flex items-center gap-2 ${secondaryButtonClassName}`}
-        >
-          <FontAwesomeIcon icon={faPrint} />
-          พิมพ์ใบนับสต๊อก
-        </Link>
-      </form>
+      <ListFilterForm
+        action="/admin/inventory/count"
+        q={q}
+        placeholder="นับเฉพาะ: รหัส / ชื่อสินค้า / บาร์โค้ด"
+        active={!!(q || type)}
+        clearHref="/admin/inventory/count"
+        actions={
+          <Link
+            href={`/admin/print/inventory/stock-count?${new URLSearchParams({ ...(q && { q }), ...(type && { type }) })}`}
+            target="_blank"
+            className={`flex items-center gap-2 ${secondaryButtonClassName}`}
+          >
+            <FontAwesomeIcon icon={faPrint} />
+            พิมพ์ใบนับสต๊อก
+          </Link>
+        }
+      >
+        <FilterField label="ประเภทสินค้า" htmlFor="type" className="min-w-44">
+          <select id="type" name="type" defaultValue={type} className={selectClassName}>
+            <option value="">ทุกประเภท</option>
+            {Object.entries(PRODUCT_TYPES)
+              .filter(([v]) => v !== "service")
+              .map(([v, label]) => (
+                <option key={v} value={v}>
+                  {label}
+                </option>
+              ))}
+          </select>
+        </FilterField>
+      </ListFilterForm>
 
       <form action={postStockCount} className={`mt-4 ${formCardClassName}`}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

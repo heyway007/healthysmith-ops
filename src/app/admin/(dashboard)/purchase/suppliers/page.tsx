@@ -3,7 +3,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
-import { submitButtonClassName } from "@/lib/ui-classes";
+import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { deleteSupplier } from "./actions";
 import { DeleteButton } from "@/components/ui/delete-button";
@@ -13,19 +13,25 @@ import { RowActions } from "@/components/ui/row-actions";
 export default async function PurchasePage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; page?: string; size?: string }>;
+  searchParams: Promise<{ error?: string; page?: string; size?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   const { error } = sp;
+  const q = (sp.q ?? "").trim().toLowerCase();
   const paging = await getPaging(sp);
   const supabase = await createClient();
-  const { data: suppliers } = await supabase
+  const { data: allSuppliers } = await supabase
     .from("suppliers")
     .select("*")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
+  const suppliers = q
+    ? (allSuppliers ?? []).filter((s) =>
+        [s.supplier_code, s.name, s.contact_person, s.phone].join(" ").toLowerCase().includes(q),
+      )
+    : (allSuppliers ?? []);
 
-  const paged = paginate(suppliers ?? [], paging);
+  const paged = paginate(suppliers, paging);
 
   return (
     <div>
@@ -47,7 +53,30 @@ export default async function PurchasePage({
         <p className="mt-4 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{error}</p>
       )}
 
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
+      <form method="get" action="/admin/purchase/suppliers" className="mt-6 flex flex-wrap items-end justify-end gap-3">
+        <div className="min-w-64 flex-1">
+          <label className="block text-xs font-medium text-teal-700" htmlFor="q">
+            ค้นหา
+          </label>
+          <input
+            id="q"
+            name="q"
+            defaultValue={sp.q ?? ""}
+            placeholder="รหัส / ชื่อ / ผู้ติดต่อ / เบอร์โทร"
+            className="mt-1 w-full rounded-lg border border-teal-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+          />
+        </div>
+        <button type="submit" className={secondaryButtonClassName}>
+          ค้นหา
+        </button>
+        {q && (
+          <Link href="/admin/purchase/suppliers" className={secondaryButtonClassName}>
+            ล้างตัวกรอง
+          </Link>
+        )}
+      </form>
+
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
         <table className="stack-table w-full text-sm md:min-w-[720px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
@@ -87,10 +116,10 @@ export default async function PurchasePage({
                 </td>
               </tr>
             ))}
-            {(!suppliers || suppliers.length === 0) && (
+            {suppliers.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-teal-400">
-                  ยังไม่มีข้อมูลร้านค้า / ผู้ขาย
+                  {q ? "ไม่พบร้านค้า / ผู้ขายตามเงื่อนไขนี้" : "ยังไม่มีข้อมูลร้านค้า / ผู้ขาย"}
                 </td>
               </tr>
             )}

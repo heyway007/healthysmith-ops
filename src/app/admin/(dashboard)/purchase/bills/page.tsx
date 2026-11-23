@@ -2,8 +2,9 @@ import Link from "next/link";
 import { Pagination } from "@/components/ui/pagination";
 import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faChevronRight, faEye, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
-import { submitButtonClassName } from "@/lib/ui-classes";
+import { faChevronLeft, faChevronRight, faEye, faPenToSquare, faPlus, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { secondaryButtonClassName, selectClassName, submitButtonClassName } from "@/lib/ui-classes";
+import { DateInput } from "@/components/ui/date-input";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { IconLinkButton } from "@/components/ui/icon-link-button";
@@ -16,6 +17,18 @@ import { attachmentViewsByBill } from "./attachments";
 import { BILL_STATUS } from "./status";
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const inputClassName =
+  "mt-1 rounded-lg border border-teal-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100";
+
+/** Payment-status choices for the filter (draft / pending_approval count as unpaid). */
+const STATUS_FILTERS: { value: string; label: string; statuses: string[] }[] = [
+  { value: "unpaid", label: "ค้างจ่าย", statuses: ["approved", "draft", "pending_approval"] },
+  { value: "overdue", label: "เกินกำหนดจ่าย", statuses: ["overdue"] },
+  { value: "partially_paid", label: "จ่ายบางส่วน", statuses: ["partially_paid"] },
+  { value: "paid", label: "จ่ายแล้ว", statuses: ["paid"] },
+];
 
 function shiftMonth(month: string, delta: number) {
   const [y, m] = month.split("-").map(Number);
@@ -26,49 +39,108 @@ function shiftMonth(month: string, delta: number) {
 export default async function PurchaseBillsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; month?: string; page?: string; size?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    month?: string;
+    page?: string;
+    size?: string;
+    q?: string;
+    supplier?: string;
+    status?: string;
+    from?: string;
+    to?: string;
+  }>;
 }) {
   const params = await searchParams;
   const paging = await getPaging(params);
   const month = params.month && MONTH_RE.test(params.month) ? params.month : bangkokToday().slice(0, 7);
+  const rawFrom = DATE_RE.test(params.from ?? "") ? params.from! : "";
+  const rawTo = DATE_RE.test(params.to ?? "") ? params.to! : "";
+  const isRange = !!(rawFrom || rawTo);
+  const q = (params.q ?? "").trim().toLowerCase();
+  const supplierFilter = params.supplier ?? "";
+  const statusFilter = STATUS_FILTERS.find((o) => o.value === params.status);
   const supabase = await createClient();
 
-  const [{ data: bills }, { data: suppliers }] = await Promise.all([
-    supabase
-      .from("purchase_bills")
-      .select("*")
-      .neq("status", "cancelled")
-      .gte("bill_date", `${month}-01`)
-      .lt("bill_date", `${shiftMonth(month, 1)}-01`)
-      .order("bill_date", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase.from("suppliers").select("id, name"),
+  let billQuery = supabase
+    .from("purchase_bills")
+    .select("*")
+    .neq("status", "cancelled")
+    .gte("bill_date", isRange ? rawFrom || "2000-01-01" : `${month}-01`)
+    .order("bill_date", { ascending: false })
+    .order("created_at", { ascending: false });
+  billQuery = isRange
+    ? billQuery.lte("bill_date", rawTo || "2999-12-31")
+    : billQuery.lt("bill_date", `${shiftMonth(month, 1)}-01`);
+  if (supplierFilter) billQuery = billQuery.eq("supplier_id", supplierFilter);
+  if (statusFilter) billQuery = billQuery.in("status", statusFilter.statuses);
+
+  const [{ data: periodBills }, { data: suppliers }] = await Promise.all([
+    billQuery,
+    supabase.from("suppliers").select("id, name").order("name"),
   ]);
   const supplierNameById = new Map((suppliers ?? []).map((s) => [s.id, s.name]));
 
-  const billIds = (bills ?? []).map((b) => b.id);
-  const [{ data: items }, attachmentsByBill] = await Promise.all([
-    billIds.length
-      ? supabase
-          .from("purchase_bill_items")
-          .select("purchase_bill_id, description, sort_order")
-          .in("purchase_bill_id", billIds)
-          .order("sort_order")
-      : Promise.resolve({ data: [] as { purchase_bill_id: string; description: string | null }[] }),
-    attachmentViewsByBill(supabase, billIds),
-  ]);
+  const periodIds = (periodBills ?? []).map((b) => b.id);
+  const { data: items } = periodIds.length
+    ? await supabase
+        .from("purchase_bill_items")
+        .select("purchase_bill_id, description, sort_order")
+        .in("purchase_bill_id", periodIds)
+        .order("sort_order")
+    : { data: [] as { purchase_bill_id: string; description: string | null }[] };
+
+  // Text search: bill number, supplier invoice / note, supplier name, or any line item.
+  const itemText = new Map<string, string>();
+  for (const item of items ?? []) {
+    itemText.set(item.purchase_bill_id, `${itemText.get(item.purchase_bill_id) ?? ""} ${item.description ?? ""}`);
+  }
+  const bills = q
+    ? (periodBills ?? []).filter((b) =>
+        [
+          b.bill_number,
+          b.supplier_invoice_number,
+          b.invoice_number,
+          b.delivery_note_number,
+          b.note,
+          supplierNameById.get(b.supplier_id),
+          itemText.get(b.id),
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(q),
+      )
+    : (periodBills ?? []);
+  const hasFilter = !!(q || supplierFilter || statusFilter || isRange);
+
+  const billIds = bills.map((b) => b.id);
+  const shown = new Set(billIds);
+  const attachmentsByBill = await attachmentViewsByBill(supabase, billIds);
   const itemsByBill = new Map<string, string[]>();
   for (const item of items ?? []) {
+    if (!shown.has(item.purchase_bill_id)) continue;
     const list = itemsByBill.get(item.purchase_bill_id) ?? [];
     if (item.description) list.push(item.description);
     itemsByBill.set(item.purchase_bill_id, list);
   }
 
-  const total = (bills ?? []).reduce((sum, b) => sum + b.total_amount, 0);
-  const unpaid = (bills ?? []).reduce((sum, b) => sum + (b.outstanding_amount ?? 0), 0);
-  const monthLabel = formatThaiDate(`${month}-01`, { month: "long", year: "numeric" });
+  const total = bills.reduce((sum, b) => sum + b.total_amount, 0);
+  const unpaid = bills.reduce((sum, b) => sum + (b.outstanding_amount ?? 0), 0);
+  const fullDate = { day: "numeric", month: "short", year: "numeric" } as const;
+  const monthLabel = isRange
+    ? `${rawFrom ? formatThaiDate(rawFrom, fullDate) : "ตั้งแต่ต้น"} – ${rawTo ? formatThaiDate(rawTo, fullDate) : "ล่าสุด"}`
+    : formatThaiDate(`${month}-01`, { month: "long", year: "numeric" });
 
-  const paged = paginate(bills ?? [], paging);
+  // Month arrows keep the search / supplier / status choices.
+  const monthHref = (m: string) => {
+    const next = new URLSearchParams(
+      Object.entries({ q: params.q ?? "", supplier: supplierFilter, status: statusFilter?.value ?? "" }).filter(([, v]) => v),
+    );
+    next.set("month", m);
+    return `/admin/purchase/bills?${next.toString()}`;
+  };
+
+  const paged = paginate(bills, paging);
 
   return (
     <div>
@@ -91,28 +163,101 @@ export default async function PurchaseBillsPage({
       )}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/admin/purchase/bills?month=${shiftMonth(month, -1)}`}
-            className="rounded-lg border border-teal-200 bg-white p-2 text-teal-700 hover:bg-teal-50"
-            aria-label="เดือนก่อน"
-          >
-            <FontAwesomeIcon icon={faChevronLeft} className="w-3" />
-          </Link>
-          <span className="min-w-36 text-center font-medium text-teal-900">{monthLabel}</span>
-          <Link
-            href={`/admin/purchase/bills?month=${shiftMonth(month, 1)}`}
-            className="rounded-lg border border-teal-200 bg-white p-2 text-teal-700 hover:bg-teal-50"
-            aria-label="เดือนถัดไป"
-          >
-            <FontAwesomeIcon icon={faChevronRight} className="w-3" />
-          </Link>
-        </div>
+        {isRange ? (
+          <div className="flex items-center gap-2">
+            <span className="rounded-lg bg-teal-100 px-3 py-1.5 text-sm font-medium text-teal-900">{monthLabel}</span>
+            <Link href={monthHref(month)} className="text-teal-500 hover:text-orange-600" aria-label="ล้างช่วงวันที่">
+              <FontAwesomeIcon icon={faXmark} />
+            </Link>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Link
+              href={monthHref(shiftMonth(month, -1))}
+              className="rounded-lg border border-teal-200 bg-white p-2 text-teal-700 hover:bg-teal-50"
+              aria-label="เดือนก่อน"
+            >
+              <FontAwesomeIcon icon={faChevronLeft} className="w-3" />
+            </Link>
+            <span className="min-w-36 text-center font-medium text-teal-900">{monthLabel}</span>
+            <Link
+              href={monthHref(shiftMonth(month, 1))}
+              className="rounded-lg border border-teal-200 bg-white p-2 text-teal-700 hover:bg-teal-50"
+              aria-label="เดือนถัดไป"
+            >
+              <FontAwesomeIcon icon={faChevronRight} className="w-3" />
+            </Link>
+          </div>
+        )}
         <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
-          <Stat label="ซื้อทั้งเดือน" value={total} />
+          <Stat label={isRange ? "ซื้อทั้งหมด" : "ซื้อทั้งเดือน"} value={total} />
           <Stat label="ยังค้างจ่าย" value={unpaid} className={unpaid > 0 ? "text-rose-600" : undefined} />
         </div>
       </div>
+
+      <form method="get" action="/admin/purchase/bills" className="mt-4 flex flex-wrap items-end justify-end gap-3">
+        {!isRange && <input type="hidden" name="month" value={month} />}
+        <div className="min-w-64 flex-1">
+          <label className="block text-xs font-medium text-teal-700" htmlFor="q">
+            ค้นหา
+          </label>
+          <input
+            id="q"
+            name="q"
+            defaultValue={params.q ?? ""}
+            placeholder="เลขที่ / ร้าน-ผู้ขาย / รายการ / เลขใบกำกับ"
+            className={`${inputClassName} w-full`}
+          />
+        </div>
+        <div className="min-w-44">
+          <label className="block text-xs font-medium text-teal-700" htmlFor="supplier">
+            ร้าน / ผู้ขาย
+          </label>
+          <select id="supplier" name="supplier" defaultValue={supplierFilter} className={selectClassName}>
+            <option value="">ทั้งหมด</option>
+            {(suppliers ?? []).map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-teal-700" htmlFor="status">
+            จ่ายเงิน
+          </label>
+          <select id="status" name="status" defaultValue={statusFilter?.value ?? ""} className={selectClassName}>
+            <option value="">ทั้งหมด</option>
+            {STATUS_FILTERS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-teal-700" htmlFor="from">
+            ตั้งแต่วันที่
+          </label>
+          <DateInput id="from" name="from" defaultValue={rawFrom} className={inputClassName} />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-teal-700" htmlFor="to">
+            ถึงวันที่
+          </label>
+          <DateInput id="to" name="to" defaultValue={rawTo} className={inputClassName} />
+        </div>
+        <button type="submit" className={secondaryButtonClassName}>
+          ค้นหา
+        </button>
+        {hasFilter && (
+          <Link href={`/admin/purchase/bills?month=${month}`} className={secondaryButtonClassName}>
+            ล้างตัวกรอง
+          </Link>
+        )}
+      </form>
+
+      {hasFilter && <p className="mt-3 text-sm text-teal-600">พบ {bills.length.toLocaleString()} รายการ</p>}
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
         <table className="stack-table w-full text-sm md:min-w-[860px]">
@@ -178,10 +323,10 @@ export default async function PurchaseBillsPage({
                 </tr>
               );
             })}
-            {(!bills || bills.length === 0) && (
+            {bills.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-4 py-6 text-center text-teal-400">
-                  เดือนนี้ยังไม่มีรายการซื้อ
+                  {hasFilter ? "ไม่พบรายการซื้อตามเงื่อนไขนี้" : "เดือนนี้ยังไม่มีรายการซื้อ"}
                 </td>
               </tr>
             )}

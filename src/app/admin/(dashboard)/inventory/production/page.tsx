@@ -7,6 +7,8 @@ import { submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { thaiDate } from "@/lib/thai-money";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { DateInput } from "@/components/ui/date-input";
+import { FilterField, ListFilterForm, filterInputClassName } from "@/components/ui/list-filter";
 import { CancelWithReasonButton } from "@/components/ui/cancel-with-reason-button";
 import { IconLinkButton } from "@/components/ui/icon-link-button";
 import { DisabledIconButton, RowActions } from "@/components/ui/row-actions";
@@ -21,10 +23,19 @@ const VIEWS: Record<string, { label: string; statuses: string[] | null }> = {
   all: { label: "ทั้งหมด", statuses: null },
 };
 
-export default async function ProductionOrdersPage({ searchParams }: { searchParams: Promise<{ view?: string; page?: string; size?: string }> }) {
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export default async function ProductionOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string; page?: string; size?: string; q?: string; from?: string; to?: string }>;
+}) {
   const params = await searchParams;
   const paging = await getPaging(params);
   const view = params.view && params.view in VIEWS ? params.view : "active";
+  const q = (params.q ?? "").trim();
+  const rawFrom = DATE_RE.test(params.from ?? "") ? params.from! : "";
+  const rawTo = DATE_RE.test(params.to ?? "") ? params.to! : "";
   const supabase = await createClient();
 
   let query = supabase
@@ -35,9 +46,12 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
     .limit(300);
   const statuses = VIEWS[view].statuses;
   if (statuses) query = query.in("status", statuses);
-  const { data: orders } = await query;
+  if (rawFrom) query = query.gte("order_date", rawFrom);
+  if (rawTo) query = query.lte("order_date", rawTo);
+  const { data: allOrders } = await query;
+  const orders = allOrders ?? [];
 
-  const orderIds = (orders ?? []).map((o) => o.id);
+  const orderIds = orders.map((o) => o.id);
   const { data: items } = orderIds.length
     ? await supabase.from("production_order_items").select("*").in("production_order_id", orderIds).order("sort_order")
     : { data: [] };
@@ -51,7 +65,31 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
 
   const today = bangkokToday();
 
-  const paged = paginate(orders ?? [], paging);
+  // text search: production number, producer, or any product (code / name) on the order
+  const needle = q.toLowerCase();
+  const shownOrders = needle
+    ? orders.filter((o) =>
+        [
+          o.production_number,
+          o.producer_name,
+          ...(itemsByOrder.get(o.id) ?? []).flatMap((i) => {
+            const p = productById.get(i.product_id);
+            return [p?.sku, p?.name];
+          }),
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle),
+      )
+    : orders;
+  const hasFilter = !!(q || rawFrom || rawTo);
+  const viewHref = (key: string) => {
+    const sp = new URLSearchParams({ view: key });
+    for (const [k, v] of Object.entries({ q, from: rawFrom, to: rawTo })) if (v) sp.set(k, v);
+    return `/admin/inventory/production?${sp}`;
+  };
+
+  const paged = paginate(shownOrders, paging);
 
   return (
     <div>
@@ -70,7 +108,7 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
         {Object.entries(VIEWS).map(([key, v]) => (
           <Link
             key={key}
-            href={`/admin/inventory/production?view=${key}`}
+            href={viewHref(key)}
             aria-current={view === key ? "page" : undefined}
             className={`rounded-full px-3 py-1 text-xs font-medium ${
               view === key ? "bg-teal-700 text-white" : "bg-white text-teal-700 ring-1 ring-teal-200 hover:bg-teal-50"
@@ -80,6 +118,23 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
           </Link>
         ))}
       </div>
+
+      <ListFilterForm
+        action="/admin/inventory/production"
+        q={q}
+        placeholder="เลขที่ / ผู้ผลิต / รหัส-ชื่อสินค้า"
+        hidden={{ view }}
+        active={hasFilter}
+        clearHref={`/admin/inventory/production?view=${view}`}
+      >
+        <FilterField label="วันที่สั่งตั้งแต่" htmlFor="from">
+          <DateInput id="from" name="from" defaultValue={rawFrom} className={filterInputClassName} />
+        </FilterField>
+        <FilterField label="ถึงวันที่" htmlFor="to">
+          <DateInput id="to" name="to" defaultValue={rawTo} className={filterInputClassName} />
+        </FilterField>
+      </ListFilterForm>
+      {hasFilter && <p className="mt-3 text-sm text-teal-600">พบ {shownOrders.length.toLocaleString()} รายการ</p>}
 
       <div className="mt-3 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
         <table className="stack-table w-full text-sm md:min-w-[760px]">
@@ -165,10 +220,10 @@ export default async function ProductionOrdersPage({ searchParams }: { searchPar
                 </tr>
               );
             })}
-            {(!orders || orders.length === 0) && (
+            {shownOrders.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-4 py-6 text-center text-teal-400">
-                  ไม่มีใบผลิตในกลุ่มนี้
+                  {hasFilter ? "ไม่พบใบผลิตตามเงื่อนไขนี้" : "ไม่มีใบผลิตในกลุ่มนี้"}
                 </td>
               </tr>
             )}

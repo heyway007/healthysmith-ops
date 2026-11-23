@@ -27,10 +27,11 @@ function agingLabel(dueDate: string | null): { label: string; className: string 
 export default async function PayablesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; bill?: string; page?: string; size?: string }>;
+  searchParams: Promise<{ error?: string; bill?: string; page?: string; size?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   const { error, bill: billId } = sp;
+  const q = (sp.q ?? "").trim().toLowerCase();
   const paging = await getPaging(sp);
   const supabase = await createClient();
 
@@ -43,7 +44,15 @@ export default async function PayablesPage({
     supabase.from("suppliers").select("id, name"),
   ]);
   const supplierNameById = new Map((suppliers ?? []).map((s) => [s.id, s.name]));
-  const outstandingBills = (bills ?? []).filter((b) => (b.outstanding_amount ?? 0) > 0);
+  const outstandingBills = (bills ?? []).filter(
+    (b) =>
+      (b.outstanding_amount ?? 0) > 0 &&
+      (!q ||
+        [b.bill_number, b.supplier_invoice_number, b.invoice_number, b.note, supplierNameById.get(b.supplier_id)]
+          .join(" ")
+          .toLowerCase()
+          .includes(q)),
+  );
 
   const totalOutstanding = outstandingBills.reduce((sum, b) => sum + (b.outstanding_amount ?? 0), 0);
 
@@ -117,7 +126,30 @@ export default async function PayablesPage({
         </div>
       )}
 
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
+      <form method="get" action="/admin/purchase/payables" className="mt-6 flex flex-wrap items-end justify-end gap-3">
+        <div className="min-w-64 flex-1">
+          <label className="block text-xs font-medium text-teal-700" htmlFor="q">
+            ค้นหา
+          </label>
+          <input
+            id="q"
+            name="q"
+            defaultValue={sp.q ?? ""}
+            placeholder="เลขที่ / ร้าน-ผู้ขาย / เลขใบกำกับ"
+            className="mt-1 w-full rounded-lg border border-teal-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+          />
+        </div>
+        <button type="submit" className={secondaryButtonClassName}>
+          ค้นหา
+        </button>
+        {q && (
+          <Link href="/admin/purchase/payables" className={secondaryButtonClassName}>
+            ล้างตัวกรอง
+          </Link>
+        )}
+      </form>
+
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
         <table className="stack-table w-full text-sm md:min-w-[760px]">
           <thead>
             <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
@@ -166,7 +198,7 @@ export default async function PayablesPage({
             {outstandingBills.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-teal-400">
-                  ไม่มียอดค้างจ่าย
+                  {q ? "ไม่พบรายการค้างจ่ายตามเงื่อนไขนี้" : "ไม่มียอดค้างจ่าย"}
                 </td>
               </tr>
             )}

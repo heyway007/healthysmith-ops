@@ -2,8 +2,9 @@ import Link from "next/link";
 import { Pagination } from "@/components/ui/pagination";
 import { getPaging, paginate } from "@/lib/pagination";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faMagnifyingGlass, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
-import { secondaryButtonClassName, submitButtonClassName } from "@/lib/ui-classes";
+import { faEye, faPenToSquare, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { selectClassName, submitButtonClassName } from "@/lib/ui-classes";
+import { FilterField, ListFilterForm } from "@/components/ui/list-filter";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteButton } from "@/components/ui/delete-button";
 import { IconLinkButton } from "@/components/ui/icon-link-button";
@@ -15,16 +16,18 @@ import { PRODUCT_TYPES, formatQty, productSearchFilter } from "../labels";
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; q?: string; inactive?: string; page?: string; size?: string }>;
+  searchParams: Promise<{ error?: string; q?: string; type?: string; inactive?: string; page?: string; size?: string }>;
 }) {
   const params = await searchParams;
   const paging = await getPaging(params);
   const q = params.q?.trim() ?? "";
+  const type = params.type && params.type in PRODUCT_TYPES ? params.type : "";
   const showInactive = params.inactive === "1";
   const supabase = await createClient();
 
   let query = supabase.from("product_stock").select("*").order("sku");
   if (!showInactive) query = query.eq("is_active", true);
+  if (type) query = query.eq("product_type", type);
   const filter = productSearchFilter(q);
   if (filter) query = query.or(filter);
   const { data: products } = await query;
@@ -62,27 +65,28 @@ export default async function ProductsPage({
 
       {params.error && <p className="mt-4 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{params.error}</p>}
 
-      <form className="mt-6 flex flex-wrap items-center gap-3">
-        <div className="relative w-full sm:w-72">
-          <FontAwesomeIcon
-            icon={faMagnifyingGlass}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-teal-400"
-          />
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="ค้นหารหัส / ชื่อ / บาร์โค้ด"
-            className="w-full rounded-lg border border-teal-300 py-2 pl-8 pr-3 text-sm focus:border-teal-600 focus:outline-none"
-          />
-        </div>
-        <label className="flex items-center gap-2 text-sm text-teal-700">
+      <ListFilterForm
+        action="/admin/inventory/products"
+        q={q}
+        placeholder="รหัส / ชื่อสินค้า / บาร์โค้ด"
+        active={!!(q || type || showInactive)}
+        clearHref="/admin/inventory/products"
+      >
+        <FilterField label="ประเภทสินค้า" htmlFor="type" className="min-w-44">
+          <select id="type" name="type" defaultValue={type} className={selectClassName}>
+            <option value="">ทุกประเภท</option>
+            {Object.entries(PRODUCT_TYPES).map(([v, label]) => (
+              <option key={v} value={v}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </FilterField>
+        <label className="flex items-center gap-2 pb-2 text-sm text-teal-700">
           <input type="checkbox" name="inactive" value="1" defaultChecked={showInactive} className="accent-teal-600" />
           แสดงสินค้าที่ปิดใช้งาน
         </label>
-        <button type="submit" className={secondaryButtonClassName}>
-          ค้นหา
-        </button>
-      </form>
+      </ListFilterForm>
 
       <div className="mt-4 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
         <table className="stack-table w-full text-sm">
@@ -162,7 +166,7 @@ export default async function ProductsPage({
             {(!products || products.length === 0) && (
               <tr>
                 <td colSpan={8} className="px-4 py-6 text-center text-teal-400">
-                  {q ? "ไม่พบสินค้าที่ค้นหา" : "ยังไม่มีสินค้า — กด \"เพิ่มสินค้า\" เพื่อเริ่ม"}
+                  {q || type ? "ไม่พบสินค้าตามเงื่อนไขนี้" : "ยังไม่มีสินค้า — กด \"เพิ่มสินค้า\" เพื่อเริ่ม"}
                 </td>
               </tr>
             )}

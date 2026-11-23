@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { Pagination } from "@/components/ui/pagination";
 import { getPaging, paginate } from "@/lib/pagination";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faMagnifyingGlass, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import { ListFilterForm } from "@/components/ui/list-filter";
 import { IconLinkButton } from "@/components/ui/icon-link-button";
 import { RowActions } from "@/components/ui/row-actions";
-import { secondaryButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
 import { bangkokToday } from "@/components/holidays/holiday-views";
 import { NEAR_EXPIRY_DAYS, UNLOTTED_LABEL, expiryStatus, fefoSort, shortDate } from "@/components/inventory/lots";
-import { formatQty, productSearchFilter } from "../labels";
+import { formatQty } from "../labels";
 
 const FILTERS: Record<string, string> = {
   all: "ทั้งหมด",
@@ -30,15 +29,12 @@ export default async function LotsPage({
   const today = bangkokToday();
   const supabase = await createClient();
 
-  let query = supabase
+  const { data: products } = await supabase
     .from("products")
     .select("id, sku, name, unit")
     .eq("is_active", true)
     .eq("track_lot", true)
     .order("sku");
-  const filter = productSearchFilter(q);
-  if (filter) query = query.or(filter);
-  const { data: products } = await query;
 
   const ids = (products ?? []).map((p) => p.id);
   const { data: lotData } = ids.length
@@ -50,7 +46,12 @@ export default async function LotsPage({
     : { data: [] };
   const productById = new Map((products ?? []).map((p) => [p.id, p]));
 
-  const all = fefoSort(lotData ?? []).filter((l) => productById.has(l.product_id));
+  // search matches the product code / name or the lot number
+  const needle = q.toLowerCase();
+  const all = fefoSort(lotData ?? []).filter((l) => {
+    const p = productById.get(l.product_id);
+    return !!p && (!needle || [p.sku, p.name, l.lot_number].join(" ").toLowerCase().includes(needle));
+  });
   const status = (l: (typeof all)[number]) => expiryStatus(l.expiry_date, today);
   const nearCount = all.filter((l) => status(l).key === "near").length;
   const expiredCount = all.filter((l) => status(l).key === "expired").length;
@@ -79,24 +80,14 @@ export default async function LotsPage({
         <Stat label="หมดอายุแล้ว (ยังมีของ)" value={`${expiredCount} ล็อต`} className={expiredCount ? "text-rose-600" : undefined} />
       </div>
 
-      <form className="mt-6 flex flex-wrap items-end gap-3">
-        <div className="relative w-full sm:w-72">
-          <FontAwesomeIcon
-            icon={faMagnifyingGlass}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-teal-400"
-          />
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="ค้นหารหัส / ชื่อสินค้า"
-            className="w-full rounded-lg border border-teal-300 py-2 pl-8 pr-3 text-sm focus:border-teal-600 focus:outline-none"
-          />
-        </div>
-        {show !== "all" && <input type="hidden" name="show" value={show} />}
-        <button type="submit" className={secondaryButtonClassName}>
-          ค้นหา
-        </button>
-      </form>
+      <ListFilterForm
+        action="/admin/inventory/lots"
+        q={q}
+        placeholder="รหัส / ชื่อสินค้า / เลข Lot"
+        hidden={{ show: show === "all" ? "" : show }}
+        active={!!(q || show !== "all")}
+        clearHref="/admin/inventory/lots"
+      />
 
       <div className="mt-4 flex flex-wrap gap-1">
         {Object.entries(FILTERS).map(([key, label]) => (
