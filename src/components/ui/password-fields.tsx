@@ -1,8 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDice, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { faCircle, faCircleCheck, faDice, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+
+const rules = [
+  { label: "ความยาวอย่างน้อย 8 ตัวอักษร", test: (p: string) => p.length >= 8 },
+  { label: "มีตัวอักษรภาษาอังกฤษอย่างน้อย 1 ตัว (A-Z, a-z)", test: (p: string) => /[A-Za-z]/.test(p) },
+  { label: "มีตัวเลขอย่างน้อย 1 ตัว (0-9)", test: (p: string) => /\d/.test(p) },
+];
 
 function generatePassword(length = 14): string {
   const lower = "abcdefghijkmnpqrstuvwxyz"; // l/o dropped -- easy to misread
@@ -34,14 +40,23 @@ export function PasswordFields({
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [visible, setVisible] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const mismatch = (password.length > 0 || confirmation.length > 0) && password !== confirmation;
+  const weak = password.length > 0 && !rules.every((r) => r.test(password));
+
+  // Block form submit natively (and focus this field) while the password is weak.
+  useEffect(() => {
+    inputRef.current?.setCustomValidity(weak ? "รหัสผ่านยังไม่ตรงตามเงื่อนไข" : "");
+  }, [weak]);
 
   function handleGenerate() {
     const generated = generatePassword();
     setPassword(generated);
     setConfirmation(generated);
     setVisible(true);
+    setConfirmVisible(true);
   }
 
   return (
@@ -62,14 +77,19 @@ export function PasswordFields({
         </div>
         <div className="relative mt-1">
           <input
+            ref={inputRef}
             id="password"
             name="password"
             type={visible ? "text" : "password"}
             required={required}
-            minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-teal-300 px-3 py-2 pr-11 text-sm transition-shadow focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-100"
+            aria-invalid={weak}
+            className={`w-full rounded-lg border px-3 py-2 pr-11 text-sm transition-shadow focus:outline-none focus:ring-2 ${
+              weak
+                ? "border-rose-400 focus:border-rose-500 focus:ring-rose-100"
+                : "border-teal-300 focus:border-teal-600 focus:ring-teal-100"
+            }`}
           />
           <button
             type="button"
@@ -80,28 +100,56 @@ export function PasswordFields({
             <FontAwesomeIcon icon={visible ? faEyeSlash : faEye} />
           </button>
         </div>
-        <p className="mt-1 text-xs text-teal-500">
-          {helperText ?? (required ? "อย่างน้อย 8 ตัวอักษร มีทั้งตัวอักษรภาษาอังกฤษและตัวเลข" : "เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน")}
-        </p>
+        {!required && password.length === 0 ? (
+          <p className="mt-1 text-xs text-teal-500">{helperText ?? "เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน"}</p>
+        ) : (
+          <ul className="mt-1.5 space-y-0.5 text-xs">
+            {rules.map((rule) => {
+              const ok = rule.test(password);
+              const touched = password.length > 0;
+              return (
+                <li
+                  key={rule.label}
+                  className={`flex items-center gap-1.5 ${
+                    ok ? "text-emerald-600" : touched ? "text-rose-600" : "text-teal-500"
+                  }`}
+                >
+                  <FontAwesomeIcon icon={ok ? faCircleCheck : faCircle} className={ok ? "" : "text-[6px]"} fixedWidth />
+                  {rule.label}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
       <div>
         <label className="block text-sm font-medium text-teal-800" htmlFor="password_confirmation">
           ยืนยันรหัสผ่าน
         </label>
-        <input
-          id="password_confirmation"
-          name="password_confirmation"
-          type={visible ? "text" : "password"}
-          required={required}
-          value={confirmation}
-          onChange={(e) => setConfirmation(e.target.value)}
-          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm transition-shadow focus:outline-none focus:ring-2 ${
-            mismatch
-              ? "border-rose-400 focus:border-rose-500 focus:ring-rose-100"
-              : "border-teal-300 focus:border-teal-600 focus:ring-teal-100"
-          }`}
-        />
+        <div className="relative mt-1">
+          <input
+            id="password_confirmation"
+            name="password_confirmation"
+            type={confirmVisible ? "text" : "password"}
+            required={required}
+            value={confirmation}
+            onChange={(e) => setConfirmation(e.target.value)}
+            className={`w-full rounded-lg border px-3 py-2 pr-11 text-sm transition-shadow focus:outline-none focus:ring-2 ${
+              mismatch
+                ? "border-rose-400 focus:border-rose-500 focus:ring-rose-100"
+                : "border-teal-300 focus:border-teal-600 focus:ring-teal-100"
+            }`}
+          />
+          <button
+            type="button"
+            onClick={() => setConfirmVisible((v) => !v)}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-teal-400 hover:text-teal-700"
+            title={confirmVisible ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+          >
+            <FontAwesomeIcon icon={confirmVisible ? faEyeSlash : faEye} />
+          </button>
+        </div>
         {mismatch && <p className="mt-1 text-xs text-rose-600">รหัสผ่านไม่ตรงกัน</p>}
       </div>
     </>
