@@ -99,7 +99,6 @@ export default async function PrintProductionReceiptsPage({
                   ))}
                 </tbody>
               </table>
-              {r.created_by_email && <p className="mt-2 text-[11px]">บันทึกในระบบโดย {r.created_by_email}</p>}
               <DocSignatures labels={["ผู้ส่งสินค้า", "ผู้รับสินค้า", "ผู้ตรวจสอบ"]} />
             </DocSheet>
           );

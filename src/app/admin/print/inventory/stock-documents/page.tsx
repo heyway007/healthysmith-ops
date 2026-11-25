@@ -114,7 +114,6 @@ export default async function PrintStockDocumentsPage({
                   ))}
                 </tbody>
               </table>
-              {first.created_by_email && <p className="mt-2 text-[11px]">บันทึกในระบบโดย {first.created_by_email}</p>}
               <DocSignatures labels={[...kind.signatures]} />
             </DocSheet>
           );
