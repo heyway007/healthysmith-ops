@@ -1,19 +1,19 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { submitButtonClassName } from "@/lib/ui-classes";
 import { createClient } from "@/lib/supabase/server";
+import { getPaging } from "@/lib/pagination";
 import { deleteEmployee } from "./actions";
-import { DeleteButton } from "@/components/ui/delete-button";
-import { MaskedValue } from "@/components/ui/masked-value";
-import { EMPLOYMENT_TYPES } from "./employment-types";
+import { EmployeeList, type EmployeeRow } from "./employee-list";
 
 export default async function HrPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; size?: string }>;
 }) {
-  const { error } = await searchParams;
+  const sp = await searchParams;
+  const paging = await getPaging(sp);
   const supabase = await createClient();
 
   const [{ data: employees }, { data: departments }, { data: positions }] = await Promise.all([
@@ -24,6 +24,21 @@ export default async function HrPage({
 
   const departmentNameById = new Map((departments ?? []).map((d) => [d.id, d.name]));
   const positionNameById = new Map((positions ?? []).map((p) => [p.id, p.name]));
+
+  // Only what the list shows -- salary and other personal data never go to the browser here.
+  const rows: EmployeeRow[] = (employees ?? []).map((e) => ({
+    id: e.id,
+    employee_code: e.employee_code,
+    prefix_name: e.prefix_name,
+    first_name: e.first_name,
+    last_name: e.last_name,
+    nickname: e.nickname,
+    scan_code: e.scan_code,
+    phone: e.phone,
+    department: (e.department_id && departmentNameById.get(e.department_id)) || null,
+    position: (e.position_id && positionNameById.get(e.position_id)) || null,
+    employment_type: e.employment_type,
+  }));
 
   return (
     <div>
@@ -41,73 +56,16 @@ export default async function HrPage({
         </Link>
       </div>
 
-      {error && (
-        <p className="mt-4 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{error}</p>
+      {sp.error && (
+        <p className="mt-4 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{sp.error}</p>
       )}
 
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-teal-100 bg-white shadow-sm">
-        <table className="stack-table w-full text-sm md:min-w-[720px]">
-          <thead>
-            <tr className="border-b border-teal-100 bg-linear-to-r from-teal-50 to-cyan-50 text-left text-xs font-medium uppercase text-teal-700">
-              <th className="px-4 py-3">รหัส</th>
-              <th className="px-4 py-3">ชื่อ-นามสกุล</th>
-              <th className="px-4 py-3">แผนก / ตำแหน่ง</th>
-              <th className="px-4 py-3">ประเภท</th>
-              <th className="px-4 py-3">เงินเดือน</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {employees?.map((e) => (
-              <tr key={e.id} className="border-t border-teal-100 hover:bg-teal-50">
-                <td data-label="รหัส" className="px-4 py-3">
-                  <Link href={`/admin/hr/${e.id}`} className="text-teal-800 hover:text-orange-600">
-                    {e.employee_code}
-                  </Link>
-                </td>
-                <td data-label="ชื่อ-นามสกุล" className="px-4 py-3 text-teal-950">
-                  <Link href={`/admin/hr/${e.id}`} className="hover:text-orange-600">
-                    {e.prefix_name ?? ""}
-                    {e.first_name} {e.last_name}
-                  </Link>
-                </td>
-                <td data-label="แผนก / ตำแหน่ง" className="px-4 py-3 text-teal-700">
-                  {(e.department_id && departmentNameById.get(e.department_id)) ?? "-"} /{" "}
-                  {(e.position_id && positionNameById.get(e.position_id)) ?? "-"}
-                </td>
-                <td data-label="ประเภท" className="px-4 py-3 text-teal-700">
-                  {EMPLOYMENT_TYPES[e.employment_type] ?? e.employment_type}
-                </td>
-                <td data-label="เงินเดือน" className="px-4 py-3 text-teal-700">
-                  <MaskedValue value={e.base_salary.toLocaleString()} />
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-2">
-                    <Link
-                      href={`/admin/hr/${e.id}`}
-                      title="แก้ไข"
-                      className="rounded-full border border-teal-200 p-1.5 text-teal-600 transition-colors hover:bg-teal-50"
-                    >
-                      <FontAwesomeIcon icon={faPen} />
-                    </Link>
-                    <DeleteButton
-                      action={deleteEmployee.bind(null, e.id)}
-                      confirmMessage={`ลบพนักงาน "${e.first_name} ${e.last_name}"?`}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {(!employees || employees.length === 0) && (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-teal-400">
-                  ยังไม่มีข้อมูลพนักงาน
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <EmployeeList
+        employees={rows}
+        departments={(departments ?? []).map((d) => d.name)}
+        pageSize={paging.size}
+        deleteEmployee={deleteEmployee}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Field } from "@/components/ui/field";
+import { MaskedField } from "@/components/ui/masked-field";
 import { FormSection } from "@/components/ui/form-section";
 import { PREFIX_NAMES } from "@/lib/prefix-names";
 import { EMPLOYMENT_TYPES } from "./employment-types";
@@ -63,9 +64,16 @@ export async function EmployeeForm({
               ))}
             </select>
           </div>
-          <div className="hidden lg:block" />
+          <Field
+            label="รหัสสแกนนิ้ว (Code)"
+            name="scan_code"
+            type="number"
+            step="1"
+            defaultValue={defaultValues?.scan_code}
+          />
           <Field label="ชื่อ" name="first_name" required defaultValue={defaultValues?.first_name} />
           <Field label="นามสกุล" name="last_name" required defaultValue={defaultValues?.last_name} />
+          <Field label="ชื่อเล่น" name="nickname" defaultValue={defaultValues?.nickname} />
         </FormSection>
 
         <FormSection title="ตำแหน่งงาน">
@@ -115,12 +123,7 @@ export async function EmployeeForm({
             required
             defaultValue={defaultValues?.start_date}
           />
-          <Field
-            label="เงินเดือนเริ่มต้น"
-            name="base_salary"
-            type="number"
-            defaultValue={defaultValues?.base_salary}
-          />
+          <MaskedField label="เงินเดือนเริ่มต้น" name="base_salary" defaultValue={defaultValues?.base_salary} />
         </FormSection>
 
         <FormSection title="ช่องทางติดต่อ">

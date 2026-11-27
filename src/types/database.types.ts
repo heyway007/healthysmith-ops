@@ -228,6 +228,8 @@ export interface Database {
           tax_id: string | null;
           user_id: string | null;
           team_id: string | null;
+
+          scan_code: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -256,6 +258,8 @@ export interface Database {
           tax_id?: string | null;
           user_id?: string | null;
           team_id?: string | null;
+
+          scan_code?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -284,6 +288,8 @@ export interface Database {
           tax_id?: string | null;
           user_id?: string | null;
           team_id?: string | null;
+
+          scan_code?: number | null;
           created_at?: string;
           updated_at?: string;
         };
