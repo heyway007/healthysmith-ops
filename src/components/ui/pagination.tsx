@@ -24,12 +24,70 @@ function pageNumbers(page: number, pages: number): (number | "…")[] {
   return out;
 }
 
+type Change = { page?: number; size?: number };
+
+/** A link normally; a button when the list pages itself in the browser (`onChange`). */
+function Item({
+  change,
+  hrefFor,
+  onChange,
+  className,
+  current,
+  children,
+}: {
+  change: Change;
+  hrefFor: (changes: Record<string, string | null>) => string;
+  onChange?: (change: Change) => void;
+  className: string;
+  current?: "true" | "page";
+  children: React.ReactNode;
+}) {
+  const remember = () => {
+    if (change.size !== undefined) document.cookie = `${PAGE_SIZE_COOKIE}=${change.size}; path=/; max-age=31536000; samesite=lax`;
+  };
+  if (onChange) {
+    return (
+      <button
+        type="button"
+        aria-current={current}
+        onClick={() => {
+          remember();
+          onChange(change);
+        }}
+        className={className}
+      >
+        {children}
+      </button>
+    );
+  }
+  const changes: Record<string, string | null> = {
+    ...(change.size !== undefined ? { size: String(change.size), page: null } : {}),
+    ...(change.page !== undefined ? { page: change.page === 1 ? null : String(change.page) } : {}),
+  };
+  return (
+    <Link href={hrefFor(changes)} aria-current={current} onClick={remember} className={className}>
+      {children}
+    </Link>
+  );
+}
+
 /**
  * Footer of a list: "แสดง 1–10 จาก 120 รายการ", the rows-per-page choice
  * (10 / 50 / 100, remembered in a cookie) and page links. Keeps the list's
  * other filters in the URL. Hidden when everything fits on the first page of 10.
  */
-export function Pagination({ total, page, size }: { total: number; page: number; size: number }) {
+export function Pagination({
+  total,
+  page,
+  size,
+  onChange,
+}: {
+  total: number;
+  page: number;
+  size: number;
+  /** controlled mode for lists filtered/paged in the browser: buttons call this instead of changing the URL */
+  onChange?: (change: { page?: number; size?: number }) => void;
+}) {
   const pathname = usePathname();
   const current = useSearchParams();
   if (total <= PAGE_SIZES[0]) return null;
@@ -57,17 +115,9 @@ export function Pagination({ total, page, size }: { total: number; page: number;
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs">แสดง</span>
         {PAGE_SIZES.map((n) => (
-          <Link
-            key={n}
-            href={href({ size: String(n), page: null })}
-            onClick={() => {
-              document.cookie = `${PAGE_SIZE_COOKIE}=${n}; path=/; max-age=31536000; samesite=lax`;
-            }}
-            aria-current={n === size ? "true" : undefined}
-            className={`${pill} ${n === size ? pillOn : pillOff}`}
-          >
+          <Item hrefFor={href} onChange={onChange} key={n} change={{ size: n }} current={n === size ? "true" : undefined} className={`${pill} ${n === size ? pillOn : pillOff}`}>
             {n}
-          </Link>
+          </Item>
         ))}
         <span className="text-xs">รายการ / หน้า</span>
       </div>
@@ -75,9 +125,9 @@ export function Pagination({ total, page, size }: { total: number; page: number;
       {pages > 1 && (
         <div className="flex flex-wrap items-center gap-1">
           {page > 1 ? (
-            <Link href={href({ page: String(page - 1) })} className={`${pill} ${pillOff}`}>
+            <Item hrefFor={href} onChange={onChange} change={{ page: page - 1 }} className={`${pill} ${pillOff}`}>
               ‹ ก่อนหน้า
-            </Link>
+            </Item>
           ) : (
             <span className={`${pill} cursor-not-allowed bg-gray-50 text-gray-300 ring-1 ring-gray-200`}>‹ ก่อนหน้า</span>
           )}
@@ -87,20 +137,15 @@ export function Pagination({ total, page, size }: { total: number; page: number;
                 …
               </span>
             ) : (
-              <Link
-                key={n}
-                href={href({ page: n === 1 ? null : String(n) })}
-                aria-current={n === page ? "page" : undefined}
-                className={`${pill} ${n === page ? pillOn : pillOff}`}
-              >
+              <Item hrefFor={href} onChange={onChange} key={n} change={{ page: n }} current={n === page ? "page" : undefined} className={`${pill} ${n === page ? pillOn : pillOff}`}>
                 {n}
-              </Link>
+              </Item>
             ),
           )}
           {page < pages ? (
-            <Link href={href({ page: String(page + 1) })} className={`${pill} ${pillOff}`}>
+            <Item hrefFor={href} onChange={onChange} change={{ page: page + 1 }} className={`${pill} ${pillOff}`}>
               ถัดไป ›
-            </Link>
+            </Item>
           ) : (
             <span className={`${pill} cursor-not-allowed bg-gray-50 text-gray-300 ring-1 ring-gray-200`}>ถัดไป ›</span>
           )}
