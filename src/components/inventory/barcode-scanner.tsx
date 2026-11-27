@@ -32,10 +32,13 @@ export function BarcodeScanButton({
   onScan,
   label = "สแกนบาร์โค้ด",
   className,
+  once = false,
 }: {
   onScan: (code: string) => ScanFeedback;
   label?: string;
   className?: string;
+  /** close the camera after the first code that `onScan` accepts (for filling in a single field) */
+  once?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -52,17 +55,29 @@ export function BarcodeScanButton({
         <FontAwesomeIcon icon={faBarcode} />
         {label}
       </button>
-      {open && <ScannerSheet onScan={onScan} onClose={() => setOpen(false)} />}
+      {open && <ScannerSheet onScan={onScan} once={once} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function ScannerSheet({ onScan, onClose }: { onScan: (code: string) => ScanFeedback; onClose: () => void }) {
+function ScannerSheet({
+  onScan,
+  once,
+  onClose,
+}: {
+  onScan: (code: string) => ScanFeedback;
+  once: boolean;
+  onClose: () => void;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  // the latest handler, so the camera isn't restarted whenever the form state changes
+  // the latest handlers, so the camera isn't restarted whenever the form state changes
   const onScanRef = useRef(onScan);
+  const onCloseRef = useRef(onClose);
+  const onceRef = useRef(once);
   useEffect(() => {
     onScanRef.current = onScan;
+    onCloseRef.current = onClose;
+    onceRef.current = once;
   });
 
   const [error, setError] = useState("");
@@ -118,7 +133,12 @@ function ScannerSheet({ onScan, onClose }: { onScan: (code: string) => ScanFeedb
             } catch {
               /* not supported */
             }
-            setFeedback({ ...onScanRef.current(code), code, n: ++n });
+            const fb = onScanRef.current(code);
+            setFeedback({ ...fb, code, n: ++n });
+            if (onceRef.current && fb.ok) {
+              stopped = true;
+              setTimeout(() => onCloseRef.current(), 500);
+            }
           },
         );
         if (stopped) c.stop();

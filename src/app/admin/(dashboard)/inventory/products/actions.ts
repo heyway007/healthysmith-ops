@@ -38,9 +38,21 @@ function revalidateProducts() {
   revalidatePath("/admin/inventory/stock");
 }
 
+/** A barcode names one product -- a second product with the same number would make a scan ambiguous. */
+async function barcodeTakenBy(supabase: Awaited<ReturnType<typeof createClient>>, barcode: string | null, exceptId?: string) {
+  if (!barcode) return null;
+  let query = supabase.from("products").select("sku, name").eq("barcode", barcode).limit(1);
+  if (exceptId) query = query.neq("id", exceptId);
+  const { data } = await query;
+  return data?.[0] ? `บาร์โค้ดนี้ใช้กับสินค้า ${data[0].sku} · ${data[0].name} อยู่แล้ว` : null;
+}
+
 export async function createProduct(formData: FormData) {
   const supabase = await createClient();
-  const { error } = await supabase.from("products").insert(productFields(formData));
+  const fields = productFields(formData);
+  const taken = await barcodeTakenBy(supabase, fields.barcode);
+  if (taken) redirect(`/admin/inventory/products/new?error=${encodeURIComponent(taken)}`);
+  const { error } = await supabase.from("products").insert(fields);
 
   if (error) redirect(`/admin/inventory/products/new?error=${encodeURIComponent(friendly(error))}`);
   revalidateProducts();
@@ -49,9 +61,12 @@ export async function createProduct(formData: FormData) {
 
 export async function updateProduct(id: string, formData: FormData) {
   const supabase = await createClient();
+  const fields = productFields(formData);
+  const taken = await barcodeTakenBy(supabase, fields.barcode, id);
+  if (taken) redirect(`/admin/inventory/products/${id}?error=${encodeURIComponent(taken)}`);
   const { error } = await supabase
     .from("products")
-    .update({ ...productFields(formData), is_active: formData.get("is_active") === "1" })
+    .update({ ...fields, is_active: formData.get("is_active") === "1" })
     .eq("id", id);
 
   if (error) redirect(`/admin/inventory/products/${id}?error=${encodeURIComponent(friendly(error))}`);

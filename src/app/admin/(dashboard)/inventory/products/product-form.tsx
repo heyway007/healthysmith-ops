@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { formCardClassName, secondaryButtonClassName, selectClassName, submitButtonClassName } from "@/lib/ui-classes";
 import type { Database } from "@/types/database.types";
 import { PRODUCT_TYPES } from "../labels";
+import { BarcodeField } from "./barcode-field";
 
 type Product = Database["public"]["Tables"]["products"]["Row"];
 
@@ -30,7 +31,7 @@ export function ProductForm({
         <FormSection title="ข้อมูลสินค้า">
           <Field label="รหัสสินค้า (SKU)" name="sku" required defaultValue={defaultValues?.sku} />
           <Field label="ชื่อสินค้า" name="name" required defaultValue={defaultValues?.name} className="lg:col-span-2" />
-          <Field label="บาร์โค้ด (ถ้ามี)" name="barcode" defaultValue={defaultValues?.barcode} />
+          <BarcodeField defaultValue={defaultValues?.barcode} />
           <Field
             label="หน่วยนับ"
             name="unit"
