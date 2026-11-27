@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { cardClassName, inputClassName, primaryButtonClassName, secondaryButtonClassName } from "../../ui";
 import { createLeaveRequest } from "../actions";
@@ -18,10 +17,7 @@ export default async function NewLeaveRequestPage({
 
   return (
     <div>
-      <Link href="/leave" className="inline-flex items-center gap-2 text-sm font-medium text-mist-600 hover:text-mist-800">
-        <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
-        กลับไปหน้าใบลาของฉัน
-      </Link>
+      <BackLink href="/leave" label="กลับไปหน้าใบลาของฉัน" tone="mist" />
       <h1 className="mt-3 text-2xl font-semibold text-mist-900">ยื่นใบลาใหม่</h1>
 
       <div className={`mt-6 max-w-lg ${cardClassName}`}>

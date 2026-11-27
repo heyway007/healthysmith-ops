@@ -9,10 +9,10 @@ export default async function EditEmployeePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; notice?: string }>;
 }) {
   const { id } = await params;
-  const { error } = await searchParams;
+  const { error, notice } = await searchParams;
 
   const supabase = await createClient();
   const { data: employee } = await supabase.from("employees").select("*").eq("id", id).single();
@@ -31,6 +31,7 @@ export default async function EditEmployeePage({
           defaultValues={employee}
           submitLabel="บันทึกการแก้ไข"
           error={error}
+          notice={notice}
         />
       </div>
     </div>

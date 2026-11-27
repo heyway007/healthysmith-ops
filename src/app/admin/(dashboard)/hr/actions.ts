@@ -6,6 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { emptyToNull, errorMessage, numberOrDefault } from "@/lib/forms";
 import { resolveByName } from "@/lib/resolve-by-name";
 
+/** A failed save returns `error`; a save that stays on the page returns `message`. (Creating redirects instead.) */
+export type SaveResult = { error?: string; message?: string } | undefined;
+
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
 function friendlyError(err: unknown) {
@@ -47,32 +50,40 @@ async function employeeFields(supabase: SupabaseClient, formData: FormData) {
   };
 }
 
-export async function createEmployee(formData: FormData) {
+const displayName = (f: { nickname: string | null; first_name: string }) => f.nickname || f.first_name;
+
+// After creating, open the new employee's edit page (with a success notice)
+// so they can keep working on it instead of being sent back to the list.
+export async function createEmployee(formData: FormData): Promise<SaveResult> {
   const supabase = await createClient();
+  let id: string;
+  let notice: string;
   try {
     const fields = await employeeFields(supabase, formData);
-    const { error } = await supabase.from("employees").insert(fields);
+    const { data, error } = await supabase.from("employees").insert(fields).select("id").single();
     if (error) throw error;
+    id = data.id;
+    notice = `เพิ่มพนักงาน "${displayName(fields)}" เรียบร้อยแล้ว`;
   } catch (err) {
-    const message = friendlyError(err);
-    redirect(`/admin/hr/new?error=${encodeURIComponent(message)}`);
+    return { error: friendlyError(err) };
   }
   revalidatePath("/admin/hr");
-  redirect("/admin/hr");
+  redirect(`/admin/hr/${id}?${new URLSearchParams({ notice })}`);
 }
 
-export async function updateEmployee(id: string, formData: FormData) {
+// Editing stays on the same page: it returns a message for the form to show.
+export async function updateEmployee(id: string, formData: FormData): Promise<SaveResult> {
   const supabase = await createClient();
   try {
     const fields = await employeeFields(supabase, formData);
     const { error } = await supabase.from("employees").update(fields).eq("id", id);
     if (error) throw error;
+    revalidatePath("/admin/hr");
+    revalidatePath(`/admin/hr/${id}`);
+    return { message: `บันทึกข้อมูลพนักงาน "${displayName(fields)}" เรียบร้อยแล้ว` };
   } catch (err) {
-    const message = friendlyError(err);
-    redirect(`/admin/hr/${id}?error=${encodeURIComponent(message)}`);
+    return { error: friendlyError(err) };
   }
-  revalidatePath("/admin/hr");
-  redirect("/admin/hr");
 }
 
 export async function deleteEmployee(id: string) {

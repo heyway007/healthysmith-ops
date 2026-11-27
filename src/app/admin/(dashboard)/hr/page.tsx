@@ -10,7 +10,7 @@ import { EmployeeList, type EmployeeRow } from "./employee-list";
 export default async function HrPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; size?: string }>;
+  searchParams: Promise<{ error?: string; notice?: string; size?: string }>;
 }) {
   const sp = await searchParams;
   const paging = await getPaging(sp);
@@ -55,6 +55,12 @@ export default async function HrPage({
           เพิ่มพนักงานใหม่
         </Link>
       </div>
+
+      {sp.notice && (
+        <p role="status" className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          ✓ {sp.notice}
+        </p>
+      )}
 
       {sp.error && (
         <p className="mt-4 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{sp.error}</p>

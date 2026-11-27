@@ -1,12 +1,12 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Field } from "@/components/ui/field";
 import { MaskedField } from "@/components/ui/masked-field";
-import { SubmitButton } from "@/components/ui/submit-button";
 import { FormSection } from "@/components/ui/form-section";
 import { PREFIX_NAMES } from "@/lib/prefix-names";
 import { EMPLOYMENT_TYPES } from "./employment-types";
-import { formCardClassName, secondaryButtonClassName, selectClassName, submitButtonClassName } from "@/lib/ui-classes";
+import { EmployeeFormShell } from "./employee-form-shell";
+import type { SaveResult } from "./actions";
+import { formCardClassName, selectClassName } from "@/lib/ui-classes";
 import type { Database } from "@/types/database.types";
 
 type Employee = Database["public"]["Tables"]["employees"]["Row"];
@@ -16,11 +16,13 @@ export async function EmployeeForm({
   defaultValues,
   submitLabel,
   error,
+  notice,
 }: {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<SaveResult>;
   defaultValues?: Employee;
   submitLabel: string;
   error?: string;
+  notice?: string;
 }) {
   const supabase = await createClient();
   const [{ data: departments }, { data: positions }, { data: teams }] = await Promise.all([
@@ -42,7 +44,7 @@ export async function EmployeeForm({
         <p className="mb-5 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-600">{error}</p>
       )}
 
-      <form action={action} className="space-y-6">
+      <EmployeeFormShell action={action} submitLabel={submitLabel} notice={notice}>
         <FormSection title="ข้อมูลพนักงาน">
           <Field
             label="รหัสพนักงาน"
@@ -140,14 +142,7 @@ export async function EmployeeForm({
           />
           <Field label="เลขผู้เสียภาษี" name="tax_id" defaultValue={defaultValues?.tax_id} />
         </FormSection>
-
-        <div className="flex flex-wrap items-center gap-4 border-t border-teal-100 pt-5">
-          <SubmitButton className={submitButtonClassName}>{submitLabel}</SubmitButton>
-          <Link href="/admin/hr" className={secondaryButtonClassName}>
-            ยกเลิก
-          </Link>
-        </div>
-      </form>
+      </EmployeeFormShell>
     </div>
   );
 }

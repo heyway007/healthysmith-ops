@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { BackLink } from "@/components/ui/back-link";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCurrentEmployee } from "@/lib/current-employee";
@@ -38,10 +36,7 @@ export default async function LeaveRequestDetailPage({
 
   return (
     <div>
-      <Link href="/leave" className="inline-flex items-center gap-2 text-sm font-medium text-mist-600 hover:text-mist-800">
-        <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
-        กลับไปหน้าใบลาของฉัน
-      </Link>
+      <BackLink href="/leave" label="กลับไปหน้าใบลาของฉัน" tone="mist" />
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold text-mist-900">{leaveType?.name ?? "ใบลา"}</h1>
         <StatusBadge status={request.status} config={LEAVE_STATUS} />
