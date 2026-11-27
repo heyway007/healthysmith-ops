@@ -11,6 +11,7 @@ import { postStockCount } from "../movements/actions";
 import { PRODUCT_TYPES, formatQty, productSearchFilter } from "../labels";
 import { expiryStatus, shortDate, UNLOTTED_LABEL, type LotOption } from "@/components/inventory/lots";
 import { expandForCount } from "../count-rows";
+import { CountScanner } from "./count-scanner";
 
 export default async function StockCountPage({
   searchParams,
@@ -24,7 +25,7 @@ export default async function StockCountPage({
 
   let query = supabase
     .from("product_stock")
-    .select("id, sku, name, unit, on_hand, track_lot")
+    .select("id, sku, name, unit, barcode, on_hand, track_lot")
     .eq("is_active", true)
     .neq("product_type", "service")
     .order("sku");
@@ -109,7 +110,9 @@ export default async function StockCountPage({
           <Field label="หมายเหตุ (เช่น นับสิ้นเดือน / ผู้นับ)" name="note" rows={3} className="sm:col-span-2" />
         </div>
 
-        <div className="mt-5 overflow-x-auto rounded-lg border border-teal-100 bg-white">
+        <CountScanner products={products ?? []} />
+
+        <div className="mt-3 overflow-x-auto rounded-lg border border-teal-100 bg-white">
           <table className="stack-table w-full text-sm">
             <thead>
               <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
@@ -149,6 +152,8 @@ export default async function StockCountPage({
                     <input type="hidden" name="lot_number" value={r.lot ?? ""} />
                     <input
                       name="counted"
+                      data-count-product={r.productId}
+                      data-count-lot={r.lot ?? undefined}
                       type="number"
                       inputMode="decimal"
                       min="0"

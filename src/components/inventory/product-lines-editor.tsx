@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { emptyLine, labelOf, type PickableProduct, type ProductLine } from "./product-lines";
@@ -16,6 +16,7 @@ import {
   type LotOption,
 } from "./lots";
 import { DateInput } from "@/components/ui/date-input";
+import { BarcodeScanButton, findByBarcode, type ScanFeedback } from "./barcode-scanner";
 
 export type { PickableProduct, ProductLine };
 
@@ -87,6 +88,58 @@ export function ProductLinesEditor({
   const update = (i: number, patch: Partial<ProductLine>) =>
     setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
 
+  // Two scans can land before React re-renders, so the scan handler works on a ref.
+  const linesRef = useRef(lines);
+  useEffect(() => {
+    linesRef.current = lines;
+  });
+
+  // The most a row may hold: เบิกออก of a lot-tracked product is capped by the picked lot's balance.
+  const maxFor = (l: ProductLine) =>
+    pickLot && products.find((p) => p.id === l.productId)?.track_lot
+      ? issuableLots(lots, l.productId).find((o) => lotValue(o) === l.lot)?.on_hand
+      : undefined;
+
+  /** Each scan adds 1 to the product's row (a new row the first time it is scanned). */
+  const handleScan = (code: string): ScanFeedback => {
+    const product = findByBarcode(products, code);
+    if (!product) return { ok: false, message: "ไม่พบสินค้าที่ตรงกับบาร์โค้ดนี้ — ตรวจช่องบาร์โค้ดในข้อมูลสินค้า" };
+
+    const current = linesRef.current;
+    const at = current.map((l) => l.productId).lastIndexOf(product.id);
+    let next: ProductLine[];
+    let qty: number;
+
+    if (at >= 0) {
+      qty = (Number(current[at].quantity) || 0) + 1;
+      const max = maxFor(current[at]);
+      if (max !== undefined && qty > max) {
+        return { ok: false, message: `${labelOf(product)} — เกินยอดคงเหลือของล็อตนี้ (${fmt(max)} ${product.unit})` };
+      }
+      next = current.map((l, idx) => (idx === at ? { ...l, quantity: String(qty) } : l));
+    } else {
+      qty = 1;
+      const auto = shelfExpiry(product.id);
+      const line: ProductLine = {
+        productId: product.id,
+        quantity: "1",
+        lot: defaultLot(product.id),
+        expiry: auto,
+        expiryAuto: !!auto,
+      };
+      const max = maxFor(line);
+      if (max !== undefined && qty > max) {
+        return { ok: false, message: `${labelOf(product)} — ไม่มียอดคงเหลือให้เบิก` };
+      }
+      const blank = current.findIndex(isBlank);
+      next = blank >= 0 ? current.map((l, idx) => (idx === blank ? line : l)) : [...current, line];
+    }
+
+    linesRef.current = next;
+    setLines(next);
+    return { ok: true, message: `${labelOf(product)} · ${fmt(qty)} ${product.unit}` };
+  };
+
   const payload = lines
     .filter((l) => !isBlank(l))
     .map((l) => ({
@@ -99,6 +152,11 @@ export function ProductLinesEditor({
   return (
     <div>
       <input type="hidden" name={name} value={JSON.stringify(payload)} />
+
+      <div className="mb-2 flex flex-wrap items-center gap-3">
+        <BarcodeScanButton onScan={handleScan} />
+        <span className="text-xs text-teal-600">สแกนด้วยกล้องมือถือ — สแกนซ้ำเพื่อเพิ่มจำนวนทีละ 1</span>
+      </div>
 
       <div className="overflow-x-auto rounded-lg border border-teal-100 bg-white">
         <table className={`stack-table w-full text-sm ${showLot ? "md:min-w-[820px]" : "md:min-w-[520px]"}`}>

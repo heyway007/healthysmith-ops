@@ -44,7 +44,7 @@ export default async function ProductionOrderPage({
       ? supabase.from("production_receipt_items").select("*").in("production_receipt_id", receiptIds)
       : Promise.resolve({ data: [] as never[] }),
     productIds.length
-      ? supabase.from("products").select("id, sku, name, unit, track_lot, shelf_life_months").in("id", productIds)
+      ? supabase.from("products").select("id, sku, barcode, name, unit, track_lot, shelf_life_months").in("id", productIds)
       : Promise.resolve({ data: [] as never[] }),
   ]);
   const productById = new Map((products ?? []).map((p) => [p.id, p]));
@@ -231,6 +231,7 @@ export default async function ProductionOrderPage({
                   return {
                     id: i.id,
                     sku: p?.sku ?? "",
+                    barcode: p?.barcode ?? null,
                     name: p?.name ?? "",
                     unit: p?.unit ?? "",
                     remaining: i.quantity - i.received_quantity,

@@ -1,15 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { DateInput } from "@/components/ui/date-input";
 import { addMonths, shortDate } from "@/components/inventory/lots";
+import { BarcodeScanButton, findByBarcode, type ScanFeedback } from "@/components/inventory/barcode-scanner";
 import { formatQty } from "../../labels";
 
 export type ReceiveItem = {
   id: string;
   sku: string;
+  barcode: string | null;
   name: string;
   unit: string;
   remaining: number;
@@ -38,11 +40,40 @@ export function ReceiveLines({ items, lotExample, today }: { items: ReceiveItem[
   const newRow = (item: ReceiveItem): Row => makeRow(item, nextKey.current++);
   const [rows, setRows] = useState<Record<string, Row[]>>(() => Object.fromEntries(items.map((i) => [i.id, [makeRow(i, 0)]])));
 
+  // two scans can land before React re-renders, so the scan handler works on a ref
+  const rowsRef = useRef(rows);
+  useEffect(() => {
+    rowsRef.current = rows;
+  });
+
   const patch = (itemId: string, key: number, p: Partial<Row>) =>
     setRows((r) => ({ ...r, [itemId]: r[itemId].map((x) => (x.key === key ? { ...x, ...p } : x)) }));
 
+  // Each scan adds 1 to the item's last lot line. The items are the order's own,
+  // so a product that isn't on this order (or is fully received) is reported, not added.
+  const handleScan = (code: string): ScanFeedback => {
+    const item = findByBarcode(items, code);
+    if (!item) return { ok: false, message: "สินค้านี้ไม่อยู่ในรายการค้างรับของใบผลิตนี้" };
+    const list = rowsRef.current[item.id];
+    const last = list[list.length - 1];
+    const qty = (Number(last.qty) || 0) + 1;
+    const total = list.reduce((s, r) => s + (Number(r.qty) || 0), 0) + 1;
+    if (total > item.remaining) {
+      return { ok: false, message: `${item.sku} — เกินจำนวนค้างรับ (${formatQty(item.remaining)} ${item.unit})` };
+    }
+    const next = { ...rowsRef.current, [item.id]: list.map((x) => (x.key === last.key ? { ...x, qty: String(qty) } : x)) };
+    rowsRef.current = next;
+    setRows(next);
+    return { ok: true, message: `${item.sku} ${item.name} · รับรอบนี้ ${formatQty(total)} ${item.unit}` };
+  };
+
   return (
-    <div className="mt-4 overflow-x-auto rounded-lg border border-teal-100 bg-white">
+    <div className="mt-4">
+      <div className="mb-2 flex flex-wrap items-center gap-3">
+        <BarcodeScanButton onScan={handleScan} />
+        <span className="text-xs text-teal-600">สแกนด้วยกล้องมือถือ — สแกนซ้ำเพื่อเพิ่มจำนวนทีละ 1 (สินค้าหลายล็อตให้ใส่ Lot ในบรรทัดนั้นเอง)</span>
+      </div>
+    <div className="overflow-x-auto rounded-lg border border-teal-100 bg-white">
       <table className="stack-table w-full text-sm md:min-w-[760px]">
         <thead>
           <tr className="bg-teal-50 text-left text-xs font-medium uppercase text-teal-700">
@@ -183,6 +214,7 @@ export function ReceiveLines({ items, lotExample, today }: { items: ReceiveItem[
           );
         })}
       </table>
+    </div>
     </div>
   );
 }
