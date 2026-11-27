@@ -223,7 +223,7 @@ export function ProductLinesEditor({
                       </p>
                     )}
                   </td>
-                  <td data-label="จำนวน" className="px-2 py-1.5">
+                  <td data-label="จำนวน" data-stack="block" className="px-2 py-1.5">
                     <input
                       type="number"
                       inputMode="decimal"
@@ -239,7 +239,7 @@ export function ProductLinesEditor({
                   </td>
 
                   {withLot && (
-                    <td data-label="Lot" className="px-2 py-1.5">
+                    <td data-label="Lot" data-stack="block" className="px-2 py-1.5">
                       <input
                         value={l.lot}
                         list={tracked ? `lot-list-${i}` : undefined}
@@ -274,7 +274,7 @@ export function ProductLinesEditor({
                     </td>
                   )}
                   {withLot && (
-                    <td data-label="วันหมดอายุ" className="px-2 py-1.5">
+                    <td data-label="วันหมดอายุ" data-stack="block" className="px-2 py-1.5">
                       <DateInput
                         value={l.expiry}
                         onChange={(e) => update(i, { expiry: e.target.value, expiryAuto: false })}
@@ -295,7 +295,7 @@ export function ProductLinesEditor({
                   )}
 
                   {pickLot && (
-                    <td data-label="Lot" className="px-2 py-1.5">
+                    <td data-label="Lot" data-stack="block" className="px-2 py-1.5">
                       {tracked ? (
                         <>
                           <select
@@ -328,7 +328,7 @@ export function ProductLinesEditor({
                     </td>
                   )}
                   {pickLot && (
-                    <td data-label="วันหมดอายุ" className="px-2 py-1.5">
+                    <td data-label="วันหมดอายุ" data-stack="block" className="px-2 py-1.5">
                       {picked?.expiry_date ? (
                         <div className="py-1">
                           <span className="text-teal-800">{shortDate(picked.expiry_date)}</span>
@@ -346,7 +346,7 @@ export function ProductLinesEditor({
                     </td>
                   )}
 
-                  <td className="px-2 py-1.5 text-right">
+                  <td className="px-2 py-1.5 text-right max-md:mt-2 max-md:justify-end max-md:border-t max-md:border-teal-100 max-md:pt-2">
                     {min === undefined && (
                       <button
                         type="button"
