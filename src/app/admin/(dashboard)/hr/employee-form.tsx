@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Field } from "@/components/ui/field";
 import { MaskedField } from "@/components/ui/masked-field";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { FormSection } from "@/components/ui/form-section";
 import { PREFIX_NAMES } from "@/lib/prefix-names";
 import { EMPLOYMENT_TYPES } from "./employment-types";
@@ -141,9 +142,7 @@ export async function EmployeeForm({
         </FormSection>
 
         <div className="flex flex-wrap items-center gap-4 border-t border-teal-100 pt-5">
-          <button type="submit" className={submitButtonClassName}>
-            {submitLabel}
-          </button>
+          <SubmitButton className={submitButtonClassName}>{submitLabel}</SubmitButton>
           <Link href="/admin/hr" className={secondaryButtonClassName}>
             ยกเลิก
           </Link>
