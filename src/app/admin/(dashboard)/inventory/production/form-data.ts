@@ -4,8 +4,8 @@ import type { createClient } from "@/lib/supabase/server";
 export async function productionFormData(supabase: Awaited<ReturnType<typeof createClient>>) {
   const [{ data: products }, { data: orders }] = await Promise.all([
     supabase
-      .from("products")
-      .select("id, sku, name, unit, barcode")
+      .from("product_stock")
+      .select("id, sku, name, unit, barcode, on_hand")
       .eq("is_active", true)
       .neq("product_type", "service")
       .order("sku"),

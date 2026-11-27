@@ -20,7 +20,7 @@ export default async function EditProductionOrderPage({ params }: { params: Prom
   // Products on the order stay pickable even if they've since been deactivated.
   const missing = (items ?? []).filter((i) => !formData.products.some((p) => p.id === i.product_id)).map((i) => i.product_id);
   const { data: extra } = missing.length
-    ? await supabase.from("products").select("id, sku, name, unit, barcode").in("id", missing)
+    ? await supabase.from("product_stock").select("id, sku, name, unit, barcode, on_hand").in("id", missing)
     : { data: [] };
   const products = [...formData.products, ...(extra ?? [])];
 

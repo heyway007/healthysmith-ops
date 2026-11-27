@@ -17,6 +17,7 @@ import {
 } from "./lots";
 import { DateInput } from "@/components/ui/date-input";
 import { BarcodeScanButton, findByBarcode, type ScanFeedback } from "./barcode-scanner";
+import { ScanDialog, type ScanMode, type ScanResult } from "./scan-dialog";
 
 export type { PickableProduct, ProductLine };
 
@@ -94,50 +95,45 @@ export function ProductLinesEditor({
     linesRef.current = lines;
   });
 
-  // The most a row may hold: เบิกออก of a lot-tracked product is capped by the picked lot's balance.
-  const maxFor = (l: ProductLine) =>
-    pickLot && products.find((p) => p.id === l.productId)?.track_lot
-      ? issuableLots(lots, l.productId).find((o) => lotValue(o) === l.lot)?.on_hand
-      : undefined;
+  // A scan opens a popup (product, stock, quantity) instead of adding 1
+  const scanMode: ScanMode = withLot ? "in" : pickLot ? "out" : "produce";
+  const [scanned, setScanned] = useState<PickableProduct | null>(null);
 
-  /** Each scan adds 1 to the product's row (a new row the first time it is scanned). */
   const handleScan = (code: string): ScanFeedback => {
     const product = findByBarcode(products, code);
     if (!product) return { ok: false, message: "ไม่พบสินค้าที่ตรงกับบาร์โค้ดนี้ — ตรวจช่องบาร์โค้ดในข้อมูลสินค้า" };
+    setScanned(product);
+    return { ok: true, message: labelOf(product) };
+  };
 
+  // the row a scan of this product + lot lands on: รับเข้า matches the lot typed, เบิกออก the lot picked, ใบผลิต just the product
+  const sameRow = (l: ProductLine, productId: string, lot: string | null) =>
+    l.productId === productId &&
+    (lot === null || scanMode === "produce" || (scanMode === "in" ? lotKey(l.lot) === lotKey(lot) : l.lot === lot));
+
+  /** ตกลง in the popup: add the quantity to the matching row, or make a new row. */
+  const confirmScan = (product: PickableProduct, r: ScanResult) => {
     const current = linesRef.current;
-    const at = current.map((l) => l.productId).lastIndexOf(product.id);
+    const at = current.findIndex((l) => sameRow(l, product.id, r.lot));
     let next: ProductLine[];
-    let qty: number;
-
     if (at >= 0) {
-      qty = (Number(current[at].quantity) || 0) + 1;
-      const max = maxFor(current[at]);
-      if (max !== undefined && qty > max) {
-        return { ok: false, message: `${labelOf(product)} — เกินยอดคงเหลือของล็อตนี้ (${fmt(max)} ${product.unit})` };
-      }
-      next = current.map((l, idx) => (idx === at ? { ...l, quantity: String(qty) } : l));
+      next = current.map((l, idx) =>
+        idx === at ? { ...l, quantity: String((Number(l.quantity) || 0) + r.quantity), expiry: l.expiry || r.expiry } : l,
+      );
     } else {
-      qty = 1;
-      const auto = shelfExpiry(product.id);
       const line: ProductLine = {
         productId: product.id,
-        quantity: "1",
-        lot: defaultLot(product.id),
-        expiry: auto,
-        expiryAuto: !!auto,
+        quantity: String(r.quantity),
+        lot: r.lot,
+        expiry: r.expiry,
+        expiryAuto: r.expiryAuto,
       };
-      const max = maxFor(line);
-      if (max !== undefined && qty > max) {
-        return { ok: false, message: `${labelOf(product)} — ไม่มียอดคงเหลือให้เบิก` };
-      }
       const blank = current.findIndex(isBlank);
       next = blank >= 0 ? current.map((l, idx) => (idx === blank ? line : l)) : [...current, line];
     }
-
     linesRef.current = next;
     setLines(next);
-    return { ok: true, message: `${labelOf(product)} · ${fmt(qty)} ${product.unit}` };
+    setScanned(null);
   };
 
   const payload = lines
@@ -154,9 +150,26 @@ export function ProductLinesEditor({
       <input type="hidden" name={name} value={JSON.stringify(payload)} />
 
       <div className="mb-2 flex flex-wrap items-center gap-3">
-        <BarcodeScanButton onScan={handleScan} />
-        <span className="text-xs text-teal-600">สแกนด้วยกล้องมือถือ — สแกนซ้ำเพื่อเพิ่มจำนวนทีละ 1</span>
+        <BarcodeScanButton onScan={handleScan} once />
+        <span className="text-xs text-teal-600">
+          สแกนด้วยกล้องมือถือ — สแกนแล้วใส่จำนวนในหน้าต่างที่เด้งขึ้นมา
+        </span>
       </div>
+      {scanned && (
+        <ScanDialog
+          key={scanned.id}
+          mode={scanMode}
+          product={scanned}
+          lots={lots}
+          today={today}
+          shelfExpiry={shelfExpiry(scanned.id)}
+          listedQty={(lot) =>
+            lines.filter((l) => sameRow(l, scanned.id, lot)).reduce((n, l) => n + (Number(l.quantity) || 0), 0)
+          }
+          onConfirm={(r) => confirmScan(scanned, r)}
+          onCancel={() => setScanned(null)}
+        />
+      )}
 
       <div className="overflow-x-auto rounded-lg border border-teal-100 bg-white">
         <table className={`stack-table w-full text-sm ${showLot ? "md:min-w-[820px]" : "md:min-w-[520px]"}`}>
